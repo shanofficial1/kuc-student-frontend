@@ -1,0 +1,39 @@
+
+@import url('https://fonts.googleapis.com/css2?family=Public+Sans:wght@300;400;500;600;700;800&display=swap');
+@import "tailwindcss";
+@theme {
+  --font-sans: "Public Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-body: "Public Sans", sans-serif;
+
+  --color-primary: #003e7a;
+  --color-primary-container: #0055a4;
+  --color-on-primary: #ffffff;
+  --color-on-primary-container: #afccff;
+  
+  --color-secondary: #505f76;
+  --color-secondary-container: #d0e1fb;
+  --color-on-secondary: #ffffff;
+  --color-on-secondary-container: #54647a;
+
+  --color-surface-background: #F8FAFC;
+  --color-surface-card: #FFFFFF;
+  --color-border-subtle: #E2E8F0;
+  
+  --color-status-success: #10B981;
+  --color-status-warning: #F59E0B;
+  --color-status-error: #EF4444;
+
+  --spacing-gutter: 1.5rem;
+  --spacing-section-gap: 2.5rem;
+  --spacing-field-stack: 1.25rem;
+}
+
+@layer base {
+  body {
+    @apply bg-surface-background text-slate-900 font-body antialiased;
+  }
+}
+
+.material-symbols-outlined {
+  font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+}
