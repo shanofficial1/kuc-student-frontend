@@ -33,6 +33,8 @@ import FormSidebar from "./components/FormSidebar";
 import GlobalLoader from "./components/GlobalLoader";
 import DemoToggleButton from "./components/DemoToggleButton";
 import ChangePassword from "./pages/ChangePassword";
+import RequestUnlockPage from "./pages/RequestUnlockPage";
+import MarkRequestPage from "./pages/MarkRequestPage";
 
 function Layout() {
   const isSubmitted = useStore((s) => s.isSubmitted);
@@ -103,6 +105,8 @@ function Layout() {
               <Route path="/forms/review" element={isLoggedIn ? <FinalReviewForm /> : <Navigate to="/login" />} />
               <Route path="/grade-card" element={isLoggedIn ? <GradeCardPage /> : <Navigate to="/login" />} />
               <Route path="/change-password" element={isLoggedIn ? <ChangePassword /> : <Navigate to="/login" />} />
+              <Route path="/request" element={isLoggedIn ? <RequestUnlockPage /> : <Navigate to="/login" />} />
+              <Route path="/mark-request" element={isLoggedIn ? <MarkRequestPage/> : <Navigate to="/login"/>} />
 
               {/* FALLBACK */}
               <Route path="*" element={<Navigate to="/" />} />

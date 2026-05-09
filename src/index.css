@@ -37,3 +37,11 @@
 .material-symbols-outlined {
   font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
 }
+
+
+
+:root {
+  /* Avoid oklch(55% 0.15 250) */
+  --primary: #003e7a; 
+  --slate-900: #0f172a;
+}

@@ -332,9 +332,12 @@ const editStatus = "none";
       )}
 
       {isSubmitted && editStatus === "none" && (
-        <button className="w-full py-3 bg-yellow-500 text-white font-semibold rounded-lg hover:bg-yellow-600 transition">
-          Request Edit
-        </button>
+       <Link 
+  to="/request" 
+  className="block w-full py-3 bg-yellow-500 text-white font-semibold rounded-lg hover:bg-yellow-600 transition text-center"
+>
+  Request Edit
+</Link>
       )}
 
       {editStatus === "pending" && (

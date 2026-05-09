@@ -81,12 +81,12 @@ export default function Navbar() {
                   {/* MENU ITEMS */}
 
                   <Link
-                    to="/request-changes"
+                    to="/request"
                     onClick={() => setOpen(false)}
                     className="flex items-center gap-3 px-4 py-2.5 text-sm text-slate-600 hover:bg-slate-50"
                   >
                     <FileEdit className="w-4 h-4 text-yellow-600" />
-                    Request Changes
+                    Request 
                   </Link>
 
                   <Link

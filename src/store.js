@@ -143,8 +143,8 @@ const initialState = {
   },
 
   mentor: {
-    tutorName: "",
-    tutorEmail: "",
+    tutorName: "tuit.it@kannuruniversity.ac.in",
+    tutorEmail: "Dr. ghhr M.",
     hodName: "Dr. Sivaprasad M.",
     hodEmail: "hod.it@kannuruniversity.ac.in",
   },
@@ -169,6 +169,37 @@ const initialState = {
       },
     },
   },
+  marksData: {
+  "Semester I": [
+    { code: "BIT101", title: "Engineering Mathematics I", credits: 4, CE: 19, TE: 72, result: "PASS" },
+    { code: "BIT102", title: "Engineering Physics", credits: 3, CE: 18, TE: 65, result: "PASS" },
+    { code: "BIT103", title: "Programming in C", credits: 3, CE: 20, TE: 75, result: "PASS" },
+    { code: "BIT104", title: "Engineering Graphics", credits: 3, CE: 17, TE: 60, result: "PASS" },
+    { code: "BIT105L", title: "Programming Lab in C", credits: 2, CE: 20, TE: 48, result: "PASS" }
+  ],
+  "Semester II": [
+    { code: "BIT201", title: "Engineering Mathematics II", credits: 4, CE: 19, TE: 68, result: "PASS" },
+    { code: "BIT202", title: "Engineering Chemistry", credits: 3, CE: 18, TE: 70, result: "PASS" },
+    { code: "BIT203", title: "Data Structures", credits: 3, CE: 19, TE: 72, result: "PASS" },
+    { code: "BIT204", title: "Basic Electrical Engineering", credits: 3, CE: 17, TE: 64, result: "PASS" },
+    { code: "BIT205L", title: "Data Structures Lab", credits: 2, CE: 20, TE: 46, result: "PASS" }
+  ],
+  "Semester III": [
+    { code: "BIT301", title: "Discrete Mathematics", credits: 4, CE: 18, TE: 75, result: "PASS" },
+    { code: "BIT302", title: "Computer Organization", credits: 3, CE: 19, TE: 62, result: "PASS" },
+    { code: "BIT303", title: "Object Oriented Programming", credits: 3, CE: 20, TE: 78, result: "PASS" },
+    { code: "BIT304", title: "Digital Electronics", credits: 3, CE: 19, TE: 66, result: "PASS" },
+    { code: "BIT305L", title: "OOP Lab using Java", credits: 2, CE: 20, TE: 49, result: "PASS" }
+  ],
+  "Semester IV": [
+    { code: "BIT401", title: "Database Management Systems", credits: 4, CE: 19, TE: 74, result: "PASS" },
+    { code: "BIT402", title: "Computer Networks", credits: 4, CE: 19, TE: 70, result: "PASS" },
+    { code: "BIT403", title: "Operating Systems", credits: 3, CE: 19, TE: 65, result: "PASS" },
+    { code: "BIT404", title: "Software Engineering", credits: 3, CE: 20, TE: 72, result: "PASS" },
+    { code: "BIT405L", title: "DBMS Laboratory", credits: 2, CE: 20, TE: 45, result: "PASS" }
+  ],
+},
+
 };
 
 /* ================= HELPER ================= */
@@ -211,7 +242,16 @@ setIsLoading: (val) => set({ isLoading: val }),
             ...data,
           },
         })),
-
+updateMark: (semester, code, newCE, newTE) => set((state) => ({
+    marksData: {
+      ...state.marksData,
+      [semester]: state.marksData[semester].map((subject) =>
+        subject.code === code 
+          ? { ...subject, CE: Number(newCE) || subject.CE, TE: Number(newTE) || subject.TE }
+          : subject
+      ),
+    },
+  })),
       /* ⏳ LOADING */
       setLoading: (status) => set({ isLoading: status }),
 

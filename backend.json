@@ -1,0 +1,151 @@
+
+{
+  "userId": {
+    "$oid": "69e47a02c8bf8bbe67aea853"
+  },
+  "__v": 0,
+  "academic_details": {
+    "rollNumber": "12345",
+    "admissionApplicationNumber": "APP001",
+    "universityEnrollmentNumber": "ENR001",
+    "faculty": "Engineering",
+    "programLevel": "UG",
+    "degreeName": "BCA",
+    "specialization": "Computer Science",
+    "fellowshipLetter": "uploads/69e47a02c8bf8bbe67aea853/6de34722-7df4-4f0e-a520-023e610a5d6d.pdf"
+  },
+  "createdAt": {
+    "$date": "2026-04-19T07:19:55.067Z"
+  },
+  "documents": {
+    "academicTranscripts": [],
+    "identityProof": {
+      "document": "uploads/69e47a02c8bf8bbe67aea853/cc5e004e-c396-41c2-a415-43c8170a0ce2.pdf"
+    },
+    "legalCertificates": {
+      "casteCertificate": "uploads/69e47a02c8bf8bbe67aea853/d95ced7a-1d2d-4070-91c3-10e0adca3541.pdf",
+      "incomeCertificate": "uploads/69e47a02c8bf8bbe67aea853/759a4ac5-23dc-41a1-9e45-ee8d6d1559fb.pdf",
+      "nativityCertificate": "uploads/69e47a02c8bf8bbe67aea853/fba3d9c8-881b-4d86-a781-03f8f63f71e2.pdf",
+      "nonCreamyLayerCertificate": "uploads/69e47a02c8bf8bbe67aea853/dd652ffa-4217-439b-9003-a8b620d0be99.pdf"
+    },
+    "profilePhoto": "uploads/69e47a02c8bf8bbe67aea853/bbdca4b9-0c3e-4cfc-bdce-08f86f2ef5ac.pdf",
+    "signature": "uploads/69e47a02c8bf8bbe67aea853/77ae00d4-2d36-4c8a-94a5-8e2f4e78a949.pdf",
+    "transcripts": [
+      {
+        "name": "sample.pdf",
+        "file": "uploads/69e47a02c8bf8bbe67aea853/ec643cd0-0b41-4342-9060-df3c041a40c8.pdf",
+        "_id": {
+          "$oid": "69f8b555da2f569d1054aa61"
+        }
+      },
+      {
+        "name": "sample.pdf",
+        "file": "uploads/69e47a02c8bf8bbe67aea853/f1138994-a572-4738-8b4f-96c4e38ee2fb.pdf",
+        "_id": {
+          "$oid": "69f8b555da2f569d1054aa62"
+        }
+      }
+    ]
+  },
+  "education_details": {
+    "certifications": [],
+    "competitiveExams": [
+      {
+        "documentUrl": "uploads/69e47a02c8bf8bbe67aea853/bff2a8d7-25cf-4187-ae0a-16aa95a2ae01.pdf",
+        "_id": {
+          "$oid": "69f8b555da2f569d1054aa5e"
+        }
+      }
+    ],
+    "education": [
+      {
+        "documentUrl": "uploads/69e47a02c8bf8bbe67aea853/1aaf5572-faa4-4eda-99d1-3a64d98414f1.pdf",
+        "_id": {
+          "$oid": "69f8b555da2f569d1054aa5f"
+        }
+      },
+      {
+        "documentUrl": "uploads/69e47a02c8bf8bbe67aea853/c456a3ee-4e61-46b1-9990-e92acb5dca67.pdf",
+        "_id": {
+          "$oid": "69f8b555da2f569d1054aa60"
+        }
+      }
+    ],
+    "migrationUrl": "uploads/69e47a02c8bf8bbe67aea853/d7e05b0d-761e-4959-819c-ddabcddc3536.pdf"
+  },
+  "family_details": {
+    "siblings": []
+  },
+  "health_details": {
+    "disabilityStatus": false,
+    "disabilityCertificate": "uploads/69e47a02c8bf8bbe67aea853/c6c2b083-a4fd-440c-b0a3-93351c7b969c.pdf",
+    "vaccinationDoc": "uploads/69e47a02c8bf8bbe67aea853/1a40c004-2de0-4217-b235-879730727b80.pdf"
+  },
+  "personal_details": {
+    "fullName": "Amith",
+    "gender": "Male",
+    "nationality": "Indian",
+    "passportDoc": "uploads/69e47a02c8bf8bbe67aea853/12c94de5-1e69-4485-bcde-3b7ab131e378.pdf",
+    "visaDoc": "uploads/69e47a02c8bf8bbe67aea853/3c2a9487-42f0-418c-b42f-8f41632e5f77.pdf",
+    "birthCertificateDoc": "uploads/69e47a02c8bf8bbe67aea853/411b28ff-1436-4aed-a298-d7e02f40d876.pdf"
+  },
+  "professional_details": {
+    "conferencePresentations": [],
+    "patents": [
+      {
+        "document": "uploads/69e47a02c8bf8bbe67aea853/d7e3b645-baad-40f6-a961-9587034459de.pdf",
+        "_id": {
+          "$oid": "69f8b555da2f569d1054aa5d"
+        }
+      }
+    ],
+    "professionalMemberships": [],
+    "researchPublications": [],
+    "skills": {
+      "software": [],
+      "technical": []
+    },
+    "workExperience": [],
+    "conferences": [
+      {
+        "url": "uploads/69e47a02c8bf8bbe67aea853/a4a1ac93-1e8c-444a-ad90-b442442f8991.pdf",
+        "_id": {
+          "$oid": "69f8b555da2f569d1054aa5b"
+        }
+      }
+    ],
+    "experience": [
+      {
+        "url": "uploads/69e47a02c8bf8bbe67aea853/3811a5b6-a677-45f1-93d3-f6cd0c88a82d.pdf",
+        "_id": {
+          "$oid": "69f8b555da2f569d1054aa5a"
+        }
+      }
+    ],
+    "publications": [
+      {
+        "url": "uploads/69e47a02c8bf8bbe67aea853/437612d1-ebf8-4e6d-9953-c8ebc9e11959.pdf",
+        "_id": {
+          "$oid": "69f8b555da2f569d1054aa5c"
+        }
+      }
+    ]
+  },
+  "residential_details": {
+    "transport": {
+      "opted": false
+    },
+    "hostelDeclarationForm": "uploads/69e47a02c8bf8bbe67aea853/4119cdc6-0396-4f08-acef-2cd12d5010df.pdf"
+  },
+  "updatedAt": {
+    "$date": "2026-05-04T15:03:49.756Z"
+  },
+  "contact_details": {
+    "personalEmail": "amith@example.com"
+  },
+  "financial_details": {
+    "feeWaiveUrl": {
+      "document": "uploads/69e47a02c8bf8bbe67aea853/cde02135-96eb-4d3f-b9d3-477bd9ae7173.pdf"
+    }
+  }
+}
