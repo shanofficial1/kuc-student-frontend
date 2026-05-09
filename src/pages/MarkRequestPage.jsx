@@ -192,7 +192,7 @@ export default function MarkRequestPage() {
               }`}
             >
               {isSuccess ? (
-                <> <CheckCircle2 className="w-4 h-4" /> Marks Updated</>
+                <> <CheckCircle2 className="w-4 h-4" /> Marks Update requested</>
               ) : (
                 <> <Save className="w-4 h-4" /> Apply Changes</>
               )}
