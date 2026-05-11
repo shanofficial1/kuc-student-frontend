@@ -1,7 +1,7 @@
 import React from 'react';
 import { useStore } from '../../store';
-import FormWrapper, { FormSection, InputField, SelectField } from '../../components/FormWrapper';
-import { Fingerprint, GraduationCap, Calendar, BookOpen, Crown, CheckCircle, FileText } from 'lucide-react';
+import FormWrapper, { FormSection, InputField, SelectField,FileInput } from '../../components/FormWrapper';
+import { Fingerprint, GraduationCap, Calendar, BookOpen, Crown, CheckCircle, FileText,Search } from 'lucide-react';
 import GlobalLoader from '@/src/components/GlobalLoader';
 
 export default function AcademicForm() {
@@ -174,7 +174,44 @@ const isLoading = useStore((state) => state.isLoading);
           ]}
         />
       </FormSection>
+ <FormSection title="Research & Specialization" icon={Search}>
+        <div className="md:col-span-2">
+          <InputField
+            label="Specialization / Research Area"
+            id="specialization"
+            value={academic.specialization || ''}
+            onChange={handleChange}
+            placeholder="e.g. Machine Learning, Structural Engineering, Modern History"
+            disabled={isSubmitted}
+          />
+        </div>
 
+        {/* Research specific fields only for PhD students */}
+        {academic.programLevel === 'phd' && (
+          <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4 mt-2 animate-in fade-in slide-in-from-top-2 duration-300">
+            <div className="md:col-span-2">
+              <InputField
+                label="Thesis / Dissertation Topic"
+                id="researchTopic"
+                value={academic.researchTopic || ''}
+                onChange={handleChange}
+                placeholder="Enter the full title of your research work"
+                disabled={isSubmitted}
+              />
+            </div>
+            <div className="md:col-span-2">
+              <InputField
+                label="Name of Research Supervisor / Guide"
+                id="supervisorName"
+                value={academic.supervisorName || ''}
+                onChange={handleChange}
+                placeholder="Dr. Full Name"
+                disabled={isSubmitted}
+              />
+            </div>
+          </div>
+        )}
+      </FormSection>
       <FormSection title="Academic Timeline" icon={Calendar}>
         <InputField
           label="Admission Batch"
@@ -265,64 +302,24 @@ const isLoading = useStore((state) => state.isLoading);
           placeholder="F-882/2024/KU"
         />
 
-        <div className="flex flex-col gap-2">
-          <label className="block text-sm font-medium text-slate-600">
-            Fellowship Document
-          </label>
-
-          <label
-            className={`w-full h-12 flex items-center justify-between px-3 border rounded-lg cursor-pointer transition
-            ${isUploaded
-                ? "border-green-500 bg-green-50"
-                : "border-slate-200 bg-white hover:border-slate-300"
-              }`}
-          >
-            <div className="flex items-center gap-3">
-              <div
-                className={`w-8 h-8 flex items-center justify-center rounded-md 
-                ${isUploaded ? "bg-green-100" : "bg-slate-100"}`}
-              >
-                <FileText
-                  size={18}
-                  className={isUploaded ? "text-green-600" : "text-slate-500"}
-                />
-              </div>
-
-              <span
-                className={`text-sm max-w-[180px] truncate block ${academic.fileError
-                    ? "text-red-600"
-                    : isUploaded
-                      ? "text-green-700 font-medium"
-                      : "text-slate-500"
-                  }`}
-              >
-                {academic.fileError
-                  ? academic.fileError
-                  : isUploaded
-                    ? fileName
-                    : "Upload PDF / Image"}
-              </span>
-            </div>
-
-            {isUploaded && (
-              <CheckCircle size={18} className="text-green-600" />
-            )}
-
-            <input
-              type="file"
-              id="fellowshipFile"
-              accept=".pdf,.jpg,.jpeg,.png"
-              disabled={isSubmitted}
-              onChange={handleFileChange}
-              className="hidden"
-            />
-          </label>
-
-          <p className="text-xs text-red-600 font-medium">
-            Upload file size: 50–150 KB only.
-          </p>
-        </div>
+   <FileInput
+  label="Fellowship Document"
+  required
+  file={academic.fellowshipFileName}
+  error={academic.fileError}
+  disabled={isSubmitted}
+  onChange={(e) => {
+    const { name, error } = e.target;
+    
+    updateSection("academic", {
+      fellowshipFileName: name,
+      fileError: error,
+    });
+  }}
+/>
       </FormSection>
+     
+
     </FormWrapper>
     </>
   );

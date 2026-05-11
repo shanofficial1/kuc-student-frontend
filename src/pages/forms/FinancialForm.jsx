@@ -3,6 +3,7 @@ import { useStore } from "../../store";
 import FormWrapper, {
   FormSection,
   InputField,
+  FileInput,
   SelectField,
 } from "../../components/FormWrapper";
 import { Wallet, Landmark, ShieldCheck, FileText } from "lucide-react";
@@ -21,6 +22,29 @@ export default function FinancialForm() {
     updateSection("financial", { [id]: value });
   };
 
+  const handleArrayFile = (file, index, key) => {
+  // 150KB in bytes
+  const limitBytes = 150 * 1024; 
+  const arr = [...(professional[key] || [])];
+  
+  if (file.size > limitBytes) {
+    arr[index] = { 
+      ...arr[index], 
+      docName: "", 
+      fileError: "File too large (Max 150KB allowed)" 
+    };
+  } else {
+    arr[index] = { 
+      ...arr[index], 
+      docName: file.name, 
+      fileError: "" 
+    };
+  }
+  
+  updateSection("professional", { [key]: arr });
+};
+
+
   return (
     <FormWrapper
       title="Financial Details"
@@ -29,81 +53,65 @@ export default function FinancialForm() {
     >
       {/* ===================== 1. SCHOLARSHIP ===================== */}
       <FormSection title="Scholarship & Support" icon={Wallet}>
-        <SelectField
-          label="Scholarship Category"
-          id="scholarshipCategory"
-          value={financial.scholarshipCategory || ""}
-          onChange={handleChange}
-          disabled={isSubmitted}
-          options={[
-            { value: "", label: "Select..." },
-            { value: "government", label: "Government" },
-            { value: "institutional", label: "Institutional" },
-            { value: "jrf", label: "JRF" },
-            { value: "egrant", label: "e-Grant" },
-            { value: "none", label: "None" },
-          ]}
-        />
+  {/* 1. Category Selection - Always Visible */}
+  <SelectField
+    label="Scholarship Category"
+    id="scholarshipCategory"
+    required
+    value={financial.scholarshipCategory || "none"}
+    onChange={(e) => {
+      const val = e.target.value;
+      if (val === "none") {
+        // Clear sub-fields if "none" is selected
+        updateSection("financial", {
+          scholarshipCategory: val,
+          scholarshipId: "",
+          feeDocName: "",
+        });
+      } else {
+        handleChange(e);
+      }
+    }}
+    disabled={isSubmitted}
+    options={[
+      { value: "none", label: "None" },
+      { value: "government", label: "Government" },
+      { value: "institutional", label: "Institutional" },
+      { value: "jrf", label: "JRF" },
+      { value: "egrant", label: "e-Grant" },
+    ]}
+  />
 
-        <InputField
-          label="Scholarship Unique ID"
-          id="scholarshipId"
-          value={financial.scholarshipId || ""}
-          onChange={handleChange}
-          disabled={isSubmitted}
-        />
+  {/* 2. Conditional Fields - Visible only if NOT "none" */}
+  {financial.scholarshipCategory && financial.scholarshipCategory !== "none" && (
+    <>
+      <InputField
+        label={`${financial.scholarshipCategory.toUpperCase()} Unique ID`}
+        id="scholarshipId"
+        placeholder="Enter your registration ID"
+        required
+        value={financial.scholarshipId || ""}
+        onChange={handleChange}
+        disabled={isSubmitted}
+      />
 
-        <div className="flex flex-col gap-2">
-          <label className="block text-sm font-medium text-slate-600">
-            Upload Fee Waiver Document
-          </label>
-
-          <label
-            className={`w-full h-12 flex items-center justify-between px-3 border rounded-lg cursor-pointer transition 
-            ${financial.feeDocName ? "border-green-500 bg-green-50" : "border-slate-200 bg-white"}`}
-          >
-            <div className="flex items-center gap-3">
-              <div
-                className={`w-8 h-8 flex items-center justify-center rounded-md 
-                ${financial.feeDocName ? "bg-green-100" : "bg-slate-100"}`}
-              >
-                <FileText
-                  size={18}
-                  className={financial.feeDocName ? "text-green-600" : "text-slate-500"}
-                />
-              </div>
-
-              <span
-                className={`text-sm truncate block 
-                ${financial.feeDocError
-                  ? "text-red-600"
-                  : financial.feeDocName
-                  ? "text-green-700 font-medium"
-                  : "text-slate-500"}`}
-              >
-                {financial.feeDocError ||
-                  financial.feeDocName ||
-                  "Upload PDF / Image"}
-              </span>
-            </div>
-
-            <input
-              type="file"
-              className="hidden"
-              accept=".pdf,.jpg,.png"
-              onChange={(e) => {
-                const file = e.target.files?.[0];
-                if (!file) return;
-
-                updateSection("financial", {
-                  feeDocName: file.name,
-                  feeDocError: "",
-                });
-              }}
-            />
-          </label>
-        </div>
-      </FormSection>
+    <FileInput
+  label="Fee Waiver Document"
+  file={financial.feeDocName}
+  error={financial.feeDocError}
+  onChange={(e) => {
+    // The component sends back the object we created in onFileChange
+    const { name, error } = e.target;
+    
+    updateSection("financial", {
+      feeDocName: name,
+      feeDocError: error,
+    });
+  }}
+/>
+    </>
+  )}
+</FormSection>
 
       {/* ===================== 2. EDUCATION LOAN ===================== */}
       <FormSection title="Education Loan Details" icon={Wallet}>

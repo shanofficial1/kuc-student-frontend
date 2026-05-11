@@ -1,6 +1,6 @@
 import React from "react";
 import { cn } from "../lib/utils";
-import { Save } from "lucide-react";
+import { Save,FileText } from "lucide-react";
 import { useStore } from "../store";
 
 /* ================= MAIN WRAPPER ================= */
@@ -208,7 +208,7 @@ export function SelectField({
             )}
 
             {/* Options */}
-            <div className="max-h-60 overflow-y-auto">
+            <div className="max-h-60 overflow-y-auto no-scrollbar">
               {filteredOptions.length > 0 ? (
                 filteredOptions.map((opt) => {
                   const isActive = selectedValues.includes(opt.value);
@@ -260,6 +260,113 @@ export function SelectField({
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+
+/* ================= FILE INPUT FIELD ================= */
+export function FileInput({ label, file, error, onChange, disabled, required }) {
+  const isSubmitted = useStore((s) => s.isSubmitted);
+  const isDisabled = disabled || isSubmitted;
+
+  // Helper to format the display name of the file
+  const formatFileName = (fileName) => {
+    if (!fileName) return "Upload File";
+    const name = typeof fileName === "string" ? fileName.split('/').pop() : fileName.name;
+    
+    if (name.length > 22) {
+      return name.substring(0, 15) + "..." + name.slice(-6);
+    }
+    return name;
+  };
+
+  // ✅ New internal validation handler
+  const onFileChange = (e) => {
+    const selectedFile = e.target.files?.[0];
+    if (!selectedFile) return;
+
+    const limitBytes = 150 * 1024; // 150 KB
+
+    if (selectedFile.size > limitBytes) {
+      // Pass an error-state-like object to the parent's onChange
+      onChange({
+        target: {
+          name: selectedFile.name,
+          file: null,
+          error: "Max 150KB allowed"
+        }
+      });
+    } else {
+      // Pass the valid file to the parent
+      onChange({
+        target: {
+          name: selectedFile.name,
+          file: selectedFile,
+          error: ""
+        }
+      });
+    }
+  };
+
+  return (
+    <div className="space-y-2">
+      <label className="block text-sm font-medium text-slate-600">
+        {label} 
+      </label>
+
+      <label
+        className={cn(
+          "w-full h-12 flex items-center justify-between px-3 border rounded-xl cursor-pointer transition-all",
+          !isDisabled && "bg-white border-slate-200 shadow-sm hover:border-slate-300",
+          isDisabled && "bg-gray-100 border-slate-200 cursor-not-allowed opacity-70",
+          file && !error && !isDisabled && "border-green-500 bg-green-50/30",
+          error && "border-red-500 bg-red-50"
+        )}
+      >
+        <div className="flex items-center gap-3 overflow-hidden">
+          <div
+            className={cn(
+              "p-2 rounded-lg transition-colors",
+              file && !error ? "bg-green-100 text-green-600" : "bg-slate-100 text-slate-500"
+            )}
+          >
+            <FileText size={18} />
+          </div>
+
+          <span
+            className={cn(
+              "text-sm truncate",
+              error ? "text-red-600 font-medium" : file ? "text-green-700 font-medium" : "text-slate-400"
+            )}
+          >
+            {error || formatFileName(file)}
+          </span>
+        </div>
+
+        <input
+          type="file"
+          className="hidden"
+          disabled={isDisabled}
+          onChange={onFileChange} // ✅ Call internal handler
+          accept=".pdf,.jpg,.jpeg,.png"
+        />
+
+        {file && !error && (
+          <div className="text-green-600 shrink-0">
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24">
+              <polyline points="20 6 9 17 4 12" />
+            </svg>
+          </div>
+        )}
+      </label>
+
+      <p className={cn(
+        "text-[10px] font-bold  tracking-wider",
+       "text-red-500" 
+      )}>
+        {error ? error : "Upload file size: MAX 150 KB only."}
+      </p>
     </div>
   );
 }

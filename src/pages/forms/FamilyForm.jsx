@@ -170,6 +170,43 @@ export default function FamilyForm() {
           </button>
         </div>
       </FormSection>
+
+
+   {/* Guardian Address Details */}
+      <FormSection title="Guardian Address Details" icon={Users}>
+        {/* Residential Address */}
+        <div className="md:col-span-2 space-y-2">
+          <label className="block text-sm font-medium text-slate-600">
+            Guardian's Residential Address
+          </label>
+          <textarea
+            id="guardianResidentialAddress"
+            placeholder="House Name/No., Street, Locality, Pincode"
+            rows={3}
+            value={family?.guardianResidentialAddress || ''}
+            onChange={handleChange}
+            disabled={isSubmitted}
+            className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-primary transition-all disabled:opacity-70 disabled:cursor-not-allowed resize-none"
+          />
+        </div>
+
+        {/* Office Address */}
+        <div className="md:col-span-2 space-y-2">
+          <label className="block text-sm font-medium text-slate-600">
+            Guardian's Office Address
+          </label>
+          <textarea
+            id="guardianOfficeAddress"
+            placeholder="Company Name, Building, Floor, Office Area Address"
+            rows={3}
+            value={family?.guardianOfficeAddress || ''}
+            onChange={handleChange}
+            disabled={isSubmitted}
+            className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-primary transition-all disabled:opacity-70 disabled:cursor-not-allowed resize-none"
+          />
+        </div>
+      </FormSection>
+
     </FormWrapper>
   );
 }

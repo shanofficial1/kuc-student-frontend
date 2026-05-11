@@ -1,7 +1,7 @@
 import React, { useState ,useEffect,useRef } from 'react';
 import { useStore } from '../../store';
-import FormWrapper, { FormSection, InputField, SelectField } from '../../components/FormWrapper';
-import { User, Flag, Languages, CreditCard, Keyboard, FileText, CheckCircle } from 'lucide-react';
+import FormWrapper, { FormSection, InputField, SelectField, FileInput } from '../../components/FormWrapper';
+import { User, Flag, Languages,Globe, CreditCard, Keyboard, FileText, CheckCircle } from 'lucide-react';
 const COLS = 11;
 
 const baseKeys = [
@@ -372,27 +372,24 @@ export default function PersonalForm() {
           error={errors.dob}
         />
 
-        <div className="flex flex-col gap-2">
-          <label className="block text-sm font-medium text-slate-600">
-            Date of Birth Proof
-          </label>
-          <label
-            className={`w-full h-12 flex items-center justify-between px-3 border rounded-lg cursor-pointer transition
-            ${personal.dobDoc ? "border-green-500 bg-green-50" : "border-slate-200 bg-white hover:border-slate-300"}`}
-          >
-            <div className="flex items-center gap-3">
-              <div className={`w-8 h-8 flex items-center justify-center rounded-md ${personal.dobDoc ? "bg-green-100" : "bg-slate-100"}`}>
-                <FileText size={18} className={personal.dobDoc ? "text-green-600" : "text-slate-500"} />
-              </div>
-              <span className={`text-sm max-w-[180px] truncate block ${personal.dobDocError ? "text-red-600" : personal.dobDoc || personal.dobDocName ? "text-green-700 font-medium" : "text-slate-500"}`}>
-                {personal.dobDocError || (personal.dobDoc ? personal.dobDoc.name : (personal.dobDocName || "Upload DOB Proof (PDF/Image)"))}
-              </span>
-            </div>
-            {personal.dobDoc && <CheckCircle size={18} className="text-green-600" />}
-            <input type="file" id="dobDoc" accept=".pdf,.jpg,.jpeg,.png" disabled={isSubmitted} onChange={handleDOBFileChange} className="hidden" />
-          </label>
-          <p className="text-xs text-red-600 font-medium">Upload file size: 50–150 KB only.</p>
-        </div>
+      <FileInput
+  label="Date of Birth Proof"
+  required={true}
+  file={personal.dobDocName || (personal.dobDoc ? personal.dobDoc.name : "")}
+  error={personal.dobDocError}
+  disabled={isSubmitted}
+  onChange={(e) => {
+    const { name, error } = e.target;
+    
+    updateSection("personal", {
+      dobDocName: name,
+      dobDocError: error,
+      // If you are storing the actual file object, 
+      // it is passed as e.target.file in our component logic
+      dobDoc: e.target.file 
+    });
+  }}
+/>
 
         <SelectField disabled={isSubmitted}
           label="Gender"
@@ -423,47 +420,141 @@ export default function PersonalForm() {
         <SelectField label="Country of Issue" id="passportCountry" value={personal.passportCountry} onChange={handleChange} options={countryOptions} />
         <InputField label="Passport Expiry Date" id="passportExpiry" type="text" placeholder="DD-MM-YYYY" value={personal.passportExpiry} onChange={handleChange} onBlur={handleBlur} error={errors.passportExpiry} />
 
-        <div className="flex flex-col gap-2">
-          <label className="block text-sm font-medium text-slate-600">Passport Document</label>
-          <label className={`w-full h-12 flex items-center justify-between px-3 border rounded-lg cursor-pointer transition ${personal.passportDoc ? "border-green-500 bg-green-50" : "border-slate-200 bg-white hover:border-slate-300"}`}>
-            <div className="flex items-center gap-3">
-              <div className={`w-8 h-8 flex items-center justify-center rounded-md ${personal.passportDoc ? "bg-green-100" : "bg-slate-100"}`}>
-                <FileText size={18} className={personal.passportDoc ? "text-green-600" : "text-slate-500"} />
-              </div>
-              <span className={`text-sm max-w-[180px] truncate block ${personal.passportDocError ? "text-red-600" : personal.passportDoc || personal.passportDocName ? "text-green-700 font-medium" : "text-slate-500"}`}>
-                {personal.passportDocError || (personal.passportDoc ? personal.passportDoc.name : (personal.passportDocName || "Upload Passport (PDF/Image)"))}
-              </span>
-            </div>
-            {personal.passportDoc && <CheckCircle size={18} className="text-green-600" />}
-            <input type="file" id="passportDoc" accept=".pdf,.jpg,.jpeg,.png" disabled={isSubmitted} onChange={handlePassportFileChange} className="hidden" />
-          </label>
-          <p className="text-xs text-red-600 font-medium">Upload file size: 50–150 KB only.</p>
-        </div>
-
-        <SelectField label="Visa Type" id="visaType" value={personal.visaType} onChange={handleChange} options={VISA_TYPES.map(v => ({ value: v, label: v }))} />
-        <InputField label="Visa Number" id="visaNo" value={personal.visaNo} onChange={handleChange} />
-        <SelectField label="Issuing Country" id="visaCountry" value={personal.visaCountry} onChange={handleChange} options={countryOptions} />
-        <InputField label="Visa Issue Date" id="visaIssueDate" type="text" placeholder="DD-MM-YYYY" value={personal.visaIssueDate} onChange={handleChange} onBlur={handleBlur} error={errors.visaIssueDate} />
-        <InputField label="Visa Expiry Date" id="visaExpiryDate" type="text" placeholder="DD-MM-YYYY" value={personal.visaExpiryDate} onChange={handleChange} onBlur={handleBlur} error={errors.visaExpiryDate} />
-        <SelectField label="Visa Status" id="visaStatus" value={personal.visaStatus} onChange={handleChange} options={[{ value: "active", label: "Active" }, { value: "expired", label: "Expired" }, { value: "pending", label: "Pending" }]} />
-
-        <div className="flex flex-col gap-2">
-          <label className="block text-sm font-medium text-slate-600">Visa / Permit Document</label>
-          <label className={`w-full h-12 flex items-center justify-between px-3 border rounded-lg cursor-pointer transition ${personal.visaDoc ? "border-green-500 bg-green-50" : "border-slate-200 bg-white hover:border-slate-300"}`}>
-            <div className="flex items-center gap-3">
-              <div className={`w-8 h-8 flex items-center justify-center rounded-md ${personal.visaDoc ? "bg-green-100" : "bg-slate-100"}`}>
-                <FileText size={18} className={personal.visaDoc ? "text-green-600" : "text-slate-500"} />
-              </div>
-              <span className={`text-sm max-w-[180px] truncate block ${personal.visaDocError ? "text-red-600" : personal.visaDoc || personal.visaDocName ? "text-green-700 font-medium" : "text-slate-500"}`}>
-                {personal.visaDocError || (personal.visaDoc ? personal.visaDoc.name : (personal.visaDocName || "Upload Visa/Permit (PDF/Image)"))}
-              </span>
-            </div>
-            {personal.visaDoc && <CheckCircle size={18} className="text-green-600" />}
-            <input type="file" id="visaDoc" accept=".pdf,.jpg,.jpeg,.png" disabled={isSubmitted} onChange={handleVisaFileChange} className="hidden" />
-          </label>
-          <p className="text-xs text-red-600 font-medium">Upload file size: 50–150 KB only.</p>
-        </div>
+       <FileInput
+  label="Passport Document"
+  required={false} // Set to true if this is mandatory
+  file={personal.passportDocName || (personal.passportDoc ? personal.passportDoc.name : "")}
+  error={personal.passportDocError}
+  disabled={isSubmitted}
+  onChange={(e) => {
+    const { name, error, file } = e.target;
+    
+    updateSection("personal", {
+      passportDocName: name,
+      passportDocError: error,
+      passportDoc: file // Stores the actual file object if needed
+    });
+  }}
+/>
       </FormSection>
+
+      {/* New Dedicated International Student Section */}
+<FormSection title="International Student Details" icon={Globe}>
+  <div className="md:col-span-2 space-y-6">
+    {/* Row 1: The Question and Visa Type */}
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <SelectField 
+        label="Are you an International Student?" 
+        id="isInternational" 
+        value={personal.isInternational || "no"} 
+        disabled={isSubmitted}
+        options={[
+          { value: "no", label: "No" },
+          { value: "yes", label: "Yes" }
+        ]} 
+        onChange={(e) => {
+          const isInt = e.target.value === "yes";
+          updateSection("personal", { 
+            isInternational: e.target.value,
+            ...( !isInt && {
+              visaType: "", visaNo: "", visaCountry: "", 
+              visaIssueDate: "", visaExpiryDate: "", visaStatus: "",
+              visaDoc: null, visaDocName: "", visaDocError: ""
+            })
+          });
+        }} 
+      />
+
+      {personal.isInternational === "yes" && (
+        <SelectField 
+          label="Visa Type" 
+          id="visaType" 
+          value={personal.visaType} 
+          onChange={handleChange} 
+          disabled={isSubmitted}
+          options={VISA_TYPES.map(v => ({ value: v, label: v }))} 
+          className="animate-in fade-in slide-in-from-left-2 duration-300"
+        />
+      )}
+    </div>
+
+    {/* Conditional Rows for Yes */}
+    {personal.isInternational === "yes" && (
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 animate-in fade-in slide-in-from-top-2 duration-500">
+        
+        {/* Row 2: Visa Number & Issuing Country */}
+        <InputField 
+          label="Visa Number" 
+          id="visaNo" 
+          value={personal.visaNo} 
+          onChange={handleChange} 
+          disabled={isSubmitted}
+        />
+        <SelectField 
+          label="Issuing Country" 
+          id="visaCountry" 
+          value={personal.visaCountry} 
+          onChange={handleChange} 
+          disabled={isSubmitted}
+          options={countryOptions} 
+        />
+
+        {/* Row 3: Dates */}
+        <InputField 
+          label="Visa Issue Date" 
+          id="visaIssueDate" 
+          type="text" 
+          placeholder="DD-MM-YYYY" 
+          value={personal.visaIssueDate} 
+          onChange={handleChange} 
+          onBlur={handleBlur} 
+          error={errors.visaIssueDate} 
+          disabled={isSubmitted}
+        />
+        <InputField 
+          label="Visa Expiry Date" 
+          id="visaExpiryDate" 
+          type="text" 
+          placeholder="DD-MM-YYYY" 
+          value={personal.visaExpiryDate} 
+          onChange={handleChange} 
+          onBlur={handleBlur} 
+          error={errors.visaExpiryDate} 
+          disabled={isSubmitted}
+        />
+
+        {/* Row 4: Status and Document */}
+        <SelectField 
+          label="Visa Status" 
+          id="visaStatus" 
+          value={personal.visaStatus} 
+          onChange={handleChange} 
+          disabled={isSubmitted}
+          options={[
+            { value: "active", label: "Active" }, 
+            { value: "expired", label: "Expired" }, 
+            { value: "pending", label: "Pending" }
+          ]} 
+        />
+        
+        <FileInput
+          label="Visa / Permit Document"
+          file={personal.visaDocName || (personal.visaDoc ? personal.visaDoc.name : "")}
+          error={personal.visaDocError}
+          disabled={isSubmitted}
+          onChange={(e) => {
+            const { name, error, file } = e.target;
+            updateSection("personal", {
+              visaDocName: name,
+              visaDocError: error,
+              visaDoc: file
+            });
+          }}
+        />
+      </div>
+    )}
+  </div>
+</FormSection>
 
       <FormSection title="Language Details" icon={Languages}>
         <SelectField disabled={isSubmitted} label="Mother Tongue" id="motherTongue" value={personal.motherTongue} onChange={handleChange} required options={[{ value: "", label: "Select Mother Tongue" }, { value: "Malayalam", label: "Malayalam" }, { value: "English", label: "English" }]} />

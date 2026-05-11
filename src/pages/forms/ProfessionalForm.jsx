@@ -3,6 +3,7 @@ import { useStore } from "../../store";
 import FormWrapper, {
   FormSection,
   InputField,
+  FileInput,
 } from "../../components/FormWrapper";
 import {
   BookOpen,
@@ -21,79 +22,7 @@ function cn(...inputs) {
 
 /* ================= REUSABLE INPUT ================= */
 
-const FileInput = ({
-  label,
-  file,
-  error,
-  onChange,
-  disabled,
-}) => {
-  const formatFileName = (fileName) => {
-    if (!fileName) return "Upload File";
-    const name = typeof fileName === "string" ? fileName.split('/').pop() : fileName.name;
-    
-    if (name.length > 20) {
-      return name.substring(0, 15) + "..." + name.slice(-5);
-    }
-    return name;
-  };
 
-  return (
-    <div className="flex flex-col gap-2">
-      {label && (
-        <label className="block text-sm font-medium text-slate-600">
-          {label}
-        </label>
-      )}
-
-      <label
-        className={`w-full h-12 flex items-center justify-between px-3 border rounded-lg cursor-pointer transition 
-        ${file ? "border-green-500 bg-green-50" : "border-slate-200 bg-white"}`}
-      >
-        <div className="flex items-center gap-3 w-[85%]">
-          <div
-            className={`flex-shrink-0 w-8 h-8 flex items-center justify-center rounded-md 
-            ${file ? "bg-green-100" : "bg-slate-100"}`}
-          >
-            <FileText
-              size={18}
-              className={file ? "text-green-600" : "text-slate-500"}
-            />
-          </div>
-
-          <span
-            className={`text-sm truncate block
-            ${error
-              ? "text-red-600"
-              : file
-              ? "text-green-700 font-medium"
-              : "text-slate-500"}`}
-          >
-            {error || formatFileName(file)}
-          </span>
-        </div>
-
-        <input
-          type="file"
-          className="hidden"
-          accept=".pdf,.jpg,.png"
-          onChange={onChange}
-          disabled={disabled}
-        />
-        
-        {file && !error && (
-          <div className="text-green-600 flex-shrink-0">
-             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
-          </div>
-        )}
-      </label>
-
-      <p className="text-[10px] text-red-600 font-medium">
-        PDF / JPG / PNG (Max 2MB)
-      </p>
-    </div>
-  );
-};
 
 /* ================= MAIN COMPONENT ================= */
 
@@ -105,11 +34,11 @@ const SUGGESTIONS = {
 
 
 export default function ProfessionalForm() {
-  const isSubmitted = useStore((s) => s.isSubmitted);
+const isSubmitted = useStore((s) => s.isSubmitted);
   const professional = useStore((s) => s.professional) || {};
   const updateSection = useStore((s) => s.updateSection);
-// States for suggestion dropdowns
-  const [openType, setOpenType] = useState(null); // 'technical' or 'software'
+
+  const [openType, setOpenType] = useState(null);
   const [search, setSearch] = useState("");
   const [activeIndex, setActiveIndex] = useState(-1);
   const dropdownRef = useRef(null);
@@ -122,27 +51,21 @@ export default function ProfessionalForm() {
   const addSkill = (category, value) => {
     const val = value.trim();
     const currentSkills = professional.skills?.[category] || [];
-    
     if (val && !currentSkills.includes(val)) {
       updateSection("professional", {
         ...professional,
-        skills: {
-          ...professional.skills,
-          [category]: [...currentSkills, val],
-        },
+        skills: { ...professional.skills, [category]: [...currentSkills, val] },
       });
     }
     setSearch("");
     setOpenType(null);
     setActiveIndex(-1);
-    // Keep focus on the input so you can keep typing immediately
     inputRefs[category].current?.focus();
   };
 
   const handleKeyDown = (e, category, filtered) => {
     if (e.key === "ArrowDown") {
       e.preventDefault();
-      setOpenType(category);
       setActiveIndex(prev => (prev < filtered.length - 1 ? prev + 1 : 0));
     } else if (e.key === "ArrowUp") {
       e.preventDefault();
@@ -159,55 +82,7 @@ export default function ProfessionalForm() {
     }
   };
 
-
-
-  const removeSkill = (category, index) => {
-    updateSection("professional", {
-      ...professional,
-      skills: {
-        ...professional.skills,
-        [category]: professional.skills[category].filter((_, i) => i !== index),
-      },
-    });
-  };
-
-  // Keyboard Navigation
-  useEffect(() => {
-    const handleKeyDown = (e) => {
-      if (!openType) return;
-      
-      const filtered = SUGGESTIONS[openType].filter(s => 
-        s.toLowerCase().includes(search.toLowerCase())
-      );
-
-      switch (e.key) {
-        case "ArrowDown":
-          e.preventDefault();
-          setActiveIndex(prev => (prev < filtered.length - 1 ? prev + 1 : 0));
-          break;
-        case "ArrowUp":
-          e.preventDefault();
-          setActiveIndex(prev => (prev > 0 ? prev - 1 : filtered.length - 1));
-          break;
-        case "Enter":
-          e.preventDefault();
-          if (activeIndex >= 0 && filtered[activeIndex]) {
-            addSkill(openType, filtered[activeIndex]);
-          } else if (search) {
-            addSkill(openType, search);
-          }
-          break;
-        case "Escape":
-          setOpenType(null);
-          break;
-      }
-    };
-
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [openType, search, activeIndex]);
-
-  // Click Outside
+  // Close dropdown on click outside
   useEffect(() => {
     const handleClick = (e) => {
       if (!dropdownRef.current?.contains(e.target)) setOpenType(null);
@@ -216,25 +91,31 @@ export default function ProfessionalForm() {
     return () => document.removeEventListener("mousedown", handleClick);
   }, []);
 
+ const handleArrayFile = (file, index, key) => {
+  // 150KB in bytes
+  const limitBytes = 150 * 1024; 
+  const arr = [...(professional[key] || [])];
+  
+  if (file.size > limitBytes) {
+    arr[index] = { 
+      ...arr[index], 
+      docName: "", 
+      fileError: "File too large (Max 150KB allowed)" 
+    };
+  } else {
+    arr[index] = { 
+      ...arr[index], 
+      docName: file.name, 
+      fileError: "" 
+    };
+  }
+  
+  updateSection("professional", { [key]: arr });
+};
+
   const handleSave = () => {
     console.log("Saved Professional Data Structure:", professional);
   };
-
-
-  // Handler for files within arrays (publications, conferences, etc.)
-  const handleArrayFile = (file, index, key) => {
-    const sizeMB = file.size / (1024 * 1024);
-    const arr = [...(professional[key] || [])];
-    
-    if (sizeMB > 2) {
-      arr[index] = { ...arr[index], docName: "", fileError: "Max 2MB allowed" };
-    } else {
-      arr[index] = { ...arr[index], docName: file.name, fileError: "" };
-    }
-    
-    updateSection("professional", { [key]: arr });
-  };
-
   return (
     <FormWrapper
       title="Professional & Research"
@@ -287,16 +168,27 @@ export default function ProfessionalForm() {
                 }}
               />
 
-              <FileInput
-                label="Upload Publication"
-                file={j.docName}
-                error={j.fileError}
-                disabled={isSubmitted}
-                onChange={(e) => {
-                  const file = e.target.files?.[0];
-                  if (file) handleArrayFile(file, index, "publications");
-                }}
-              />
+            <FileInput
+  label="Upload Publication"
+  file={j.docName}
+  error={j.fileError}
+  disabled={isSubmitted}
+  required={false}
+  onChange={(e) => {
+    const { name, error, file } = e.target;
+    
+    // We update the specific index in the publications array
+    const updatedPubs = [...professional.publications];
+    updatedPubs[index] = {
+      ...updatedPubs[index],
+      docName: name,
+      fileError: error,
+      docFile: file // The actual binary for submission
+    };
+
+    updateSection("professional", { publications: updatedPubs });
+  }}
+/>
             </div>
           ))}
 
@@ -352,17 +244,30 @@ export default function ProfessionalForm() {
                   updateSection("professional", { conferences: arr });
                 }}
               />
+<FileInput
+  label="Upload Presentation Proof"
+  file={c.docName}
+  error={c.fileError}
+  disabled={isSubmitted}
+  required={false}
+  onChange={(e) => {
+    const { name, error, file } = e.target;
+    
+    // Create a copy of the conferences array
+    const updatedConferences = [...professional.conferences];
+    
+    // Update the specific record at this index
+    updatedConferences[index] = {
+      ...updatedConferences[index],
+      docName: name,
+      fileError: error,
+      docFile: file // Binary file object for the actual upload
+    };
 
-              <FileInput
-                label="Upload Presentation Proof"
-                file={c.docName}
-                error={c.fileError}
-                disabled={isSubmitted}
-                onChange={(e) => {
-                  const file = e.target.files?.[0];
-                  if (file) handleArrayFile(file, index, "conferences");
-                }}
-              />
+    // Update the global/section state
+    updateSection("professional", { conferences: updatedConferences });
+  }}
+/>
             </div>
           ))}
 
@@ -434,15 +339,29 @@ export default function ProfessionalForm() {
 
               {/* Upload Document Input */}
               <FileInput
-                label="Experience Certificate"
-                file={exp.docName}
-                error={exp.fileError}
-                disabled={isSubmitted}
-                onChange={(e) => {
-                  const file = e.target.files?.[0];
-                  if (file) handleArrayFile(file, index, "experience");
-                }}
-              />
+  label="Experience Certificate"
+  file={exp.docName}
+  error={exp.fileError}
+  disabled={isSubmitted}
+  required={false}
+  onChange={(e) => {
+    const { name, error, file } = e.target;
+    
+    // Create a copy of the experience array
+    const updatedExperience = [...professional.experience];
+    
+    // Update the specific record at this index
+    updatedExperience[index] = {
+      ...updatedExperience[index],
+      docName: name,
+      fileError: error,
+      docFile: file // The binary file for storage/upload
+    };
+
+    // Update the store
+    updateSection("professional", { experience: updatedExperience });
+  }}
+/>
             </div>
           ))}
 
@@ -465,19 +384,24 @@ export default function ProfessionalForm() {
       {/* ================= PATENT ================= */}
       <FormSection title="Patent Document" icon={BookOpen}>
         <div className="md:col-span-1">
-          <FileInput
-            label="Upload Patent Document"
-            file={professional.patent?.docName}
-            error={professional.patent?.fileError}
-            disabled={isSubmitted}
-            onChange={(e) => {
-              const file = e.target.files?.[0];
-              if (!file) return;
-              updateSection("professional", {
-                patent: { docName: file.name, fileError: "" },
-              });
-            }}
-          />
+         <FileInput
+  label="Upload Patent Document"
+  file={professional.patent?.docName}
+  error={professional.patent?.fileError}
+  disabled={isSubmitted}
+  required={false}
+  onChange={(e) => {
+    const { name, error, file } = e.target;
+    
+    updateSection("professional", {
+      patent: { 
+        docName: name, 
+        fileError: error,
+        docFile: file // Actual binary for submission
+      },
+    });
+  }}
+/>
         </div>
       </FormSection>
 
@@ -485,18 +409,23 @@ export default function ProfessionalForm() {
       <FormSection title="Membership Proof" icon={Users}>
         <div className="md:col-span-1">
           <FileInput
-            label="Upload Membership Proof"
-            file={professional.membership?.docName}
-            error={professional.membership?.fileError}
-            disabled={isSubmitted}
-            onChange={(e) => {
-              const file = e.target.files?.[0];
-              if (!file) return;
-              updateSection("professional", {
-                membership: { docName: file.name, fileError: "" },
-              });
-            }}
-          />
+  label="Upload Membership Proof"
+  file={professional.membership?.docName}
+  error={professional.membership?.fileError}
+  disabled={isSubmitted}
+  required={false}
+  onChange={(e) => {
+    const { name, error, file } = e.target;
+    
+    updateSection("professional", {
+      membership: { 
+        docName: name, 
+        fileError: error,
+        docFile: file // Binary for submission
+      },
+    });
+  }}
+/>
         </div>
       </FormSection>
 
@@ -547,7 +476,7 @@ export default function ProfessionalForm() {
                               onClick={() => addSkill(category, suggestion)}
                               className={cn(
                                 "px-4 py-3 text-sm cursor-pointer transition-colors",
-                                activeIndex === idx ? "bg-primary text-white" : "text-slate-600 hover:bg-slate-50"
+                                activeIndex === idx ? "bg-blue-100 text-black" : "text-slate-600 hover:bg-slate-50"
                               )}
                             >
                               {suggestion}
@@ -559,20 +488,36 @@ export default function ProfessionalForm() {
                   )}
                 </div>
 
-                <div className="flex flex-wrap gap-2">
-                  {(professional.skills?.[category] || []).map((s, i) => (
-                    <span key={i} className={cn(
-                      "px-3 py-1 rounded-full text-sm flex items-center gap-2 border animate-in zoom-in-95",
-                      category === 'technical' ? 'bg-blue-50 text-blue-700 border-blue-100' : 'bg-purple-50 text-purple-700 border-purple-100'
-                    )}>
-                      {s}
-                      <X size={14} className="cursor-pointer hover:opacity-70" onClick={() => {
-                        const updated = professional.skills[category].filter((_, index) => index !== i);
-                        updateSection("professional", { ...professional, skills: { ...professional.skills, [category]: updated } });
-                      }} />
-                    </span>
-                  ))}
-                </div>
+                {/* Tags Section */}
+<div className="flex flex-wrap gap-2 mt-3">
+  {(professional.skills?.[category] || []).map((s, i) => (
+    <button
+      key={i}
+      type="button"
+      onClick={() => {
+        const updated = professional.skills[category].filter((_, index) => index !== i);
+        updateSection("professional", { 
+          ...professional, 
+          skills: { ...professional.skills, [category]: updated } 
+        });
+      }}
+      className={cn(
+        "group flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium border transition-all animate-in zoom-in-95",
+        "hover:border-red-200 hover:bg-red-50 hover:text-red-700 hover:shadow-sm", // Remove style
+        category === 'technical' 
+          ? 'bg-blue-50 text-blue-700 border-blue-100' 
+          : 'bg-purple-50 text-purple-700 border-purple-100'
+      )}
+      title="Click to remove"
+    >
+      {s}
+      <X 
+        size={14} 
+        className="text-slate-400 group-hover:text-red-500 transition-colors" 
+      />
+    </button>
+  ))}
+</div>
               </div>
             );
           })}

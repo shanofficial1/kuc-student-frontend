@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useStore } from '../../store';
-import FormWrapper, { FormSection, InputField, SelectField } from '../../components/FormWrapper';
+import FormWrapper, { FormSection, InputField, SelectField ,FileInput} from '../../components/FormWrapper';
 import { School, Trophy, Trash2, Plus, FileText, CheckCircle, X, Trash } from 'lucide-react';
 
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
@@ -108,23 +108,28 @@ export default function EducationForm() {
                   <SelectField label="Month" value={record.passMonth || ''} options={MONTHS.map(m => ({ value: m, label: m }))} onChange={(e) => updateRecord(index, 'passMonth', e.target.value)} disabled={isSubmitted} />
                   <SelectField label="Year" value={record.passYear || ''} options={YEARS.map(y => ({ value: y, label: y }))} onChange={(e) => updateRecord(index, 'passYear', e.target.value)} disabled={isSubmitted} />
                 </div>
+<FileInput
+  label="Upload Document"
+  required={false}
+  file={record.docName}
+  error={record.fileError}
+  disabled={isSubmitted}
+  className="md:col-span-2" // This ensures it takes full width in your grid
+  onChange={(e) => {
+    const { name, error, file } = e.target;
+    
+    // Using the index from your map loop to update the specific record
+    const updatedRecords = [...academic.records];
+    updatedRecords[index] = {
+      ...updatedRecords[index],
+      docName: name,
+      fileError: error,
+      docFile: file // Actual file object
+    };
 
-                <div className="flex flex-col gap-2 md:col-span-2">
-                  <label className="block text-sm font-medium text-slate-600">Upload Document</label>
-                  <label className={`w-full h-12 flex items-center justify-between px-3 border rounded-lg cursor-pointer transition ${record.docName ? "border-green-500 bg-green-50" : "border-slate-200 bg-white"}`}>
-                    <div className="flex items-center gap-3">
-                      <div className={`w-8 h-8 flex items-center justify-center rounded-md ${record.docName ? "bg-green-100" : "bg-slate-100"}`}>
-                        <FileText size={18} className={record.docName ? "text-green-600" : "text-slate-500"} />
-                      </div>
-                      <span className={`text-sm truncate block ${record.fileError ? "text-red-600" : record.docName ? "text-green-700 font-medium" : "text-slate-500"}`}>
-                        {record.fileError || record.docName || "Upload PDF / Image"}
-                      </span>
-                    </div>
-                    {record.docName && <CheckCircle size={18} className="text-green-600" />}
-                    <input type="file" className="hidden" accept=".pdf,.jpg,.png" onChange={(e) => handleFileUpload(e, index, 'academic')} disabled={isSubmitted} />
-                  </label>
-                  <p className="text-[10px] text-red-600 font-medium">50–150 KB only.</p>
-                </div>
+    updateSection("academic", { records: updatedRecords });
+  }}
+/>
               </div>
             </div>
           ))}
@@ -152,21 +157,28 @@ export default function EducationForm() {
                 <InputField label="Score" value={exam.score || ''} onChange={(e) => updateExam(index, 'score', e.target.value)} disabled={isSubmitted} />
                 <SelectField label="Year" value={exam.year || ''} options={YEARS.map(y => ({ value: y, label: y }))} onChange={(e) => updateExam(index, 'year', e.target.value)} disabled={isSubmitted} />
                 
-                <div className="md:col-span-3 flex flex-col gap-2">
-                   <label className="block text-sm font-medium text-slate-600">Upload Scorecard</label>
-                   <label className={`w-full h-12 flex items-center justify-between px-3 border rounded-lg cursor-pointer transition ${exam.docName ? "border-green-500 bg-green-50" : "border-slate-200 bg-white"}`}>
-                    <div className="flex items-center gap-3">
-                      <div className={`w-8 h-8 flex items-center justify-center rounded-md ${exam.docName ? "bg-green-100" : "bg-slate-100"}`}>
-                        <FileText size={18} className={exam.docName ? "text-green-600" : "text-slate-500"} />
-                      </div>
-                      <span className={`text-sm truncate block ${exam.fileError ? "text-red-600" : exam.docName ? "text-green-700 font-medium" : "text-slate-500"}`}>
-                        {exam.fileError || exam.docName || "Upload File"}
-                      </span>
-                    </div>
-                    {exam.docName && <CheckCircle size={18} className="text-green-600" />}
-                    <input type="file" className="hidden" onChange={(e) => handleFileUpload(e, index, 'competitive')} disabled={isSubmitted} />
-                  </label>
-                </div>
+          <FileInput
+  label="Upload Scorecard"
+  className="md:col-span-3"
+  file={exam.docName}
+  error={exam.fileError}
+  disabled={isSubmitted}
+  required={false}
+  onChange={(e) => {
+    const { name, error, file } = e.target;
+    
+    // Update logic for the 'competitive' exams array
+    const updatedExams = [...education.competitive];
+    updatedExams[index] = {
+      ...updatedExams[index],
+      docName: name,
+      fileError: error,
+      docFile: file // Binary file object for submission
+    };
+
+    updateSection("education", { competitive: updatedExams });
+  }}
+/>
               </div>
             </div>
           ))}
@@ -177,47 +189,23 @@ export default function EducationForm() {
       </FormSection>
 
       <FormSection title="Migration & Transfer Details" icon={FileText}>
-        <div className="md:col-span-3 flex flex-col gap-2">
-          <label className="block text-sm font-medium text-slate-600">
-            Upload Migration Certificate
-          </label>
-          <label
-            className={`w-full h-12 flex items-center justify-between px-3 border rounded-lg cursor-pointer transition 
-            ${migrationDocName ? "border-green-500 bg-green-50" : "border-slate-200 bg-white"}`}
-          >
-            <div className="flex items-center gap-3">
-              <div
-                className={`w-8 h-8 flex items-center justify-center rounded-md 
-                ${migrationDocName ? "bg-green-100" : "bg-slate-100"}`}
-              >
-                <FileText
-                  size={18}
-                  className={migrationDocName ? "text-green-600" : "text-slate-500"}
-                />
-              </div>
-              <span
-                className={`text-sm truncate block 
-                ${migrationError
-                  ? "text-red-600"
-                  : migrationDocName
-                  ? "text-green-700 font-medium"
-                  : "text-slate-500"}`}
-              >
-                {migrationError || migrationDocName || "Upload Migration Certificate"}
-              </span>
-            </div>
-            <input
-              type="file"
-              className="hidden"
-              accept=".pdf,.jpg,.png"
-              onChange={handleMigrationUpload}
-              disabled={isSubmitted}
-            />
-          </label>
-          <p className="text-[10px] text-red-600 font-medium">
-            50–150 KB only.
-          </p>
-        </div>
+  <FileInput
+  label="Upload Migration Certificate"
+  className="md:col-span-3"
+  required={false}
+  file={education.migrationDocName}
+  error={education.migrationError}
+  disabled={isSubmitted}
+  onChange={(e) => {
+    const { name, error, file } = e.target;
+    
+    updateSection("education", {
+      migrationDocName: name,
+      migrationError: error,
+      migrationFile: file // Actual binary for submission
+    });
+  }}
+/>
       </FormSection>
     </FormWrapper>
   );
