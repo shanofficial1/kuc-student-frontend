@@ -166,16 +166,18 @@ export default function CECardPage() {
         </table>
       </div>
 
-      {/* OFFICIAL EXPORT PREVIEW */}
-      <section className="mt-12">
+      {/* OFFICIAL EXPORT PREVIEW - SCALED TO FIT WIDTH */}
+      <section className="mt-12 overflow-hidden">
         <h2 className="text-xl font-bold text-slate-800 mb-6 flex items-center gap-2">
           <Search className="w-5 h-5 text-[#003e7a]" /> Preview Official Export
         </h2>
-        <div className="bg-slate-100 p-4 md:p-8 rounded-xl flex justify-center overflow-auto">
+        
+        {/* This wrapper handles the "One Stretch" look on mobile */}
+        <div className="bg-slate-100 p-2 md:p-8 rounded-xl flex justify-center items-start overflow-hidden">
           <div
             ref={pdfRef}
             data-pdf-content="true"
-            className="bg-white w-[794px] min-h-[1123px] p-10 md:p-16 relative flex flex-col shadow-lg shrink-0"
+            className="bg-white w-[794px] min-h-[1123px] p-8 md:p-16 relative flex flex-col shadow-lg origin-top scale-[0.45] sm:scale-[0.7] md:scale-100 my-[-250px] sm:my-[-100px] md:my-0"
             style={{ color: '#1e293b', backgroundColor: '#ffffff' }}
           >
             {/* Watermark */}
@@ -184,40 +186,40 @@ export default function CECardPage() {
             </div>
 
             {/* University Header */}
-            <div className="text-center border-b-2 border-slate-900 pb-8 mb-10">
-              <Landmark size={60} color="#003e7a" className="mx-auto mb-4" />
-              <h3 className="text-2xl font-black uppercase" style={{ color: '#003e7a' }}>Kannur University</h3>
-              <p className="text-[10px] font-bold text-slate-500 uppercase mt-1">Established by the Act 22 of 1996</p>
-              <div className="mt-6 bg-slate-900 text-white py-1 px-6 inline-block rounded text-[10px] font-bold uppercase tracking-widest">
+            <div className="text-center border-b-2 border-slate-900 pb-6 mb-8">
+              <Landmark size={50} color="#003e7a" className="mx-auto mb-3" />
+              <h3 className="text-xl font-black uppercase" style={{ color: '#003e7a' }}>Kannur University</h3>
+              <p className="text-[9px] font-bold text-slate-500 uppercase">Established by the Act 22 of 1996</p>
+              <div className="mt-4 bg-slate-900 text-white py-1 px-4 inline-block rounded text-[9px] font-bold uppercase tracking-tighter">
                 Official CE Card - {String(selectedSem).toUpperCase()}
               </div>
             </div>
 
-            {/* Metadata */}
-            <div className="grid grid-cols-2 gap-y-4 mb-10 text-[12px]">
-              <p><span className="font-bold text-slate-400 mr-2 uppercase">Student:</span> Arjun K. Varma</p>
-              <p className="text-right"><span className="font-bold text-slate-400 mr-2 uppercase">Reg No:</span> KU21SIT042</p>
-              <p><span className="font-bold text-slate-400 mr-2 uppercase">Date:</span> {new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }).toUpperCase()}</p>
-              <p className="text-right"><span className="font-bold text-slate-400 mr-2 uppercase">Status:</span> PUBLISHED</p>
+            {/* Metadata Grid */}
+            <div className="grid grid-cols-2 gap-y-2 mb-8 text-[11px]">
+              <p><span className="text-slate-400 font-bold uppercase mr-1">Student:</span> Arjun K. Varma</p>
+              <p className="text-right"><span className="text-slate-400 font-bold uppercase mr-1">Reg No:</span> KU21SIT042</p>
+              <p><span className="text-slate-400 font-bold uppercase mr-1">Date:</span> 24 MAY 2026</p>
+              <p className="text-right"><span className="text-slate-400 font-bold uppercase mr-1">Status:</span> PUBLISHED</p>
             </div>
 
-            {/* Formal Table for PDF */}
-            <table className="w-full border-2 border-slate-900 text-[10px] mb-10">
+            {/* Formal Compact Table */}
+            <table className="w-full border-[1.5px] border-slate-900 text-[10px] mb-8 table-fixed">
               <thead>
-                <tr className="bg-slate-50 border-b-2 border-slate-900 font-bold text-center uppercase">
-                  <td className="border-r border-slate-900 p-2 text-left" rowSpan="2">Course Title</td>
-                  <td className="border-r border-slate-900 p-2" colSpan="2">Internal (CE)</td>
-                  <td className="border-r border-slate-900 p-2" colSpan="2">External (TE)</td>
-                  <td className="border-r border-slate-900 p-2" colSpan="2">Total Marks</td>
-                  <td className="p-2" rowSpan="2">Result</td>
+                <tr className="bg-slate-50 border-b-[1.5px] border-slate-900 font-bold text-center">
+                  <td className="border-r border-slate-900 p-2 text-left w-[35%]" rowSpan="2">COURSE</td>
+                  <td className="border-r border-slate-900 p-1 w-[20%]" colSpan="2">INTERNAL</td>
+                  <td className="border-r border-slate-900 p-1 w-[20%]" colSpan="2">EXTERNAL</td>
+                  <td className="border-r border-slate-900 p-1 w-[15%]" colSpan="2">TOTAL</td>
+                  <td className="p-1 w-[10%]" rowSpan="2">RES</td>
                 </tr>
-                <tr className="bg-slate-50 border-b-2 border-slate-900 font-bold text-[8px] text-center">
-                  <td className="border-r border-slate-900 p-1">Scored</td>
-                  <td className="border-r border-slate-900 p-1">Max</td>
-                  <td className="border-r border-slate-900 p-1">Scored</td>
-                  <td className="border-r border-slate-900 p-1">Max</td>
-                  <td className="border-r border-slate-900 p-1">Scored</td>
-                  <td className="border-r border-slate-900 p-1">Max</td>
+                <tr className="bg-slate-50 border-b-[1.5px] border-slate-900 font-bold text-[7px]">
+                  <td className="border-r border-slate-900 p-1 text-center">SC</td>
+                  <td className="border-r border-slate-900 p-1 text-center">MX</td>
+                  <td className="border-r border-slate-900 p-1 text-center">SC</td>
+                  <td className="border-r border-slate-900 p-1 text-center">MX</td>
+                  <td className="border-r border-slate-900 p-1 text-center">SC</td>
+                  <td className="border-r border-slate-900 p-1 text-center">MX</td>
                 </tr>
               </thead>
               <tbody>
@@ -226,19 +228,18 @@ export default function CECardPage() {
                   const eMax = g.externalMax || 80;
                   const tMax = iMax + eMax;
                   const tScored = Number(g.CE) + Number(g.TE);
-
                   return (
                     <tr key={i} className="border-b border-slate-300 text-center uppercase">
-                      <td className="border-r border-slate-900 p-2 text-left">
-                        <span className="font-bold">{g.code}</span> - {g.title}
+                      <td className="border-r border-slate-900 p-2 text-left truncate font-bold text-[9px]">
+                        {g.code}
                       </td>
-                      <td className="border-r border-slate-900 p-2 font-bold">{g.CE}</td>
-                      <td className="border-r border-slate-900 p-2 text-slate-500">{iMax}</td>
-                      <td className="border-r border-slate-900 p-2 font-bold">{g.TE}</td>
-                      <td className="border-r border-slate-900 p-2 text-slate-500">{eMax}</td>
-                      <td className="border-r border-slate-900 p-2 font-black">{tScored}</td>
-                      <td className="border-r border-slate-900 p-2 text-slate-500">{tMax}</td>
-                      <td className="p-2 font-bold">{g.result}</td>
+                      <td className="border-r border-slate-900 p-1">{g.CE}</td>
+                      <td className="border-r border-slate-900 p-1 text-slate-400">{iMax}</td>
+                      <td className="border-r border-slate-900 p-1">{g.TE}</td>
+                      <td className="border-r border-slate-900 p-1 text-slate-400">{eMax}</td>
+                      <td className="border-r border-slate-900 p-1 font-black">{tScored}</td>
+                      <td className="border-r border-slate-900 p-1 text-slate-400">{tMax}</td>
+                      <td className="p-1 font-black">{g.result?.charAt(0)}</td>
                     </tr>
                   );
                 })}
@@ -246,16 +247,14 @@ export default function CECardPage() {
             </table>
 
             {/* Signature Area */}
-            <div className="mt-auto flex justify-between items-end border-t border-slate-100 pt-10">
-              <div className="text-[10px] space-y-1 font-medium text-slate-500">
-                <p className="font-bold text-slate-900">SGPA: 8.65</p>
-                <p className="font-bold text-slate-900">CGPA: 8.42</p>
-                <p className="mt-4 italic">Digitally generated document. No signature required.</p>
+            <div className="mt-auto flex justify-between items-end border-t border-slate-200 pt-6">
+              <div className="text-[9px] space-y-1">
+                <p className="font-black">SGPA: 8.65 | CGPA: 8.42</p>
+                <p className="text-slate-400 italic">Digitally generated. Verify at university portal.</p>
               </div>
-              <div className="text-center w-48">
-                <PenTool size={32} color="#cbd5e1" className="mx-auto mb-2" />
-                <div className="border-t border-slate-900 pt-2 text-[10px] font-bold uppercase">
-                  Controller of Examinations
+              <div className="text-center w-32">
+                <div className="border-t border-slate-900 pt-1 text-[8px] font-black uppercase">
+                  Controller of Exams
                 </div>
               </div>
             </div>
