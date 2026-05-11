@@ -5,20 +5,39 @@ import FormWrapper, {
   InputField,
   SelectField,
 } from "../../components/FormWrapper";
-import { Home, Bus, Utensils, Bike, FileBadge } from "lucide-react";
+import { Home, Bus, Utensils, Bike } from "lucide-react";
 
 export default function ResidentialForm() {
   const isSubmitted = useStore((s) => s.isSubmitted);
-  const residential = useStore((state) => state.residential);
+  // Using the key "residential_details" to match your structure
+  const residential = useStore((state) => state.residential_details) || {};
   const updateSection = useStore((state) => state.updateSection);
 
   const handleSave = () => {
     console.log("Saved Residential Data:", residential);
   };
 
-  const handleChange = (e) => {
-    const { id, value } = e.target;
-    updateSection("residential", { [id]: value });
+  /**
+   * Helper to handle nested state updates
+   * @param {string} parent - 'hostel' or 'transport'
+   * @param {string} id - the field key
+   * @param {any} value - the new value
+   */
+  const handleNestedChange = (parent, id, value) => {
+    updateSection("residential_details", {
+      ...residential,
+      [parent]: {
+        ...(residential[parent] || {}),
+        [id]: value,
+      },
+    });
+  };
+
+  const handleTopLevelChange = (id, value) => {
+    updateSection("residential_details", {
+      ...residential,
+      [id]: value,
+    });
   };
 
   return (
@@ -32,109 +51,45 @@ export default function ResidentialForm() {
         <SelectField
           disabled={isSubmitted}
           label="Residential Type"
-          id="type"
-          value={residential.type}
-          onChange={handleChange}
+          id="resType"
+          value={residential.resType || ""}
+          onChange={(e) => handleTopLevelChange("resType", e.target.value)}
           options={[
             { value: "Day Scholar", label: "Day Scholar" },
             { value: "Hosteller", label: "Hosteller" },
           ]}
         />
 
-        {/* ✅ HOSTELLER FIELDS */}
-        {residential.type === "Hosteller" && (
-          <InputField
-            label="Room Number"
-            id="roomNo"
-            value={residential.roomNo || ""}
-            onChange={handleChange}
-            disabled={isSubmitted}
-          />
-        )}
-
-        {/* Row 2 */}
-        {residential.type === "Hosteller" && (
+        {/* HOSTELLER FIELDS */}
+        {residential.resType === "Hosteller" && (
           <>
             <InputField
-              label="Hostel Block"
-              id="hostelBlock"
-              value={residential.hostelBlock || ""}
-              onChange={handleChange}
+              label="Room Number"
+              id="roomNo"
+              value={residential.hostel?.roomNo || ""}
+              onChange={(e) => handleNestedChange("hostel", "roomNo", e.target.value)}
               disabled={isSubmitted}
             />
-
+            <InputField
+              label="Hostel Block"
+              id="block"
+              value={residential.hostel?.block || ""}
+              onChange={(e) => handleNestedChange("hostel", "block", e.target.value)}
+              disabled={isSubmitted}
+            />
             <SelectField
               disabled={isSubmitted}
               label="Bed Type"
               id="bedType"
-              value={residential.bedType || ""}
-              onChange={handleChange}
+              value={residential.hostel?.bedType || ""}
+              onChange={(e) => handleNestedChange("hostel", "bedType", e.target.value)}
               options={[
                 { value: "", label: "Select Bed Type" },
-                { value: "single", label: "Single" },
-                { value: "double", label: "Double Sharing" },
-                { value: "triple", label: "Triple Sharing" },
+                { value: "Single", label: "Single" },
+                { value: "Double Sharing", label: "Double Sharing" },
+                { value: "Triple Sharing", label: "Triple Sharing" },
               ]}
             />
-
-            {/* Row 3 (half width) */}
-            <div className="col-span-1">
-              <label className="block text-sm font-medium text-slate-600 mb-1">
-                Upload Cost Declaration Form
-              </label>
-
-              <label
-                className={`w-full h-12 flex items-center gap-3 px-3 border rounded-lg cursor-pointer transition
-                ${residential.costDoc?.docName
-                  ? "border-green-500 bg-green-50"
-                  : "border-slate-200 bg-white"}`}
-              >
-                <div
-                  className={`w-8 h-8 flex items-center justify-center rounded-md
-                  ${residential.costDoc?.docName
-                    ? "bg-green-100"
-                    : "bg-slate-100"}`}
-                >
-                  <FileBadge
-                    size={18}
-                    className={
-                      residential.costDoc?.docName
-                        ? "text-green-600"
-                        : "text-slate-500"
-                    }
-                  />
-                </div>
-
-                <span
-                  className={`text-sm truncate
-                  ${residential.costDoc?.fileError
-                    ? "text-red-600"
-                    : residential.costDoc?.docName
-                    ? "text-green-700 font-medium"
-                    : "text-slate-500"}`}
-                >
-                  {residential.costDoc?.fileError ||
-                    residential.costDoc?.docName ||
-                    "Upload Document"}
-                </span>
-
-                <input
-                  type="file"
-                  className="hidden"
-                  onChange={(e) => {
-                    const file = e.target.files?.[0];
-                    if (!file) return;
-
-                    updateSection("residential", {
-                      costDoc: {
-                        docName: file.name,
-                        fileError: "",
-                      },
-                    });
-                  }}
-                />
-              </label>
-            </div>
           </>
         )}
       </FormSection>
@@ -144,9 +99,9 @@ export default function ResidentialForm() {
         <SelectField
           disabled={isSubmitted}
           label="Mess Preference"
-          id="messPreference"
-          value={residential.messPreference}
-          onChange={handleChange}
+          id="mess"
+          value={residential.mess || ""}
+          onChange={(e) => handleTopLevelChange("mess", e.target.value)}
           options={[
             { value: "Veg", label: "Veg" },
             { value: "Non-Veg", label: "Non-Veg" },
@@ -159,42 +114,29 @@ export default function ResidentialForm() {
         <SelectField
           disabled={isSubmitted}
           label="Opt for University Bus"
-          id="transportOpted"
-          value={residential.transportOpted}
-          onChange={handleChange}
+          id="opted"
+          value={residential.transport?.opted ? "Yes" : "No"}
+          onChange={(e) => handleNestedChange("transport", "opted", e.target.value === "Yes")}
           options={[
             { value: "No", label: "No" },
             { value: "Yes", label: "Yes" },
           ]}
         />
 
-        {/* ✅ SHOW ONLY IF YES */}
-        {residential.transportOpted === "Yes" && (
-          <InputField
-            label="Bus Route ID"
-            id="busRouteId"
-            value={residential.busRouteId || ""}
-            onChange={handleChange}
-            disabled={isSubmitted}
-          />
-        )}
-
-        {/* Row 2 */}
-        {residential.transportOpted === "Yes" && (
+        {residential.transport?.opted && (
           <>
             <InputField
-              label="Pickup Point"
-              id="pickupPoint"
-              value={residential.pickupPoint || ""}
-              onChange={handleChange}
+              label="Bus Route Number"
+              id="routeNumber"
+              value={residential.transport?.routeNumber || ""}
+              onChange={(e) => handleNestedChange("transport", "routeNumber", e.target.value)}
               disabled={isSubmitted}
             />
-
             <InputField
-              label="Bus Pass Number"
-              id="busPassNumber"
-              value={residential.busPassNumber || ""}
-              onChange={handleChange}
+              label="Boarding Point"
+              id="boardingPoint"
+              value={residential.transport?.boardingPoint || ""}
+              onChange={(e) => handleNestedChange("transport", "boardingPoint", e.target.value)}
               disabled={isSubmitted}
             />
           </>
@@ -207,8 +149,8 @@ export default function ResidentialForm() {
           label="Vehicle Registration Number"
           id="vehicleReg"
           placeholder="e.g. KL-13-A-1234"
-          value={residential.vehicleReg}
-          onChange={handleChange}
+          value={residential.vehicleReg || ""}
+          onChange={(e) => handleTopLevelChange("vehicleReg", e.target.value)}
           disabled={isSubmitted}
         />
       </FormSection>
