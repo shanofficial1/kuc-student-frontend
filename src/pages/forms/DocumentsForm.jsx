@@ -5,6 +5,8 @@ import { useStore } from "../../store";
 
 /* ================= REUSABLE INPUT ================= */
 
+/* ================= REUSABLE INPUT ================= */
+
 const FileInput = ({
   label,
   file,
@@ -12,6 +14,18 @@ const FileInput = ({
   onChange,
   disabled,
 }) => {
+  // Helper function to truncate filename: "verylongfilename.pdf" -> "verylo...pdf"
+  const formatFileName = (fileName) => {
+    if (!fileName) return "Upload File";
+    const name = typeof fileName === "string" ? fileName.split('/').pop() : fileName.name;
+    
+    // If name is longer than 20 chars, truncate it
+    if (name.length > 20) {
+      return name.substring(0, 15) + "..." + name.slice(-5);
+    }
+    return name;
+  };
+
   return (
     <div className="flex flex-col gap-2">
       <label className="block text-sm font-medium text-slate-600">
@@ -22,9 +36,9 @@ const FileInput = ({
         className={`w-full h-12 flex items-center justify-between px-3 border rounded-lg cursor-pointer transition 
         ${file ? "border-green-500 bg-green-50" : "border-slate-200 bg-white"}`}
       >
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 w-[85%]"> {/* Constrain width here */}
           <div
-            className={`w-8 h-8 flex items-center justify-center rounded-md 
+            className={`flex-shrink-0 w-8 h-8 flex items-center justify-center rounded-md 
             ${file ? "bg-green-100" : "bg-slate-100"}`}
           >
             <FileText
@@ -34,14 +48,14 @@ const FileInput = ({
           </div>
 
           <span
-            className={`text-sm truncate 
+            className={`text-sm truncate block
             ${error
               ? "text-red-600"
               : file
               ? "text-green-700 font-medium"
               : "text-slate-500"}`}
           >
-            {error || (typeof file === "string" ? file.split('/').pop() : file?.name) || "Upload File"}
+            {error || formatFileName(file)}
           </span>
         </div>
 
@@ -52,6 +66,13 @@ const FileInput = ({
           onChange={onChange}
           disabled={disabled}
         />
+        
+        {/* Visual Checkmark for uploaded files */}
+        {file && !error && (
+          <div className="text-green-600 flex-shrink-0">
+             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+          </div>
+        )}
       </label>
 
       <p className="text-[10px] text-red-600 font-medium">
@@ -200,6 +221,7 @@ export default function DocumentsForm() {
               if (file) handleFile("nonCreamyLayerCertificate", file, true);
             }}
           />
+
         </div>
       </FormSection>
     </FormWrapper>
