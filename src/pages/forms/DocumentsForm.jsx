@@ -1,6 +1,6 @@
 import React from "react";
 import FormWrapper, { FormSection } from "../../components/FormWrapper";
-import { FileText, Image as ImageIcon, PenTool } from "lucide-react";
+import { FileText, Image as ImageIcon, PenTool, ShieldCheck } from "lucide-react";
 import { useStore } from "../../store";
 
 /* ================= REUSABLE INPUT ================= */
@@ -41,7 +41,7 @@ const FileInput = ({
               ? "text-green-700 font-medium"
               : "text-slate-500"}`}
           >
-            {error || file || "Upload File"}
+            {error || (typeof file === "string" ? file.split('/').pop() : file?.name) || "Upload File"}
           </span>
         </div>
 
@@ -68,23 +68,32 @@ export default function DocumentsForm() {
   const documents = useStore((s) => s.documents) || {};
   const updateSection = useStore((s) => s.updateSection);
 
-  const handleFile = (key, file) => {
+  // Updated handler to support nested objects for legalCertificates
+  const handleFile = (key, file, isLegal = false) => {
     const sizeMB = file.size / (1024 * 1024);
+    const fileData = sizeMB > 2 
+      ? { file: "", error: "Max 2MB allowed" } 
+      : { file: file.name, error: "" };
 
-    if (sizeMB > 2) {
+    if (isLegal) {
+      // Structure for legalCertificates object
       updateSection("documents", {
-        [key]: { file: "", error: "Max 2MB allowed" },
+        ...documents,
+        legalCertificates: {
+          ...documents.legalCertificates,
+          [key]: fileData
+        }
       });
-      return;
+    } else {
+      // Standard structure for top-level keys
+      updateSection("documents", {
+        [key]: fileData,
+      });
     }
-
-    updateSection("documents", {
-      [key]: { file: file.name, error: "" },
-    });
   };
 
   const handleSave = () => {
-    console.log("Saved Documents Data:", documents);
+    console.log("Saved Documents Data Structure:", documents);
   };
 
   return (
@@ -93,8 +102,8 @@ export default function DocumentsForm() {
       description="Upload all required documents in PDF, JPG, or PNG format."
       onSave={handleSave}
     >
-      {/* ================= PROFILE PHOTO ================= */}
-      <FormSection title="Profile Photo" icon={ImageIcon}>
+      {/* ================= PROFILE & SIGNATURE ================= */}
+      <FormSection title="Personal Media" icon={ImageIcon}>
         <div className="md:col-span-2 grid md:grid-cols-2 gap-4">
           <FileInput
             label="Profile Photo"
@@ -106,14 +115,8 @@ export default function DocumentsForm() {
               if (file) handleFile("profilePhoto", file);
             }}
           />
-        </div>
-      </FormSection>
-
-      {/* ================= DIGITAL SIGNATURE ================= */}
-      <FormSection title="Digital Signature" icon={PenTool}>
-        <div className="md:col-span-2 grid md:grid-cols-2 gap-4">
           <FileInput
-            label="Upload Digital Signature"
+            label="Digital Signature"
             file={documents.signature?.file}
             error={documents.signature?.error}
             disabled={isSubmitted}
@@ -125,11 +128,21 @@ export default function DocumentsForm() {
         </div>
       </FormSection>
 
-      {/* ================= DOCUMENTS ================= */}
-      <FormSection title="Academic & Identity Documents" icon={FileText}>
+      {/* ================= IDENTITY & ACADEMIC ================= */}
+      <FormSection title="Academic & Identity" icon={FileText}>
         <div className="md:col-span-2 grid md:grid-cols-2 gap-4">
           <FileInput
-            label="Scanned Academic Transcripts (PDF)"
+            label="Identity Proof (Passport / Voter ID)"
+            file={documents.identityProof?.file}
+            error={documents.identityProof?.error}
+            disabled={isSubmitted}
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              if (file) handleFile("identityProof", file);
+            }}
+          />
+          <FileInput
+            label="Academic Transcripts"
             file={documents.transcripts?.file}
             error={documents.transcripts?.error}
             disabled={isSubmitted}
@@ -138,30 +151,57 @@ export default function DocumentsForm() {
               if (file) handleFile("transcripts", file);
             }}
           />
+        </div>
+      </FormSection>
 
+      {/* ================= LEGAL CERTIFICATES (SEPARATED) ================= */}
+      <FormSection title="Legal Certificates" icon={ShieldCheck}>
+        <div className="md:col-span-2 grid md:grid-cols-2 gap-4">
           <FileInput
-            label="Identity Proof (Aadhaar / Passport / Voter ID)"
-            file={documents.identity?.file}
-            error={documents.identity?.error}
+            label="Caste Certificate"
+            file={documents.legalCertificates?.casteCertificate?.file}
+            error={documents.legalCertificates?.casteCertificate?.error}
             disabled={isSubmitted}
             onChange={(e) => {
               const file = e.target.files?.[0];
-              if (file) handleFile("identity", file);
+              if (file) handleFile("casteCertificate", file, true);
             }}
           />
 
           <FileInput
-            label="Caste / Income / Domicile Certificates"
-            file={documents.certificates?.file}
-            error={documents.certificates?.error}
+            label="Income Certificate"
+            file={documents.legalCertificates?.incomeCertificate?.file}
+            error={documents.legalCertificates?.incomeCertificate?.error}
             disabled={isSubmitted}
             onChange={(e) => {
               const file = e.target.files?.[0];
-              if (file) handleFile("certificates", file);
+              if (file) handleFile("incomeCertificate", file, true);
+            }}
+          />
+
+          <FileInput
+            label="Domicile (Nativity) Certificate"
+            file={documents.legalCertificates?.nativityCertificate?.file}
+            error={documents.legalCertificates?.nativityCertificate?.error}
+            disabled={isSubmitted}
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              if (file) handleFile("nativityCertificate", file, true);
+            }}
+          />
+
+          <FileInput
+            label="Non-Creamy Layer Certificate"
+            file={documents.legalCertificates?.nonCreamyLayerCertificate?.file}
+            error={documents.legalCertificates?.nonCreamyLayerCertificate?.error}
+            disabled={isSubmitted}
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              if (file) handleFile("nonCreamyLayerCertificate", file, true);
             }}
           />
         </div>
       </FormSection>
     </FormWrapper>
   );
-}
+} 
