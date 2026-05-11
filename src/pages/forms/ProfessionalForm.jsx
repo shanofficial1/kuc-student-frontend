@@ -114,6 +114,11 @@ export default function ProfessionalForm() {
   const [activeIndex, setActiveIndex] = useState(-1);
   const dropdownRef = useRef(null);
 
+  const inputRefs = {
+    technical: useRef(null),
+    software: useRef(null)
+  };
+
   const addSkill = (category, value) => {
     const val = value.trim();
     const currentSkills = professional.skills?.[category] || [];
@@ -130,7 +135,31 @@ export default function ProfessionalForm() {
     setSearch("");
     setOpenType(null);
     setActiveIndex(-1);
+    // Keep focus on the input so you can keep typing immediately
+    inputRefs[category].current?.focus();
   };
+
+  const handleKeyDown = (e, category, filtered) => {
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      setOpenType(category);
+      setActiveIndex(prev => (prev < filtered.length - 1 ? prev + 1 : 0));
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      setActiveIndex(prev => (prev > 0 ? prev - 1 : filtered.length - 1));
+    } else if (e.key === "Enter") {
+      e.preventDefault();
+      if (activeIndex >= 0 && filtered[activeIndex]) {
+        addSkill(category, filtered[activeIndex]);
+      } else if (search) {
+        addSkill(category, search);
+      }
+    } else if (e.key === "Escape") {
+      setOpenType(null);
+    }
+  };
+
+
 
   const removeSkill = (category, index) => {
     updateSection("professional", {
@@ -472,9 +501,8 @@ export default function ProfessionalForm() {
       </FormSection>
 
  {/* ================= SKILLS ================= */}
-    <FormSection title="Skills & Software" icon={Lightbulb}>
-        <div className="md:col-span-2 space-y-8">
-          
+<FormSection title="Skills & Software" icon={Lightbulb}>
+        <div className="md:col-span-2 space-y-8" ref={dropdownRef}>
           {['technical', 'software'].map((category) => {
             const filtered = search.length > 0 
               ? SUGGESTIONS[category].filter(s => s.toLowerCase().startsWith(search.toLowerCase()))
@@ -499,15 +527,15 @@ export default function ProfessionalForm() {
                         setActiveIndex(-1);
                     }}
                     onKeyDown={(e) => handleKeyDown(e, category, filtered)}
-                    onBlur={() => setTimeout(() => setOpenType(null), 200)} // Delay to allow click selection
+                    onBlur={() => setTimeout(() => setOpenType(null), 200)}
                     className={cn(
                       "w-full px-4 py-3 rounded-xl border text-sm transition-all outline-none",
                       "bg-white border-slate-200 text-slate-700 shadow-sm focus:ring-2 focus:ring-primary/20 focus:border-primary",
-                      openType === category && search.length > 0 && "ring-2 ring-primary/20 border-primary"
+                      openType === category && filtered.length > 0 && "ring-2 ring-primary/20 border-primary"
                     )}
                   />
 
-                  {/* Dropdown - Only appears if typing (search.length > 0) */}
+                  {/* Dropdown Styled like SelectField */}
                   {openType === category && filtered.length > 0 && (
                     <div className="absolute z-50 mt-1 left-0 w-full animate-dropdown">
                       <div className="bg-white border border-slate-200 rounded-xl shadow-xl overflow-hidden ring-1 ring-black/5">
@@ -531,17 +559,16 @@ export default function ProfessionalForm() {
                   )}
                 </div>
 
-                {/* Tags Section */}
                 <div className="flex flex-wrap gap-2">
                   {(professional.skills?.[category] || []).map((s, i) => (
                     <span key={i} className={cn(
-                      "px-3 py-1 rounded-full text-sm flex items-center gap-2 border",
+                      "px-3 py-1 rounded-full text-sm flex items-center gap-2 border animate-in zoom-in-95",
                       category === 'technical' ? 'bg-blue-50 text-blue-700 border-blue-100' : 'bg-purple-50 text-purple-700 border-purple-100'
                     )}>
                       {s}
-                      <X size={14} className="cursor-pointer" onClick={() => {
-                         const updated = professional.skills[category].filter((_, index) => index !== i);
-                         updateSection("professional", { ...professional, skills: { ...professional.skills, [category]: updated } });
+                      <X size={14} className="cursor-pointer hover:opacity-70" onClick={() => {
+                        const updated = professional.skills[category].filter((_, index) => index !== i);
+                        updateSection("professional", { ...professional, skills: { ...professional.skills, [category]: updated } });
                       }} />
                     </span>
                   ))}
