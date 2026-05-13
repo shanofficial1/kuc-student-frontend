@@ -121,55 +121,64 @@ export default function FamilyForm() {
       </FormSection>
 
       {/* Sibling Details */}
-      <FormSection title="Sibling Details" icon={UserPlus}>
-        <div className="md:col-span-2 space-y-4">
-          {(family?.siblings || []).map((sibling, index) => (
-            <div key={index} className="p-4 bg-slate-50 border border-slate-200 rounded-xl flex items-center gap-4 animate-in slide-in-from-top-2">
-              <input
-                className="flex-1 px-4 py-2 bg-white border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-primary"
-                placeholder="Sibling Name"
-                disabled={isSubmitted}
-                value={sibling.name || ''}
-                onChange={(e) => {
-                  const newSiblings = [...family.siblings];
-                  newSiblings[index].name = e.target.value;
-                  updateSection('family', { siblings: newSiblings });
-                }}
-              />
-              <input
-                className="flex-1 px-4 py-2 bg-white border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-primary"
-                placeholder="Education Status"
-                value={sibling.education || ''}
-                disabled={isSubmitted}
-                onChange={(e) => {
-                  const newSiblings = [...family.siblings];
-                  newSiblings[index].education = e.target.value;
-                  updateSection('family', { siblings: newSiblings });
-                }}
-              />
-              <button
-                onClick={() => {
-                  const newSiblings = family.siblings.filter((_, i) => i !== index);
-                  updateSection('family', { siblings: newSiblings });
-                }}
-                className="p-2 text-red-500 hover:bg-red-50 rounded-full transition-colors"
-                disabled={isSubmitted}
-              >
-                <Trash2 size={20} />
-              </button>
-            </div>
-          ))}
-          <button
-            type="button"
-            disabled={isSubmitted}
-            onClick={() => updateSection('family', { siblings: [...(family?.siblings || []), { name: '', education: '' }] })}
-            className="w-full py-4 border-2 border-dashed border-slate-200 rounded-xl text-primary font-semibold hover:bg-blue-50 transition-all flex items-center justify-center gap-2"
-          >
-            <UserPlus size={20} />
-            Add Sibling
-          </button>
-        </div>
-      </FormSection>
+   <FormSection title="Sibling Details" icon={UserPlus}>
+  <div className="md:col-span-2 space-y-4">
+    {(family?.siblings || []).map((sibling, index) => (
+      <div 
+        key={index} 
+        className="relative p-4 bg-slate-50 border border-slate-200 rounded-xl flex flex-col md:flex-row gap-4 animate-in slide-in-from-top-2"
+      >
+        {/* Input Row 1: Name */}
+        <input
+          className="w-full px-4 py-2 bg-white border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-primary"
+          placeholder="Sibling Name"
+          disabled={isSubmitted}
+          value={sibling.name || ''}
+          onChange={(e) => {
+            const newSiblings = [...family.siblings];
+            newSiblings[index].name = e.target.value;
+            updateSection('family', { siblings: newSiblings });
+          }}
+        />
+
+        {/* Input Row 2: Education */}
+        <input
+          className="w-full px-4 py-2 bg-white border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-primary"
+          placeholder="Education Status"
+          value={sibling.education || ''}
+          disabled={isSubmitted}
+          onChange={(e) => {
+            const newSiblings = [...family.siblings];
+            newSiblings[index].education = e.target.value;
+            updateSection('family', { siblings: newSiblings });
+          }}
+        />
+
+        {/* Delete Button - Positioned at top right on mobile for better UI */}
+        <button
+          onClick={() => {
+            const newSiblings = family.siblings.filter((_, i) => i !== index);
+            updateSection('family', { siblings: newSiblings });
+          }}
+          className="absolute -top-2 -right-2 md:static p-2 bg-white md:bg-transparent text-red-500 shadow-sm md:shadow-none border border-slate-100 md:border-none hover:bg-red-50 rounded-full transition-colors"
+          disabled={isSubmitted}
+        >
+          <Trash2 size={18} />
+        </button>
+      </div>
+    ))}
+
+    <button
+      type="button"
+      disabled={isSubmitted}
+      onClick={() => updateSection('family', { siblings: [...(family?.siblings || []), { name: '', education: '' }] })}
+      className="w-full py-4 border-2 border-dashed border-slate-200 rounded-xl text-primary font-semibold hover:bg-blue-50 transition-all flex items-center justify-center gap-2"
+    >
+      <UserPlus size={20} />
+      Add Sibling
+    </button>
+  </div>
+</FormSection>
 
 
    {/* Guardian Address Details */}

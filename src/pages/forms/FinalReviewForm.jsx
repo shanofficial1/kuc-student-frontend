@@ -2,22 +2,49 @@ import { useState } from "react";
 import { useStore } from "../../store";
 import {
   User, School, FileText, Info, Edit3, Gavel, Home,
-  Briefcase, CreditCard, Users, Heart, Users2, ShieldCheck, Eye
+  Briefcase, CreditCard, Users, Heart, Users2, ShieldCheck,
+  FileIcon, FileTextIcon, ImageIcon, Layers
 } from "lucide-react";
 import { Link } from "react-router-dom";
 
+// --- REUSABLE FILE CARD COMPONENT ---
+const FileCard = ({ file, fileName, fileSize = "420 KB" }) => {
+  // Extract name safely: try prop, then file object name, then fallback
+  const actualName = fileName || file?.name || "Document";
+  
+  const getFileIcon = (name) => {
+    const safeName = String(name || "");
+    const ext = safeName.split('.').pop().toLowerCase();
+    
+    if (['jpg', 'jpeg', 'png', 'gif'].includes(ext)) return <ImageIcon className="w-5 h-5 text-slate-400" />;
+    if (ext === 'pdf') return <FileTextIcon className="w-5 h-5 text-red-400" />;
+    if (['doc', 'docx'].includes(ext)) return <FileTextIcon className="w-5 h-5 text-blue-400" />;
+    return <FileIcon className="w-5 h-5 text-slate-400" />;
+  };
+
+  return (
+    <div className="flex items-center gap-3 p-3 border border-slate-100 rounded bg-slate-50 min-w-[240px] max-w-fit">
+      {getFileIcon(actualName)}
+      <div className="overflow-hidden">
+        <p className="text-[12px] font-semibold text-slate-700 truncate max-w-[200px]">
+          {actualName}
+        </p>
+        <p className="text-[10px] text-slate-400 font-medium uppercase tracking-tight">
+          {file?.size ? `${(file.size / 1024).toFixed(0)} KB` : fileSize}
+        </p>
+      </div>
+    </div>
+  );
+};
+
+// --- CONFIGURATION ---
 const SECTION_MAP = {
-  academic: { title: "Academic Summary", icon: School, path: "/forms/academic" },
   personal: { title: "Personal Summary", icon: User, path: "/forms/personal" },
-  contact: { title: "Contact Summary", icon: Users, path: "/forms/contact" },
-  health: { title: "Health Summary", icon: Heart, path: "/forms/health" },
   family: { title: "Family Summary", icon: Users2, path: "/forms/family" },
-  education: { title: "Education Summary", icon: School, path: "/forms/education" },
-  financial: { title: "Financial Summary", icon: CreditCard, path: "/forms/financial" },
+  academic: { title: "Academic Summary", icon: School, path: "/forms/academic" },
   professional: { title: "Professional Summary", icon: Briefcase, path: "/forms/professional" },
-  residential: { title: "Residential Summary", icon: Home, path: "/forms/residential" },
   mentor: { title: "Mentor Summary", icon: ShieldCheck, path: "/forms/mentor" },
-  documents: { title: "Documents Summary", icon: FileText, path: "/forms/documents" },
+  documents: { title: "Uploaded Documents", icon: FileText, path: "/forms/documents" },
 };
 
 export default function FinalReviewForm() {
@@ -25,178 +52,186 @@ export default function FinalReviewForm() {
   const isSubmitted = store.isSubmitted;
   const [agreed, setAgreed] = useState(false);
 
-  function handleSubmit() {
-    if (!agreed) return;
-    store.setSubmitted(true);
-    alert("Final submission successful! Your application is now locked.");
-  }
-
   const formatLabel = (key) => {
     const result = key.replace(/([A-Z])/g, " $1");
     return result.charAt(0).toUpperCase() + result.slice(1);
   };
 
+  const handleSubmit = () => {
+    if (!agreed) return;
+    store.setSubmitted(true);
+    alert("Application submitted and locked successfully.");
+  };
+
+  // Traverses nested skill categories (Technical, Software, etc.)
+  const renderSkills = (skillsObj) => {
+    if (typeof skillsObj !== 'object' || skillsObj === null) return String(skillsObj);
+    return Object.entries(skillsObj).map(([category, list]) => (
+      <div key={category} className="mb-2 last:mb-0">
+        <span className="text-[10px] font-bold text-primary uppercase">{formatLabel(category)}: </span>
+        <span className="text-sm text-slate-600">{Array.isArray(list) ? list.join(", ") : String(list)}</span>
+      </div>
+    ));
+  };
+
   const renderValue = (val, key = "") => {
-    if (val === null || val === undefined || val === "") return "Not provided";
-    if (typeof val === "boolean") return val ? "Yes" : "No";
+    if (val === null || val === undefined || val === "") return <span className="text-slate-400 italic">Not provided</span>;
 
-    // Handle Strings (Emails, Names, etc)
-    if (typeof val === "string") {
-      return <span className="text-slate-700">{val}</span>;
-    }
+    // 1. Check if the value or key indicates a File
+    const isFileInstance = val instanceof File;
+    const isFileObject = typeof val === 'object' && (val.name || val.file);
+    const isFileKey = key.toLowerCase().includes('file') || key.toLowerCase().includes('document');
 
-    // Handle File Objects / Uploaded Files
-    if (val instanceof File || (typeof val === "object" && (val.file || val.name || key.toLowerCase().includes('file')))) {
-      const fileName = val.name || val.file || "Document";
+    if (isFileInstance || isFileObject || isFileKey) {
+      // If it's a string that doesn't look like a filename, just show text
+      if (typeof val === 'string' && !val.includes('.')) return <span className="text-slate-700">{val}</span>;
+      
       return (
-        <div className="flex items-center gap-2 mt-1">
-          <span className="text-slate-600 truncate max-w-[150px]">{fileName}</span>
-          <button 
-            type="button"
-            className="flex items-center gap-1 text-[10px] bg-primary/10 text-primary px-2 py-1 rounded hover:bg-primary/20 transition-colors"
-            onClick={() => {
-              const fileUrl = val.file || (val instanceof File ? URL.createObjectURL(val) : null);
-              if (fileUrl) window.open(fileUrl, '_blank');
-              else alert("No preview available for this file.");
-            }}
-          >
-            <Eye className="w-3 h-3" /> View
-          </button>
-        </div>
+        <FileCard 
+          file={typeof val === 'object' ? val : null} 
+          fileName={typeof val === 'string' ? val : val.name} 
+        />
       );
     }
 
-    // Handle Arrays
-    if (Array.isArray(val)) {
-      if (val.length === 0) return "None recorded";
-      
-      // If it's a simple array (like languages: ["English", "Hindi"]), join with commas
-      if (typeof val[0] !== "object") {
-        return <span className="text-slate-700">{val.join(", ")}</span>;
-      }
-
-      // If it's a complex array (like academicRecords: [{...}]), render blocks
+    // 2. Special Case: Siblings (Row-based, specific fields)
+    if (key === "siblings" && Array.isArray(val)) {
       return (
-        <div className="space-y-2 mt-2">
-          {val.map((item, i) => (
-            <div key={i} className="p-3 bg-slate-50 rounded border border-slate-100 text-[12px]">
-              {renderValue(item)}
+        <div className="space-y-2 w-full col-span-full">
+          {val.map((sib, i) => (
+            <div key={i} className="flex flex-col sm:flex-row sm:justify-between p-3 border border-slate-100 rounded bg-slate-50/50">
+              <span className="text-sm font-bold text-slate-700">{sib.name}</span>
+              <span className="text-sm text-slate-500">{sib.qualification}</span>
             </div>
           ))}
         </div>
       );
     }
 
-    // Handle Nested Objects (Recursive)
-    if (typeof val === "object") {
+    // 3. Handle Complex Arrays (Exams, Experience, Journal, etc.)
+    if (Array.isArray(val)) {
+      if (val.length === 0) return <span className="text-slate-400">No records found</span>;
+      if (typeof val[0] !== 'object') return <span className="text-slate-700">{val.join(", ")}</span>;
+
       return (
-        <div className="grid grid-cols-1 gap-1">
-          {Object.entries(val)
-            .filter(([k]) => !k.toLowerCase().includes("error")) // Hide keys containing "error"
-            .map(([k, v]) => (
-              <div key={k} className="flex gap-2 text-[13px]">
-                <span className="font-bold text-slate-400 min-w-[90px] uppercase text-[9px]">{formatLabel(k)}:</span>
-                <span className="text-slate-600">{typeof v === "object" ? "[Detail]" : String(v)}</span>
-              </div>
-            ))}
+        <div className="space-y-3 w-full col-span-full">
+          {val.map((item, i) => (
+            <div key={i} className="p-4 border border-slate-200 rounded-lg bg-white shadow-sm flex flex-wrap gap-x-8 gap-y-3 relative">
+              <div className="absolute top-0 left-0 w-1 h-full bg-slate-100"></div>
+              {Object.entries(item)
+                .filter(([k]) => !k.toLowerCase().includes("error") && !k.toLowerCase().includes("file"))
+                .map(([k, v]) => (
+                  <div key={k} className="min-w-[140px]">
+                    <p className="text-[9px] font-bold text-slate-400 uppercase tracking-tighter">{formatLabel(k)}</p>
+                    <p className="text-sm text-slate-700 font-medium">{typeof v === 'object' ? "Detail" : String(v)}</p>
+                  </div>
+              ))}
+            </div>
+          ))}
         </div>
       );
     }
 
-    return String(val);
+    // 4. Handle Skills Specifically
+    if (key === "skills") return renderSkills(val);
+
+    // Default String/Boolean rendering
+    return <span className="text-slate-700">{typeof val === 'boolean' ? (val ? "Yes" : "No") : String(val)}</span>;
   };
 
   return (
-    <div className="max-w-[1024px] mx-auto px-6 py-12 pb-24">
-      {/* HEADER */}
+    <div className="max-w-[1100px] mx-auto px-4 sm:px-6 py-12 pb-24">
       <header className="mb-10">
-        <h1 className="text-3xl font-bold text-primary mb-2">Final Review</h1>
-        <p className="text-slate-500 max-w-2xl">
-          Please review all information carefully. Files can be viewed using the "View" button.
-        </p>
+        <h1 className="text-3xl font-bold text-slate-900 tracking-tight">Final Review</h1>
+        <p className="text-slate-500 mt-1">Check all details carefully. Once submitted, the application is locked.</p>
       </header>
-
-      {/* POLICY BOX */}
-      <div className="bg-blue-50 border-l-4 border-primary p-6 rounded-r-xl mb-10 flex gap-4 items-start shadow-sm">
-        <Info className="w-6 h-6 text-primary shrink-0" />
-        <div>
-          <p className="font-bold text-primary">Final Submission Policy</p>
-          <p className="text-sm text-slate-600 mt-1">
-            Ensure all uploaded documents are correct. Once submitted, your application will be locked for review.
-          </p>
-        </div>
-      </div>
 
       <div className="space-y-8">
         {Object.entries(SECTION_MAP).map(([sectionKey, config]) => {
           const sectionData = store[sectionKey];
           if (!sectionData) return null;
 
-          const SectionIcon = config.icon;
-
           return (
-            <section key={sectionKey} className="bg-white border border-border-subtle rounded-2xl p-8 shadow-sm">
-              <div className="flex justify-between mb-6">
-                <h2 className="font-bold flex items-center gap-2 text-slate-800">
-                  <SectionIcon className="w-5 h-5 text-primary" />
-                  {config.title}
-                </h2>
+            <section key={sectionKey} className="bg-white border border-border-subtle rounded-xl p-5 sm:p-8 shadow-sm">
+              <div className="flex justify-between items-center mb-6 border-b border-slate-100 pb-4">
+                <div className="flex items-center gap-2">
+                  <config.icon className="w-5 h-5 text-primary" />
+                  <h2 className="text-lg font-bold text-slate-800">{config.title}</h2>
+                </div>
                 {!isSubmitted && (
-                  <Link to={config.path}>
-                    <Edit3 className="w-4 h-4 text-primary hover:scale-110 transition-transform" />
+                  <Link to={config.path} className="flex items-center gap-1 text-primary text-xs font-bold hover:bg-primary/5 px-2 py-1 rounded transition-colors">
+                    <Edit3 className="w-3 h-3" /> Edit
                   </Link>
                 )}
               </div>
 
-              <div className="grid grid-cols-2 gap-x-8 gap-y-6">
+              {/* Layout: 2 Columns on Desktop, 1 Column on Mobile */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-8">
                 {Object.entries(sectionData)
-                  .filter(([key]) => !key.toLowerCase().includes("error")) // Hides all "Error" keys
-                  .map(([key, value]) => (
-                    <div key={key} className="break-words">
-                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">
-                        {formatLabel(key)}
-                      </p>
-                      <div className="font-medium text-sm">
-                        {renderValue(value, key)}
+                  .filter(([key]) => !key.toLowerCase().includes("error") && !key.toLowerCase().includes("filename"))
+                  .map(([key, value]) => {
+                    const isFullWidth = Array.isArray(value) || key.toLowerCase().includes('file') || key.toLowerCase().includes('document');
+                    return (
+                      <div key={key} className={`${isFullWidth ? "md:col-span-2" : ""} flex flex-col gap-1`}>
+                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{formatLabel(key)}</p>
+                        <div className="mt-1">{renderValue(value, key)}</div>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
+
+                {/* Specific Mentor Fields if they aren't caught by the map */}
+                {sectionKey === "mentor" && !sectionData.tutorName && (
+                   <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-6 border-t border-slate-50 pt-4 mt-2">
+                      {[ 
+                        { l: "Tutor Name", v: sectionData.tutorName },
+                        { l: "Tutor Email ID", v: sectionData.tutorEmail },
+                        { l: "HOD Name", v: sectionData.hodName },
+                        { l: "HOD Email ID", v: sectionData.hodEmail }
+                      ].map((m, idx) => (
+                        <div key={idx}>
+                           <p className="text-[10px] font-bold text-slate-400 uppercase">{m.l}</p>
+                           <p className="text-sm text-slate-700">{m.v || "N/A"}</p>
+                        </div>
+                      ))}
+                   </div>
+                )}
               </div>
             </section>
           );
         })}
 
-        {/* DECLARATION SECTION */}
-        <div className="bg-slate-900 text-white rounded-3xl p-10">
-          <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
-            <Gavel className="w-5 h-5 text-blue-400" />
-            Declaration
-          </h3>
-          <p className="text-slate-300 text-sm leading-relaxed mb-8">
-            I hereby declare that the information and documents provided in this application are true and authentic to the best of my knowledge.
+        {/* Declaration Section */}
+        <div className="bg-slate-900 text-white rounded-2xl p-8 sm:p-12 shadow-xl">
+          <div className="flex items-center gap-3 mb-6">
+            <Gavel className="w-6 h-6 text-blue-400" />
+            <h3 className="text-xl font-bold">Applicant Declaration</h3>
+          </div>
+          <p className="text-slate-400 text-sm leading-relaxed mb-8">
+            I hereby declare that all information and uploaded documents provided in this application are true, 
+            complete, and authentic to the best of my knowledge.
           </p>
 
-          <div className="flex items-center gap-3 mb-6">
+          <div className="flex items-center gap-3 mb-8">
             <input
               type="checkbox"
-              id="agreeCheck"
-              className="w-5 h-5 rounded accent-primary cursor-pointer"
+              id="agree"
               checked={agreed}
-              onChange={() => setAgreed(!agreed)}
+              onChange={(e) => setAgreed(e.target.checked)}
               disabled={isSubmitted}
+              className="w-5 h-5 rounded accent-primary cursor-pointer"
             />
-            <label htmlFor="agreeCheck" className="text-sm cursor-pointer select-none">
-              I agree to the terms and conditions
+            <label htmlFor="agree" className="text-sm font-medium cursor-pointer select-none">
+              I certify that the above information is correct
             </label>
           </div>
 
           <button
             onClick={handleSubmit}
             disabled={!agreed || isSubmitted}
-            className={`px-10 py-4 rounded-xl font-bold transition-all ${
-              agreed && !isSubmitted
-                ? "bg-primary text-white hover:opacity-90 shadow-lg shadow-primary/20"
-                : "bg-slate-600 text-slate-300 cursor-not-allowed"
+            className={`w-full sm:w-auto px-10 py-4 rounded-xl font-bold transition-all ${
+              agreed && !isSubmitted 
+                ? "bg-primary hover:scale-[1.02] shadow-lg shadow-primary/20" 
+                : "bg-slate-700 text-slate-400 cursor-not-allowed"
             }`}
           >
             {isSubmitted ? "Submission Locked" : "Final Submit Application"}
