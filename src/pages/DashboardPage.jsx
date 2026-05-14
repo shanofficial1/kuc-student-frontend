@@ -82,88 +82,77 @@ const editStatus = "none";
  const modules = [
   {
     id: "academic",
-    title: "Academic",
-    desc: "Academic details",
+    title: "Academic details",
     icon: School,
     data: academic,
     path: "/forms/academic",
   },
   {
     id: "personal",
-    title: "Personal",
-    desc: "Personal details",
+    title: "Personal details",
     icon: User,
     data: personal,
     path: "/forms/personal",
   },
   {
     id: "contact",
-    title: "Contact",
-    desc: "Contact details",
+    title: "Contact details",
     icon: Phone,
     data: contact,
     path: "/forms/contact",
   },
   {
     id: "health",
-    title: "Health",
-    desc: "Medical info",
+    title: "Health details",
     icon: HeartPulse,
     data: health,
     path: "/forms/health",
   },
   {
     id: "family",
-    title: "Family",
-    desc: "Family details",
+    title: "Family details",
     icon: Users,
     data: family,
     path: "/forms/family",
   },
   {
     id: "education",
-    title: "Education",
-    desc: "Education history",
+    title: "Education details",
     icon: GraduationCap,
     data: education,
     path: "/forms/education",
   },
   {
     id: "financial",
-    title: "Financial",
-    desc: "Bank and scholarship",
+    title: "Financial details",
     icon: CreditCard,
     data: financial,
     path: "/forms/financial",
   },
   {
     id: "professional",
-    title: "Professional",
-    desc: "Work & experience",
+    title: "Professional details",
     icon: Briefcase,
     data: professional,
     path: "/forms/professional",
   },
   {
     id: "residential",
-    title: "Residential",
-    desc: "Address details",
+    title: "Residential details",
     icon: Home,
     data: residential,
     path: "/forms/residential",
   },
   {
     id: "documents",
-    title: "Documents",
-    desc: "Uploaded files",
+    title: "Documents uploads",
     icon: FileText,
     data: documents,
     path: "/forms/documents",
   },
   {
     id: "mentor",
-    title: "Mentor",
-    desc: "Mentor details",
+    title: "Mentor details",
     icon: UserCheck,
     data: mentor,
     path: "/forms/mentor",
@@ -359,13 +348,11 @@ const editStatus = "none";
   </div>
 
 </section>
-      {/* Information Modules */}
+      {/* Information Details */}
       <section>
         <div className="flex items-center justify-between mb-8">
-          <h2 className="text-2xl font-bold text-slate-800">Information Modules</h2>
-          <span className="text-xs font-medium text-slate-400 uppercase tracking-widest">
-            Review your data accuracy
-          </span>
+          <h2 className="text-2xl font-bold text-slate-800">Information Details</h2>
+         
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -374,39 +361,21 @@ const editStatus = "none";
             const status = getStatus(module.data);
 
             return (
-              <Link
-                key={module.id}
-                to={module.path}
-                className="bg-white border border-border-subtle p-6 rounded-xl flex items-start gap-5 hover:shadow-xl hover:scale-102 active:scale-95 transition-all group"
-              >
-                <div className="p-3 rounded-lg bg-slate-50 text-primary group-hover:bg-blue-50 transition-colors">
-                  <Icon className="w-6 h-6" />
-                </div>
+           <Link
+  key={module.id}
+  to={module.path}
+  className="bg-white border border-border-subtle rounded-2xl px-8 py-8 flex items-center gap-6 hover:shadow-lg transition-all"
+>
+  <div className="p-4 rounded-xl bg-slate-100 text-primary flex items-center justify-center">
+    <Icon className="w-7 h-7" />
+  </div>
 
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center justify-between mb-1">
-                    <h3 className="font-bold text-slate-800 group-hover:text-primary transition-colors">
-                      {module.title}
-                    </h3>
-
-                    {status === "Verified" && (
-                      <CheckCircle2 className="w-4 h-4 text-status-success fill-status-success/10" />
-                    )}
-                    {status === "Pending" && (
-                      <Clock className="w-4 h-4 text-status-warning" />
-                    )}
-                    {status === "Not Started" && (
-                      <AlertCircle className="w-4 h-4 text-status-error" />
-                    )}
-                  </div>
-
-                  <p className="text-xs text-slate-500 mb-4">{module.desc}</p>
-
-                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
-                    {status}
-                  </span>
-                </div>
-              </Link>
+  <div className="flex-1 flex items-center">
+    <h3 className=" font-bold text-slate-800 text-center">
+      {module.title}
+    </h3>
+  </div>
+</Link>
             );
           })}
         </div>

@@ -3,34 +3,58 @@ import { useStore } from "../../store";
 import {
   User, School, FileText, Info, Edit3, Gavel, Home,
   Briefcase, CreditCard, Users, Heart, Users2, ShieldCheck,
-  FileIcon, FileTextIcon, ImageIcon, Layers
+  FileIcon, FileTextIcon, ImageIcon, Layers,Phone,  GraduationCap
 } from "lucide-react";
 import { Link } from "react-router-dom";
 
 // --- REUSABLE FILE CARD COMPONENT ---
 const FileCard = ({ file, fileName, fileSize = "420 KB" }) => {
-  // Extract name safely: try prop, then file object name, then fallback
   const actualName = fileName || file?.name || "Document";
-  
-  const getFileIcon = (name) => {
-    const safeName = String(name || "");
-    const ext = safeName.split('.').pop().toLowerCase();
-    
-    if (['jpg', 'jpeg', 'png', 'gif'].includes(ext)) return <ImageIcon className="w-5 h-5 text-slate-400" />;
-    if (ext === 'pdf') return <FileTextIcon className="w-5 h-5 text-red-400" />;
-    if (['doc', 'docx'].includes(ext)) return <FileTextIcon className="w-5 h-5 text-blue-400" />;
-    return <FileIcon className="w-5 h-5 text-slate-400" />;
+
+  const ext = actualName.split(".").pop()?.toLowerCase();
+
+  const getFileIcon = () => {
+    // IMAGE
+    if (["jpg", "jpeg", "png", "gif", "webp"].includes(ext)) {
+      return (
+        <ImageIcon className="w-5 h-5 text-slate-400" />
+      );
+    }
+
+    // PDF
+    if (ext === "pdf") {
+      return (
+        <FileTextIcon className="w-5 h-5 text-red-400" />
+      );
+    }
+
+    // DOC
+    if (["doc", "docx"].includes(ext)) {
+      return (
+        <FileTextIcon className="w-5 h-5 text-blue-400" />
+      );
+    }
+
+    // DEFAULT
+    return (
+      <FileIcon className="w-5 h-5 text-slate-400" />
+    );
   };
 
   return (
-    <div className="flex items-center gap-3 p-3 border border-slate-100 rounded bg-slate-50 min-w-[240px] max-w-fit">
-      {getFileIcon(actualName)}
+    <div className="flex items-center gap-3 p-3 border border-slate-100 rounded bg-slate-50">
+      
+      {getFileIcon()}
+
       <div className="overflow-hidden">
-        <p className="text-[12px] font-semibold text-slate-700 truncate max-w-[200px]">
+        <p className="text-[12px] font-semibold text-slate-700 truncate">
           {actualName}
         </p>
+
         <p className="text-[10px] text-slate-400 font-medium uppercase tracking-tight">
-          {file?.size ? `${(file.size / 1024).toFixed(0)} KB` : fileSize}
+          {file?.size
+            ? `${(file.size / 1024).toFixed(0)} KB`
+            : fileSize}
         </p>
       </div>
     </div>
@@ -39,18 +63,26 @@ const FileCard = ({ file, fileName, fileSize = "420 KB" }) => {
 
 // --- CONFIGURATION ---
 const SECTION_MAP = {
-  personal: { title: "Personal Summary", icon: User, path: "/forms/personal" },
-  family: { title: "Family Summary", icon: Users2, path: "/forms/family" },
   academic: { title: "Academic Summary", icon: School, path: "/forms/academic" },
+  personal: { title: "Personal Summary", icon: User, path: "/forms/personal" },
+  contact : { title: "Contact Summary", icon: Phone, path: "/forms/contact" },
+  health : { title: "Health Summary", icon: Heart, path: "/forms/health" },
+  family: { title: "Family Summary", icon: Users2, path: "/forms/family" },
+  education: { title: "Education Summary", icon: GraduationCap, path: "/forms/education" },
+  financial : { title: "Financial Summary", icon: CreditCard, path: "/forms/financial" },
   professional: { title: "Professional Summary", icon: Briefcase, path: "/forms/professional" },
-  mentor: { title: "Mentor Summary", icon: ShieldCheck, path: "/forms/mentor" },
+  residential: { title: "Residential Summary", icon: Home, path: "/forms/residential" },
   documents: { title: "Uploaded Documents", icon: FileText, path: "/forms/documents" },
+  mentor: { title: "Mentor Summary", icon: ShieldCheck, path: "/forms/mentor" },
 };
 
 export default function FinalReviewForm() {
   const store = useStore();
   const isSubmitted = store.isSubmitted;
   const [agreed, setAgreed] = useState(false);
+
+  console.log(store);
+
 
   const formatLabel = (key) => {
     const result = key.replace(/([A-Z])/g, " $1");
@@ -77,10 +109,20 @@ export default function FinalReviewForm() {
   const renderValue = (val, key = "") => {
     if (val === null || val === undefined || val === "") return <span className="text-slate-400 italic">Not provided</span>;
 
-    // 1. Check if the value or key indicates a File
-    const isFileInstance = val instanceof File;
-    const isFileObject = typeof val === 'object' && (val.name || val.file);
-    const isFileKey = key.toLowerCase().includes('file') || key.toLowerCase().includes('document');
+  const isFileInstance = val instanceof File;
+
+const isFileObject =
+  typeof val === "object" &&
+  val !== null &&
+  (val.name || val.file);
+
+const isFileKey =
+  key.toLowerCase().includes("file") ||
+  key.toLowerCase().includes("document") ||
+  key.toLowerCase().includes("certificate") ||
+  key.toLowerCase().includes("image") ||
+  key.toLowerCase().includes("pdf");
+
 
     if (isFileInstance || isFileObject || isFileKey) {
       // If it's a string that doesn't look like a filename, just show text
@@ -168,10 +210,10 @@ export default function FinalReviewForm() {
               {/* Layout: 2 Columns on Desktop, 1 Column on Mobile */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-8">
                 {Object.entries(sectionData)
-                  .filter(([key]) => !key.toLowerCase().includes("error") && !key.toLowerCase().includes("filename"))
+                  .filter(([key]) => !key.toLowerCase().includes("error") )
                   .map(([key, value]) => {
-                    const isFullWidth = Array.isArray(value) || key.toLowerCase().includes('file') || key.toLowerCase().includes('document');
-                    return (
+const isFullWidth =
+  Array.isArray(value);                    return (
                       <div key={key} className={`${isFullWidth ? "md:col-span-2" : ""} flex flex-col gap-1`}>
                         <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{formatLabel(key)}</p>
                         <div className="mt-1">{renderValue(value, key)}</div>
