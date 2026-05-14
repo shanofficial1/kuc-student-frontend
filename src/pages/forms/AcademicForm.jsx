@@ -4,6 +4,55 @@ import FormWrapper, { FormSection, InputField, SelectField,FileInput } from '../
 import { Fingerprint, GraduationCap, Calendar, BookOpen, Crown, CheckCircle, FileText,Search } from 'lucide-react';
 import GlobalLoader from '@/src/components/GlobalLoader';
 
+export const PROGRAM_DATA = {
+  engineering: {
+    label: 'Engineering',
+    departments: {
+      "Department Of Information Technology": ["B.Sc. Computer Science", "B.Com. Computer Application", "B.Sc. Electronics", "M.Sc. Computer Science"],
+      "Department of Wood Science & Technology": ["B.Sc. Wood Science & Technology", "B.Sc. Forestry"],
+      "Department of Library and Information Science.": ["B.Lib.I.Sc.", "M.Lib.I.Sc."],
+      "Department of Journalism and Media Studies": ["B.A. Journalism", "M.A. Journalism"]
+    }
+  },
+  science: {
+    label: 'Science',
+    departments: {
+      "Department Of Mathematical Sciences": ["B.Sc. Mathematics", "M.Sc. Mathematics"],
+      "Department of Statistical Sciences": ["B.Sc. Statistics", "M.Sc. Statistics"],
+      "Department Of Biotechnology & Microbiology": ["B.Sc. Biotechnology", "B.Sc. Microbiology", "B.Sc. Bioinformatics"],
+      "Department of Chemistry": ["B.Sc. Chemistry", "B.Sc. Polymer Chemistry", "B.Sc. Biochemistry", "M.Sc Chemistry"],
+      "Department of Physics": ["B.Sc. Physics", "M.Sc Physics"],
+      "Department Of Molecular Biology": ["M.Sc. Molecular Biology"],
+      "Department of Geography": ["B.Sc. Geology", "M.Sc Geology"],
+      "Department of Botany": ["B.Sc. Botany", "B.Sc. Plant Science"],
+      "Department of Zoology": ["B.Sc. Zoology", "M.Sc Zoology"],
+      "Department of Environmental Studies": ["M.Sc. Environmental Science"],
+      "Department of Behavioural Sciences": ["B.Sc Psychology", "M.Sc Psychology"]
+    }
+  },
+  arts: {
+    label: 'Arts',
+    departments: {
+      "Department Of Studies In English": ["B.A. English", "B.A. Functional English"],
+      "Department Of Economics": ["B.A. Economics", "B.A. Development Economics", "M.A Economics"],
+      "Department Of Anthropology": ["B.A. Political Science", "B.A. Philosophy", "M.A in Governance and Politics"],
+      "Department of History": ["B.A. History", "M.A Social Science with Specialization in History"],
+      "Department of Malayalam": ["B.A. Malayalam"],
+      "Department of Kannada": ["B.A. Kannada"],
+      "Department of Hindi": ["B.A. Hindi"],
+      "Department Of Law": ["L.L.B.", "L.L.M."],
+      "Department of Music": ["B.A. Music"],
+      "Department of Commerce and Business Studies": ["B.Com. Finance", "B.Com. Co-operation", "M.Com (Finance)", "M.Com Marketing"],
+      "Department of Management Studies": ["B.B.A.", "M.B.A."],
+      "Department of Physical Education": ["B.P.Ed.", "M.P.Ed."],
+      "School Of Physical Education And Sports Sciences": ["B.P.E.S", "M.P.E.S"],
+      "Department of Pedagogical Sciences": ["B.Ed.", "M.Ed."],
+      "Department of Rural and Tribal Sociology": ["B.A. Sociology", "M.A. Sociology"]
+    }
+  }
+};
+
+
 export default function AcademicForm() {
   const isSubmitted = useStore((s) => s.isSubmitted);
   const academic = useStore((state) => state.academic);
@@ -59,43 +108,26 @@ const isLoading = useStore((state) => state.isLoading);
   const fileName = academic.fellowshipFile?.name || academic.fellowshipFileName;
   const isUploaded = !!fileName;
 
-  const departmentOptions = [
-    { value: "Computer Science", label: "Computer Science" },
-    { value: "Information Technology", label: "Information Technology" },
-    { value: "Electronics and Communication", label: "Electronics and Communication" },
-    { value: "Electrical and Electronics", label: "Electrical and Electronics" },
-    { value: "Mechanical Engineering", label: "Mechanical Engineering" },
-    { value: "Civil Engineering", label: "Civil Engineering" },
-    { value: "Artificial Intelligence and Data Science", label: "Artificial Intelligence and Data Science" },
-    { value: "Cyber Security", label: "Cyber Security" },
-    { value: "Physics", label: "Physics" },
-    { value: "Chemistry", label: "Chemistry" },
-    { value: "Mathematics", label: "Mathematics" },
-    { value: "Statistics", label: "Statistics" },
-    { value: "Commerce", label: "Commerce" },
-    { value: "Business Administration", label: "Business Administration" },
-    { value: "Management Studies", label: "Management Studies" },
-    { value: "Economics", label: "Economics" },
-    { value: "History", label: "History" },
-    { value: "Political Science", label: "Political Science" },
-    { value: "Sociology", label: "Sociology" },
-    { value: "English", label: "English" },
-    { value: "Malayalam", label: "Malayalam" },
-    { value: "Hindi", label: "Hindi" },
-    { value: "Arabic", label: "Arabic" },
-    { value: "Psychology", label: "Psychology" },
-    { value: "Social Work", label: "Social Work" },
-    { value: "Biotechnology", label: "Biotechnology" },
-    { value: "Microbiology", label: "Microbiology" },
-    { value: "Zoology", label: "Zoology" },
-    { value: "Botany", label: "Botany" },
-    { value: "Law", label: "Law" },
-    { value: "Education", label: "Education" },
-    { value: "Physical Education", label: "Physical Education" },
-    { value: "Journalism and Mass Communication", label: "Journalism and Mass Communication" },
-    { value: "Fine Arts", label: "Fine Arts" },
-  ];
 
+
+// Get Department Options
+const departmentOptions = academic.faculty && PROGRAM_DATA[academic.faculty]
+  ? Object.keys(PROGRAM_DATA[academic.faculty].departments).map(dept => ({
+      value: dept.trim(), // Cleans up any hidden spaces
+      label: dept.trim()
+    }))
+  : [];
+
+// Get Degree Options
+const currentDeptKey = academic.department;
+const degreeOptions = (academic.faculty && currentDeptKey && PROGRAM_DATA[academic.faculty].departments[currentDeptKey])
+  ? PROGRAM_DATA[academic.faculty].departments[currentDeptKey].map(degree => ({
+      value: degree,
+      label: degree
+    }))
+  : [];
+
+  
   return (
     <>
     {isLoading && <GlobalLoader  />}
@@ -107,73 +139,80 @@ const isLoading = useStore((state) => state.isLoading);
       <FormSection title="Academic Identity" icon={Fingerprint}>
         <InputField
           label="Admission Application Number"
-          id="admissionAppNo"
+          id="admissionApplicationNumber"
           required
-          value={academic.admissionAppNo}
+          value={academic.admissionApplicationNumber}
           onChange={handleChange}
           placeholder="e.g. ADM2024001"
         />
         <InputField
           label="University Enrollment Number"
-          id="enrollmentNo"
-          value={academic.enrollmentNo}
+          id="universityEnrollmentNumber"
+          value={academic.universityEnrollmentNumber}
           onChange={handleChange}
           placeholder="e.g. KU-2021-CS-882"
         />
         <InputField
           label="Roll Number"
-          id="rollNo"
-          value={academic.rollNo}
+          id="rollNumber"
+          value={academic.rollNumber}
           onChange={handleChange}
           placeholder="21CS042"
         />
       </FormSection>
 
-      <FormSection title="Program Hierarchy" icon={GraduationCap}>
-        <SelectField
-          label="Faculty / School"
-          id="faculty"
-          value={academic.faculty}
-          onChange={handleChange}
-          options={[
-            { value: '', label: 'Select Faculty' },
-            { value: 'engineering', label: 'Engineering' },
-            { value: 'arts', label: 'Arts' },
-            { value: 'science', label: 'Science' },
-          ]}
-        />
-        <SelectField
-          label="Department"
-          id="department"
-          value={academic.department}
-          onChange={handleChange}
-          options={departmentOptions}
-        />
-        <SelectField
-          label="Program Level"
-          id="programLevel"
-          value={academic.programLevel}
-          onChange={handleChange}
-          options={[
-            { value: '', label: 'Select Level' },
-            { value: 'ug', label: 'UG' },
-            { value: 'pg', label: 'PG' },
-            { value: 'phd', label: 'PhD' },
-          ]}
-        />
-        <SelectField
-          label="Degree Name"
-          id="degreeName"
-          value={academic.degreeName}
-          onChange={handleChange}
-          options={[
-            { value: '', label: 'Select Degree' },
-            { value: 'btech', label: 'B.Tech' },
-            { value: 'bsc', label: 'B.Sc' },
-            { value: 'msc', label: 'M.Sc' },
-          ]}
-        />
-      </FormSection>
+     <FormSection title="Program Hierarchy" icon={GraduationCap}>
+  <SelectField
+    label="Faculty / School"
+    id="faculty"
+    value={academic.faculty}
+    onChange={handleChange}
+    options={[
+      { value: '', label: 'Select Faculty' },
+      ...Object.entries(PROGRAM_DATA).map(([key, info]) => ({
+        value: key,
+        label: info.label
+      }))
+    ]}
+  />
+
+  <SelectField
+    label="Department"
+    id="department"
+    value={academic.department}
+    onChange={handleChange}
+    options={[
+      { value: '', label: 'Select Department' },
+      ...departmentOptions
+    ]}
+    disabled={!academic.faculty} // Disable if no faculty selected
+  />
+
+  <SelectField
+    label="Program Level"
+    id="programLevel"
+    value={academic.programLevel}
+    onChange={handleChange}
+    options={[
+      { value: '', label: 'Select Level' },
+      { value: 'ug', label: 'UG' },
+      { value: 'pg', label: 'PG' },
+      { value: 'phd', label: 'PhD' },
+    ]}
+  />
+
+  <SelectField
+    label="Degree Name"
+    id="degreeName"
+    value={academic.degreeName}
+    onChange={handleChange}
+    options={[
+      { value: '', label: 'Select Degree' },
+      ...degreeOptions
+    ]}
+    disabled={!academic.department} // Disable if no department selected
+  />
+</FormSection>
  <FormSection title="Research & Specialization" icon={Search}>
         <div className="md:col-span-2">
           <InputField
@@ -296,8 +335,8 @@ const isLoading = useStore((state) => state.isLoading);
       <FormSection title="Fellowship Information" icon={Crown}>
         <InputField
           label="Fellowship Letter Number"
-          id="fellowshipNo"
-          value={academic.fellowshipNo}
+          id="fellowshipLetterNumber"
+          value={academic.fellowshipLetterNumber}
           onChange={handleChange}
           placeholder="F-882/2024/KU"
         />

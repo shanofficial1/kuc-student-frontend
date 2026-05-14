@@ -1,269 +1,699 @@
-import React, { useState, useRef } from "react";
-import { Download, Settings2, Search, School, Landmark, PenTool } from "lucide-react";
+import React, { useState } from "react";
+import {
+  Download,
+  Settings2,
+} from "lucide-react";
+
 import { useStore } from "../store";
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
 import { useNavigate } from "react-router-dom";
 import { SelectField } from "../components/FormWrapper";
+import pdflogo from "../assets/pdflogo.png";
 
 export default function CECardPage() {
-  const isSubmitted = useStore((state) => state.isSubmitted);
-  const pdfRef = useRef();
-  const [selectedSem, setSelectedSem] = useState("Semester IV");
   const navigate = useNavigate();
-  const marksData = useStore((state) => state.marksData);
+
+  const marksData = useStore(
+    (state) => state.marksData
+  );
+
+  const [selectedSem, setSelectedSem] =
+    useState("Semester IV");
 
   const semesterOptions = [
-    { label: "All Semesters", value: "all" },
-    { label: "Semester IV", value: "Semester IV" },
-    { label: "Semester III", value: "Semester III" },
-    { label: "Semester II", value: "Semester II" },
-    { label: "Semester I", value: "Semester I" },
+    {
+      label: "All Semesters",
+      value: "all",
+    },
+    {
+      label: "Semester IV",
+      value: "Semester IV",
+    },
+    {
+      label: "Semester III",
+      value: "Semester III",
+    },
+    {
+      label: "Semester II",
+      value: "Semester II",
+    },
+    {
+      label: "Semester I",
+      value: "Semester I",
+    },
   ];
 
-  const displayCEs = selectedSem === "all" 
-    ? Object.values(marksData).flat() 
-    : marksData[selectedSem] || [];
+  const semesterGroups =
+    selectedSem === "all"
+      ? Object.entries(marksData)
+      : [
+          [
+            selectedSem,
+            marksData[selectedSem] || [],
+          ],
+        ];
 
-  const handleDownloadPDF = async () => {
-    const element = pdfRef.current;
-    const options = {
-      scale: 2,
-      useCORS: true,
-      allowTaint: true,
-      backgroundColor: "#ffffff",
-      onclone: (clonedDoc) => {
-        const captured = clonedDoc.querySelector('[data-pdf-content="true"]');
-        if (captured) {
-          const allElements = captured.querySelectorAll("*");
-          allElements.forEach((el) => {
-            const style = window.getComputedStyle(el);
-            if (style.color.includes("oklch")) el.style.color = "#1e293b";
-            if (style.borderColor.includes("oklch")) el.style.borderColor = "#e2e8f0";
-            if (style.backgroundColor.includes("oklch")) el.style.backgroundColor = "#ffffff";
-          });
-        }
-      },
-    };
+  const displayCEs =
+    selectedSem === "all"
+      ? Object.values(marksData).flat()
+      : marksData[selectedSem] || [];
 
+  // PDF DOWNLOAD
+ const handleDownloadPDF =
+  async () => {
     try {
-      const canvas = await html2canvas(element, options);
-      const imgData = canvas.toDataURL("image/png");
-      const pdf = new jsPDF("p", "mm", "a4");
-      const width = pdf.internal.pageSize.getWidth();
-      const height = (canvas.height * width) / canvas.width;
-      
-      pdf.addImage(imgData, "PNG", 0, 0, width, height);
-      pdf.save(`CECard_${selectedSem.replace(/\s+/g, '_')}.pdf`);
+      const page =
+        document.getElementById(
+          "pdf-page-all"
+        );
+
+      if (!page) return;
+
+      const canvas =
+        await html2canvas(page, {
+          scale: 2,
+          useCORS: true,
+          backgroundColor:
+            "#ffffff",
+        });
+
+      const imgData =
+        canvas.toDataURL(
+          "image/png"
+        );
+
+      const pdf =
+        new jsPDF(
+          "p",
+          "mm",
+          "a4"
+        );
+
+      const pdfWidth =
+        pdf.internal.pageSize.getWidth();
+
+      const pdfHeight =
+        (canvas.height *
+          pdfWidth) /
+        canvas.width;
+
+      let heightLeft =
+        pdfHeight;
+
+      let position = 0;
+
+      pdf.addImage(
+        imgData,
+        "PNG",
+        0,
+        position,
+        pdfWidth,
+        pdfHeight
+      );
+
+      heightLeft -= 297;
+
+      while (
+        heightLeft > 0
+      ) {
+        position =
+          heightLeft -
+          pdfHeight;
+
+        pdf.addPage();
+
+        pdf.addImage(
+          imgData,
+          "PNG",
+          0,
+          position,
+          pdfWidth,
+          pdfHeight
+        );
+
+        heightLeft -= 297;
+      }
+
+      pdf.save(
+        "Kannur_University_CE_Card.pdf"
+      );
     } catch (err) {
-      console.error("PDF Generation Error:", err);
+      console.error(
+        "PDF Error:",
+        err
+      );
     }
   };
-
   return (
-    <main className="max-w-[1024px] mx-auto px-4 md:px-6 py-6 md:py-10">
-      {/* HEADER SECTION */}
+    <main className="max-w-[1200px] mx-auto px-4 md:px-6 py-6 md:py-10">
+      {/* HEADER */}
       <header className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-10">
         <div>
-          <h1 className="text-2xl md:text-3xl font-bold text-primary">CE Card / Mark List</h1>
+          <h1 className="text-2xl md:text-3xl font-black text-[#003e7a]">
+            Grade Card / Mark List
+          </h1>
+
           <p className="text-sm text-slate-500 mt-1">
-            Official performance record: {selectedSem === "all" ? "Consolidated" : selectedSem}
+            Official academic
+            performance record
           </p>
         </div>
-        <div className="flex flex-col sm:flex-row gap-4 items-stretch md:items-end">
+
+        <div className="flex flex-col sm:flex-row gap-3 items-stretch md:items-end">
           <div className="w-full sm:w-56">
             <SelectField
               label="Select Semester"
               options={semesterOptions}
               value={selectedSem}
-              onChange={(e) => setSelectedSem(e.target.value)}
+              onChange={(e) =>
+                setSelectedSem(
+                  e.target.value
+                )
+              }
             />
           </div>
+
           <div className="flex gap-2">
+            {/* CORRECTION */}
             <button
-              onClick={() => navigate("/mark-request")}
-              className="flex-1 flex items-center justify-center gap-2 bg-slate-100 text-slate-700 px-4 py-2.5 rounded-lg font-bold text-xs md:text-sm hover:bg-slate-200 transition-all border border-slate-200"
+              onClick={() =>
+                navigate("/mark-request")
+              }
+              className="
+                flex items-center justify-center gap-2
+                bg-slate-100
+                border border-slate-200
+                text-slate-700
+                px-4 py-2
+                rounded-xl
+                font-semibold
+                text-sm
+                hover:bg-slate-200
+                transition-all
+                h-[42px]
+              "
             >
-              <Settings2 className="w-4 h-4" /> Correction
+              <Settings2 className="w-4 h-4" />
+              Correction
             </button>
+
+            {/* DOWNLOAD */}
             <button
               onClick={handleDownloadPDF}
-              className="flex-1 flex items-center justify-center gap-2 bg-[#003e7a] text-white px-4 md:px-6 py-2.5 rounded-lg font-bold text-xs md:text-sm hover:opacity-90 transition-all"
+              className="
+                flex items-center justify-center gap-2
+                bg-[#003e7a]
+                text-white
+                px-5
+                py-2
+                rounded-xl
+                font-semibold
+                text-sm
+                shadow-md
+                hover:bg-[#004b94]
+                transition-all
+                h-[42px]
+              "
             >
-              <Download className="w-4 h-4" /> Download PDF
+              <Download className="w-4 h-4" />
+              Download PDF
             </button>
           </div>
         </div>
       </header>
 
-      {/* DASHBOARD TABLE - MOBILE OPTIMIZED */}
-    {/* DASHBOARD TABLE - ULTRA COMPACT VIEW */}
-      <div className="bg-white border border-slate-200 rounded-xl shadow-sm mb-16">
-        <table className="w-full table-fixed border-collapse">
-          <thead className="bg-slate-50 border-b border-slate-200">
-            <tr>
-              {/* Using fixed widths to force the table to stay within bounds */}
-              <th className="w-[35%] px-2 py-3 text-[9px] font-bold text-slate-400 uppercase tracking-tighter">Subject</th>
-              <th className="w-[18%] px-1 py-3 text-center text-[9px] font-bold text-slate-400 uppercase tracking-tighter">Internal</th>
-              <th className="w-[18%] px-1 py-3 text-center text-[9px] font-bold text-slate-400 uppercase tracking-tighter">External</th>
-              <th className="w-[18%] px-1 py-3 text-center text-[9px] font-bold text-slate-400 uppercase tracking-tighter">Total</th>
-              <th className="w-[11%] px-1 py-3 text-center text-[9px] font-bold text-slate-400 uppercase tracking-tighter">Res</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-slate-100">
-            {displayCEs.map((g, i) => {
-              const iMax = g.internalMax || 20;
-              const eMax = g.externalMax || 80;
-              const tMax = iMax + eMax;
-              const tScored = Number(g.CE) + Number(g.TE);
-              const isPass = g.result?.toLowerCase() === 'pass';
+      {/* TABLES */}
+<div className="space-y-6 md:space-y-10">
+  {semesterGroups.map(
+    (
+      [
+        semesterName,
+        semesterData,
+      ],
+      index
+    ) => (
+      <div
+        key={index}
+        className="bg-white border border-slate-200 rounded-2xl md:rounded-3xl shadow-sm overflow-hidden"
+      >
+        {/* HEADER */}
+        <div className="px-4 md:px-6 py-4 border-b border-slate-200 bg-slate-50">
+          <h2 className="text-base md:text-xl font-black text-[#003e7a] uppercase tracking-wide">
+            {semesterName}
+          </h2>
 
-              return (
-                <tr key={i} className="hover:bg-slate-50 transition-colors">
-                  {/* Subject Cell */}
-                  <td className="px-2 py-2 overflow-hidden">
-                    <p className="text-[10px] md:text-sm font-bold text-[#003e7a] truncate">{g.code}</p>
-                    <p className="text-[9px] md:text-xs text-slate-400 truncate leading-tight">{g.title}</p>
-                  </td>
+         
+        </div>
 
-                  {/* Marks Cells - No spaces around "/" to save width */}
-                  <td className="px-1 py-2 text-center">
-                    <div className="flex flex-col md:flex-row items-center justify-center text-[10px] md:text-sm">
-                      <span className="font-bold">{g.CE}</span>
-                      <span className="hidden md:inline text-slate-300 mx-0.5">/</span>
-                      <span className="text-[8px] md:text-[10px] text-slate-400">{iMax}</span>
-                    </div>
-                  </td>
+        {/* TABLE */}
+        <div className="overflow-hidden">
+         <table className="w-full border-collapse table-fixed">
+  <thead>
+    <tr className="bg-slate-50 border-b border-slate-200">
+      <th className="w-[18%] px-2 md:px-4 py-4 text-left text-[10px] md:text-xs font-bold uppercase tracking-wide text-slate-500">
+        Code
+      </th>
 
-                  <td className="px-1 py-2 text-center">
-                    <div className="flex flex-col md:flex-row items-center justify-center text-[10px] md:text-sm">
-                      <span className="font-bold">{g.TE}</span>
-                      <span className="hidden md:inline text-slate-300 mx-0.5">/</span>
-                      <span className="text-[8px] md:text-[10px] text-slate-400">{eMax}</span>
-                    </div>
-                  </td>
+      <th className="w-[26%] px-2 md:px-4 py-4 text-left text-[10px] md:text-xs font-bold uppercase tracking-wide text-slate-500">
+        Title
+      </th>
 
-                  <td className="px-1 py-2 text-center">
-                    <div className="flex flex-col md:flex-row items-center justify-center text-[10px] md:text-sm">
-                      <span className="font-black text-[#003e7a]">{tScored}</span>
-                      <span className="hidden md:inline text-slate-300 mx-0.5">/</span>
-                      <span className="text-[8px] md:text-[10px] text-slate-400">{tMax}</span>
-                    </div>
-                  </td>
+      <th className="w-[9%] px-1 py-4 text-center text-[10px] md:text-xs font-bold uppercase tracking-wide text-slate-500">
+        I
+      </th>
 
-                  {/* Result Cell - Compact Dot/Char */}
-                  <td className="px-1 py-2 text-center">
-                    <div className={`mx-auto w-5 h-5 flex items-center justify-center rounded text-[9px] font-black ${
-                      isPass ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
-                    }`}>
-                      {g.result?.charAt(0).toUpperCase()}
-                    </div>
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      </div>
+      <th className="w-[9%] px-1 py-4 text-center text-[10px] md:text-xs font-bold uppercase tracking-wide text-slate-500">
+        O
+      </th>
 
- {/* OFFICIAL EXPORT PREVIEW - INCREASED TOP SPACING */}
-      <section className="mt-12 overflow-hidden">
-        <h2 className="text-xl font-bold text-slate-800 mb-6 flex items-center gap-2">
-          <Search className="w-5 h-5 text-[#003e7a]" /> Preview Official Export
-        </h2>
-        
-        {/* Increased pt-32 to give plenty of room for the scaled header */}
-        <div className="bg-slate-100 pt-32 pb-12 md:pt-16 md:pb-16 rounded-xl -mx-4 md:mx-0 flex justify-center items-start overflow-hidden">
-          
-          {/* Adjusted my-[-220px] on mobile to prevent the top from being eaten by the title */}
-<div className="relative w-[794px] shrink-0 origin-top scale-[0.42] sm:scale-[0.6] md:scale-[0.8] lg:scale-100 
-  mt-[-100px] mb-[-680px] 
-  sm:mt-[-100px] sm:mb-[-400px] 
-  md:mt-[-40px] md:mb-[-150px] 
-  lg:my-0 transition-transform duration-300">            <div
-              ref={pdfRef}
-              data-pdf-content="true"
-              className="bg-white w-full min-h-[1123px] p-12 relative flex flex-col shadow-2xl"
-              style={{ color: '#1e293b', backgroundColor: '#ffffff' }}
+      <th className="w-[9%] px-1 py-4 text-center text-[10px] md:text-xs font-bold uppercase tracking-wide text-slate-500">
+        E
+      </th>
+
+      <th className="w-[9%] px-1 py-4 text-center text-[10px] md:text-xs font-bold uppercase tracking-wide text-slate-500">
+        O
+      </th>
+
+      <th className="w-[9%] px-1 py-4 text-center text-[10px] md:text-xs font-bold uppercase tracking-wide text-slate-500">
+        T
+      </th>
+
+      <th className="w-[9%] px-1 py-4 text-center text-[10px] md:text-xs font-bold uppercase tracking-wide text-slate-500">
+        R
+      </th>
+    </tr>
+  </thead>
+
+  <tbody className="divide-y divide-slate-100">
+    {semesterData.map((g, i) => {
+      const iMax =
+        g.internalMax || 20;
+
+      const eMax =
+        g.externalMax || 80;
+
+      const total =
+        Number(g.CE) +
+        Number(g.TE);
+
+      const isPass =
+        g.result?.toLowerCase() ===
+        "pass";
+
+      return (
+        <tr
+          key={i}
+          className="hover:bg-slate-50 transition-colors"
+        >
+          {/* CODE */}
+          <td className="px-2 md:px-4 py-6 text-[12px] md:text-sm font-bold text-[#003e7a] align-middle">
+            {g.code}
+          </td>
+
+          {/* TITLE */}
+          <td className="px-2 md:px-4 py-6 text-[11px] md:text-sm text-slate-700 leading-snug align-middle">
+            <div className="break-words">
+              {g.title}
+            </div>
+          </td>
+
+          {/* INTERNAL */}
+          <td className="px-1 py-6 text-center text-[12px] md:text-sm font-semibold align-middle">
+            {g.CE}
+          </td>
+
+          {/* INTERNAL OUT OF */}
+          <td className="px-1 py-6 text-center text-[12px] md:text-sm text-slate-400 font-semibold align-middle">
+            {iMax}
+          </td>
+
+          {/* EXTERNAL */}
+          <td className="px-1 py-6 text-center text-[12px] md:text-sm font-semibold align-middle">
+            {g.TE}
+          </td>
+
+          {/* EXTERNAL OUT OF */}
+          <td className="px-1 py-6 text-center text-[12px] md:text-sm text-slate-400 font-semibold align-middle">
+            {eMax}
+          </td>
+
+          {/* TOTAL */}
+          <td className="px-1 py-6 text-center text-[13px] md:text-sm font-black text-[#003e7a] align-middle">
+            {total}
+          </td>
+
+          {/* RESULT */}
+          <td className="px-1 py-6 text-center align-middle">
+            <span
+              className={`inline-flex items-center justify-center w-8 h-8  text-[11px] md:text-xs font-black `}
             >
-              {/* Watermark */}
-              <div className="absolute inset-0 flex items-center justify-center opacity-[0.03] pointer-events-none">
-                <School size={400} color="#000000" />
-              </div>
+              {isPass ? "P" : "F"}
+            </span>
+          </td>
+        </tr>
+      );
+    })}
+  </tbody>
+</table>
+        </div>
 
-              {/* University Header */}
-              <div className="text-center border-b-2 border-slate-900 pb-6 mb-8">
-                <Landmark size={60} color="#003e7a" className="mx-auto mb-4" />
-                <h3 className="text-2xl font-black uppercase" style={{ color: '#003e7a' }}>Kannur University</h3>
-                <p className="text-[10px] font-bold text-slate-500 uppercase">Established by the Act 22 of 1996</p>
-                <div className="mt-6 bg-slate-900 text-white py-1.5 px-6 inline-block rounded text-[10px] font-bold uppercase tracking-widest">
-                  Official CE Card - {String(selectedSem).toUpperCase()}
-                </div>
-              </div>
+        {/* GPA */}
+        <div className="bg-slate-50 border-t border-slate-200 px-4 md:px-8 py-5 md:py-8">
+          <div className="flex gap-8 md:gap-16">
+            <div>
+              <p className="text-[10px] md:text-xs uppercase tracking-wider text-slate-400 mb-1 md:mb-2">
+                Semester GPA
+              </p>
 
-              {/* ... Rest of your metadata and table code ... */}
+              <h3 className="text-3xl md:text-5xl font-black text-[#003e7a] leading-none">
+                8.65
+              </h3>
+            </div>
 
-              <div className="grid grid-cols-2 gap-y-4 mb-10 text-[13px]">
-                <p><span className="text-slate-400 font-bold uppercase mr-2">Student:</span> Arjun K. Varma</p>
-                <p className="text-right"><span className="font-bold text-slate-400 uppercase mr-2">Reg No:</span> KU21SIT042</p>
-                <p><span className="text-slate-400 font-bold uppercase mr-2">Date:</span> {new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }).toUpperCase()}</p>
-                <p className="text-right"><span className="text-slate-400 font-bold uppercase mr-2">Status:</span> PUBLISHED</p>
-              </div>
+            <div>
+              <p className="text-[10px] md:text-xs uppercase tracking-wider text-slate-400 mb-1 md:mb-2">
+                Cumulative GPA
+              </p>
 
-              <table className="w-full border-2 border-slate-900 text-[11px] mb-10 table-fixed">
-                <thead>
-                  <tr className="bg-slate-50 border-b-2 border-slate-900 font-bold text-center uppercase">
-                    <td className="border-r border-slate-900 p-2 text-left w-[35%]" rowSpan="2">Course</td>
-                    <td className="border-r border-slate-900 p-2 w-[20%]" colSpan="2">Internal</td>
-                    <td className="border-r border-slate-900 p-2 w-[20%]" colSpan="2">External</td>
-                    <td className="border-r border-slate-900 p-2 w-[15%]" colSpan="2">Total</td>
-                    <td className="p-2 w-[10%]" rowSpan="2">Res</td>
-                  </tr>
-                  <tr className="bg-slate-50 border-b-2 border-slate-900 font-bold text-[8px]">
-                    <td className="border-r border-slate-900 p-1">SC</td>
-                    <td className="border-r border-slate-900 p-1">MX</td>
-                    <td className="border-r border-slate-900 p-1">SC</td>
-                    <td className="border-r border-slate-900 p-1">MX</td>
-                    <td className="border-r border-slate-900 p-1">SC</td>
-                    <td className="border-r border-slate-900 p-1">MX</td>
-                  </tr>
-                </thead>
-                <tbody>
-                  {displayCEs.map((g, i) => {
-                    const iMax = g.internalMax || 20;
-                    const eMax = g.externalMax || 80;
-                    const tScored = Number(g.CE) + Number(g.TE);
-                    return (
-                      <tr key={i} className="border-b border-slate-300 text-center uppercase">
-                        <td className="border-r border-slate-900 p-2 text-left truncate font-bold">{g.code}</td>
-                        <td className="border-r border-slate-900 p-2">{g.CE}</td>
-                        <td className="border-r border-slate-900 p-2 text-slate-400">{iMax}</td>
-                        <td className="border-r border-slate-900 p-2">{g.TE}</td>
-                        <td className="border-r border-slate-900 p-2 text-slate-400">{eMax}</td>
-                        <td className="border-r border-slate-900 p-2 font-black">{tScored}</td>
-                        <td className="border-r border-slate-900 p-2 text-slate-400">{iMax + eMax}</td>
-                        <td className="p-2 font-black">{g.result?.charAt(0)}</td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-
-              <div className="mt-auto flex justify-between items-end border-t border-slate-200 pt-8">
-                <div className="text-[10px] space-y-1">
-                  <p className="font-black text-slate-900">SGPA: 8.65 | CGPA: 8.42</p>
-                  <p className="text-slate-400 italic">Digitally generated. Verify at university portal.</p>
-                </div>
-                <div className="text-center w-32">
-                  <div className="border-t border-slate-900 pt-1 text-[9px] font-black uppercase">
-                    Controller of Exams
-                  </div>
-                </div>
-              </div>
+              <h3 className="text-3xl md:text-5xl font-black text-[#003e7a] leading-none">
+                8.42
+              </h3>
             </div>
           </div>
         </div>
-      </section>
+      </div>
+    )
+  )}
+</div>
+
+     {/* HIDDEN PDF */}
+{/* HIDDEN PDF */}
+<div
+  className="fixed left-[-99999px] top-0"
+  style={{
+    background: "#ffffff",
+  }}
+>
+  <div
+    id="pdf-page-all"
+    className="w-[1200px] bg-white px-12 py-10"
+    style={{
+      background: "#ffffff",
+      color: "#000000",
+      fontFamily:
+        "Arial, sans-serif",
+    }}
+  >
+    {/* TOP HEADER */}
+    <div className="mb-10">
+      {/* UNIVERSITY */}
+<div className="relative mb-16">
+
+  {/* LOGO */}
+  <div className="flex justify-center mb-4">
+ <img
+  src={pdflogo}
+  alt="Kannur University Logo"
+  className="h-[95px] w-auto mx-auto"
+  style={{
+    objectFit: "contain",
+  }}
+/>
+  </div>
+
+  {/* UNIVERSITY NAME */}
+  <div className="text-center">
+    <h1 className="text-[22px] font-black uppercase tracking-wide">
+      Kannur University
+    </h1>
+
+
+  </div>
+
+  {/* DATE */}
+  <div className="absolute right-0 top-0 text-[12px] text-right">
+    <p className="font-semibold">
+      Date
+    </p>
+
+    <p>
+      {new Date().toLocaleDateString(
+        "en-GB"
+      )}
+    </p>
+  </div>
+</div>
+
+      {/* TITLE */}
+      <div className="text-center mb-12">
+        <h2 className="text-[28px] font-black uppercase tracking-wide">
+          Mark
+          Card
+        </h2>
+
+        <p className="text-[20px] font-bold mt-2">
+          Master of Computer
+          Application
+        </p>
+      </div>
+
+      {/* STUDENT DETAILS */}
+      <div className="flex justify-between text-[14px] mb-8">
+        {/* LEFT */}
+        <div className="space-y-3">
+          <div className="flex gap-3">
+            <span className="font-semibold w-[90px]">
+              Name :
+            </span>
+
+            <span className="font-black uppercase">
+              SHAN. A
+            </span>
+          </div>
+
+          <div className="flex gap-3">
+            <span className="font-semibold w-[90px]">
+              College :
+            </span>
+
+            <span className="font-black">
+              DEPARTMENT OF INFORMATION TECHNOLOGY, KANNUR UNIVERSITY
+            </span>
+          </div>
+        </div>
+
+        {/* RIGHT */}
+        <div className="space-y-3 text-right">
+          <div className="flex gap-3 justify-end">
+            <span className="font-semibold">
+              Reg. No. :
+            </span>
+
+            <span className="font-black uppercase">
+              IT25GMCAD07
+            </span>
+          </div>
+
+          <div className="flex gap-3 justify-end">
+            <span className="font-semibold">
+              Year of Study :
+            </span>
+
+            <span className="font-black">
+              2025 - 2027
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    {/* ALL SEMESTERS */}
+    {semesterGroups.map(
+      (
+        [
+          semesterName,
+          semesterData,
+        ],
+        semesterIndex
+      ) => (
+        <div
+          key={semesterIndex}
+          className="mb-4"
+        >
+          {/* SEMESTER HEADING */}
+          <div className="border border-black border-b-0 p-3 text-center text-[20px] font-black">
+            {semesterName}
+          </div>
+
+          {/* TABLE */}
+          <table
+            className="w-full border-collapse text-[13px]"
+            style={{
+              border:
+                "1px solid black",
+            }}
+          >
+            <thead>
+              <tr>
+                <th className="border border-black p-2">
+                  Course Code
+                </th>
+
+                <th className="border border-black p-2">
+                  Course Title
+                </th>
+
+                <th className="border border-black p-2">
+                  Cr.
+                </th>
+
+                <th className="border border-black p-2">
+                  Max.
+                </th>
+
+                <th className="border border-black p-2">
+                  CE
+                </th>
+
+                <th className="border border-black p-2">
+                  ESE
+                </th>
+
+                <th className="border border-black p-2">
+                  Total
+                </th>
+
+                <th className="border border-black p-2">
+                  GP
+                </th>
+
+                <th className="border border-black p-2">
+                  G
+                </th>
+
+                <th className="border border-black p-2">
+                  CP
+                </th>
+
+                <th className="border border-black p-2">
+                  Result
+                </th>
+              </tr>
+            </thead>
+
+            <tbody>
+              {semesterData.map(
+                (g, i) => {
+                  const internalMax =
+                    g.internalMax ||
+                    20;
+
+                  const externalMax =
+                    g.externalMax ||
+                    80;
+
+                  const totalMax =
+                    internalMax +
+                    externalMax;
+
+                  const total =
+                    Number(g.CE) +
+                    Number(g.TE);
+
+                  const credits =
+                    g.credits || 4;
+
+                  const gp = (
+                    total / 10
+                  ).toFixed(1);
+
+                  let grade = "C";
+
+                  if (total >= 90)
+                    grade = "O";
+                  else if (
+                    total >= 80
+                  )
+                    grade = "A+";
+                  else if (
+                    total >= 70
+                  )
+                    grade = "A";
+                  else if (
+                    total >= 60
+                  )
+                    grade = "B+";
+                  else if (
+                    total >= 50
+                  )
+                    grade = "B";
+
+                  const cp = (
+                    credits *
+                    Number(gp)
+                  ).toFixed(1);
+
+                  return (
+                    <tr key={i}>
+                      <td className="border border-black p-2 font-bold">
+                        {g.code}
+                      </td>
+
+                      <td className="border border-black p-2">
+                        {g.title}
+                      </td>
+
+                      <td className="border border-black p-2 text-center">
+                        {credits}
+                      </td>
+
+                      <td className="border border-black p-2 text-center">
+                        {totalMax}
+                      </td>
+
+                      <td className="border border-black p-2 text-center">
+                        {g.CE}
+                      </td>
+
+                      <td className="border border-black p-2 text-center">
+                        {g.TE}
+                      </td>
+
+                      <td className="border border-black p-2 text-center font-black">
+                        {total}
+                      </td>
+
+                      <td className="border border-black p-2 text-center">
+                        {gp}
+                      </td>
+
+                      <td className="border border-black p-2 text-center font-bold">
+                        {grade}
+                      </td>
+
+                      <td className="border border-black p-2 text-center">
+                        {cp}
+                      </td>
+
+                      <td className="border border-black p-2 text-center font-bold">
+                        {g.result ===
+                        "Pass"
+                          ? "P"
+                          : "F"}
+                      </td>
+                    </tr>
+                  );
+                }
+              )}
+            </tbody>
+          </table>
+        </div>
+      )
+    )}
+  </div>
+</div>
+
     </main>
   );
 }

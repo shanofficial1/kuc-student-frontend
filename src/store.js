@@ -14,20 +14,22 @@ const initialState = {
   token: null,
 
   academic: {
-    admissionAppNo: "",
-    enrollmentNo: "",
-    rollNo: "",
+    admissionApplicationNumber: "",
+    universityEnrollmentNumber: "",
+    rollNumber: "",
     faculty: "",
     department: "",
     programLevel: "",
     degreeName: "",
     year: "",
     semester: "",
+    specialization: "",
     batch: "",
     academicCycle: "",
     modeOfStudy: "",
     admissionCategory: "",
-    fellowshipNo: "",
+    fellowshipLetterNumber: "",
+    fellowshipLetterUrl: "",
   },
 
   personal: {

@@ -31,7 +31,7 @@ export default function RequestUnlockPage() {
     },
     academic: { 
       label: "Academic Records", 
-      fields: ["rollNo", "registrationNumber", "admissionDate", "currentSemester", "department", "batch"] 
+      fields: ["rollNumber", "registrationNumber", "admissionDate", "currentSemester", "department", "batch"] 
     },
     education: { 
       label: "Education History", 

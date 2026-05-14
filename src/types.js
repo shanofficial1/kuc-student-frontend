@@ -1,9 +1,9 @@
 // This replaces TypeScript interfaces with default state objects
 
 export const academicDefault = {
-  admissionAppNo: "",
-  enrollmentNo: "",
-  rollNo: "",
+  admissionApplicationNumber: "",
+  universityEnrollmentNumber: "",
+  rollNumber: "",
   faculty: "",
   department: "",
   programLevel: "",
@@ -14,7 +14,7 @@ export const academicDefault = {
   academicCycle: "",
   modeOfStudy: "",
   admissionCategory: "",
-  fellowshipNo: "",
+  fellowshipLetterNumber: "",
 };
 
 export const personalDefault = {
