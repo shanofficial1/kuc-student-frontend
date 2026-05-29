@@ -311,14 +311,15 @@ export const useStore = create(
         }),
 
       /* LOGOUT */
-      logout: () =>
-        set({
-          isLoggedIn: false,
-          user: null,
-          token: null,
-        }),
-        
+  logout: () => {
+  set({
+    ...initialState,
 
+    isLoggedIn: false,
+    user: null,
+    token: null,
+  });
+},
       /* LOADING */
       setLoading: (status) =>
         set({
@@ -474,6 +475,7 @@ fetchStudent: async () => {
     const token = get().token;
 
     if (!token) return;
+    console.log("TOKEN", token);
 
     const res = await fetch(
       `${import.meta.env.VITE_SERVER}/api/student/profile`,
@@ -598,8 +600,20 @@ fetchStudent: async () => {
       contact:
         clean(data.contact_details),
 
-      health:
-        clean(data.health_details),
+      health: {
+  ...clean(data.health_details),
+ vaccinationDoc:
+    data.health_details?.vaccinationDoc || {},
+
+  disabilityCertificate:
+    data.health_details?.disabilityCertificate || {},
+  disabilityType:
+    data.health_details?.disabilityDetails?.disabilityType || "",
+
+  disabilityPercentage:
+    data.health_details?.disabilityDetails?.percentage || "",
+
+},
 
       family:
         clean(data.family_details),
@@ -620,7 +634,7 @@ fetchStudent: async () => {
         clean(data.mentor_details),
 
       documents:
-        clean(data.documents_details),
+  clean(data.documents),
 
     });
 
@@ -630,12 +644,22 @@ fetchStudent: async () => {
 
   } catch (err) {
 
-    console.error(
-      "Fetch error:",
-      err
-    );
+  console.error(
+    "Fetch error:",
+    err
+  );
 
-  }
+  set({
+
+    ...initialState,
+
+    token: get().token,
+    user: get().user,
+    isLoggedIn: true,
+
+  });
+
+}
 
 },
 

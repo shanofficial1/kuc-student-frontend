@@ -31,10 +31,7 @@ export default function Navbar() {
       document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // 👉 Replace later with real user from backend
-  const user = {
-    email: "student@test.com",
-  };
+  const user = useStore((state) => state.user);
 
   return (
     <header className="bg-white border-b border-border-subtle sticky top-0 z-50">
@@ -69,15 +66,17 @@ export default function Navbar() {
                 <div className="bg-white border border-border-subtle rounded-xl shadow-xl py-2 w-52 md:w-56">
 
                   {/* HEADER */}
-                  <div className="px-4 py-3 border-b border-slate-100">
-                    <p className="text-[10px] font-semibold text-slate-400 uppercase">
-                      Signed in as
-                    </p>
-                    <p className="text-sm font-semibold text-slate-700 truncate">
-                      {user.email}
-                    </p>
-                  </div>
+                 <div className="px-4 py-3 border-b border-slate-100">
+  <p className="text-[10px] font-semibold text-slate-400 uppercase">
+    Signed in as
+  </p>
 
+  
+
+  <p className="text-xs text-slate-500 truncate">
+    {user?.email || ""}
+  </p>
+</div>
                   {/* MENU ITEMS */}
 
                   <Link

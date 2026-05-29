@@ -12,51 +12,177 @@ export default function ContactForm() {
   const contact = useStore((state) => state.contact);
   const updateSection = useStore((state) => state.updateSection);
 
+
+  const saveAndRefresh =
+  useStore((s) => s.saveAndRefresh);
+
+const handleSave = async () => {
+
+  const contact =
+    useStore.getState().contact;
+
+  const payload = {
+
+    personalEmail:
+      contact.personalEmail,
+
+    institutionalEmail:
+      contact.institutionalEmail,
+
+    personalMobile: {
+    countryCode:
+      contact.personalMobile?.countryCode || "+91",
+    number:
+      contact.personalMobile?.number || "",
+  },
+
+
+     whatsappNumber: {
+    countryCode:
+      contact.whatsappNumber?.countryCode || "+91",
+    number:
+      contact.whatsappNumber?.number || "",
+  },
+
+  isSameAddress: contact.isSameAddress,
+  isSameAsMobile: contact.isSameAsMobile,
+
+      emergencyContact: {
+    ...contact.emergencyContact,
+
+    number: {
+      countryCode:
+        contact.emergencyContact?.number
+          ?.countryCode || "+91",
+
+      number:
+        contact.emergencyContact?.number
+          ?.number || "",
+    },
+  },
+
+    permanentAddress:
+      contact.permanentAddress,
+
+    correspondenceAddress:
+      contact.correspondenceAddress,
+
+    distanceToCampus:
+      contact.distanceToCampus
+
+  };
+
+  const formData =
+    new FormData();
+
+  Object.entries(payload).forEach(
+    ([key, value]) => {
+
+      if (
+        typeof value === "object" &&
+        value !== null
+      ) {
+
+        const appendNested = (
+          obj,
+          prefix
+        ) => {
+
+          Object.entries(obj).forEach(
+            ([k, v]) => {
+
+              if (
+                typeof v === "object" &&
+                v !== null
+              ) {
+
+                appendNested(
+                  v,
+                  `${prefix}[${k}]`
+                );
+
+              } else {
+
+                formData.append(
+                  `${prefix}[${k}]`,
+                  v
+                );
+
+              }
+
+            }
+          );
+
+        };
+
+        appendNested(
+          value,
+          `contact_details[${key}]`
+        );
+
+      } else {
+
+        formData.append(
+          `contact_details[${key}]`,
+          value
+        );
+
+      }
+
+    }
+  );
+
+  await saveAndRefresh(
+    formData,
+    true
+  );
+
+};
+
   /**
    * Helper for updating nested objects in Zustand
    * parent: 'personalMobile', 'permanentAddress', etc.
    * child: 'number', 'city', etc.
    */
   const handleNestedChange = (parent, child, value) => {
-    let val = value;
+  let val = value;
 
-    // PIN Code Masking (3-3 grouping)
-    if (child === "pinCode") {
-      let digits = val.replace(/\D/g, "").slice(0, 6);
-      val = digits.replace(/(\d{3})(?=\d)/g, "$1 ");
-    }
+  if (child === "pinCode") {
+    let digits = val.replace(/\D/g, "").slice(0, 6);
+    val = digits.replace(/(\d{3})(?=\d)/g, "$1 ");
+  }
 
-    const updates = {
-      [parent]: {
-        ...contact[parent],
-        [child]: val,
-      },
-    };
-
-    // Auto-clear dependent fields in nested address
-    if (child === "state") {
-      updates[parent].district = "";
-      updates[parent].city = "";
-    } else if (child === "district") {
-      updates[parent].city = "";
-    }
-
-    // Mirror to correspondence if "Same as Permanent" is checked
-    if (contact.isSameAddress && parent === "permanentAddress") {
-      updates.correspondenceAddress = {
-        ...contact.correspondenceAddress,
-        [child]: val,
-      };
-      if (child === "state") {
-        updates.correspondenceAddress.district = "";
-        updates.correspondenceAddress.city = "";
-      }
-      if (child === "district") updates.correspondenceAddress.city = "";
-    }
-
-    updateSection("contact", updates);
+  const updates = {
+    [parent]: {
+      ...contact[parent],
+      [child]: val,
+    },
   };
 
+  // Address sync
+  if (
+    contact.isSameAddress &&
+    parent === "permanentAddress"
+  ) {
+    updates.correspondenceAddress = {
+      ...contact.correspondenceAddress,
+      [child]: val,
+    };
+  }
+
+  // Mobile sync
+  if (
+    contact.isSameAsMobile &&
+    parent === "personalMobile"
+  ) {
+    updates.whatsappNumber = {
+      ...contact.whatsappNumber,
+      [child]: val,
+    };
+  }
+
+  updateSection("contact", updates);
+};
   // Top-level change handler (Email, Distance)
   const handleChange = (e) => {
     const { id, value } = e.target;
@@ -102,7 +228,7 @@ export default function ContactForm() {
     <FormWrapper
       title="Contact Details"
       description="Please provide your current and permanent contact information for university communications."
-      onSave={() => console.log("Saved Contact:", contact)}
+  onSave={handleSave}
     >
       {/* PRIMARY CONTACT SECTION */}
       <FormSection title="Primary Contact" icon={Phone}>
@@ -140,7 +266,7 @@ export default function ContactForm() {
               <input
                 type="checkbox"
                 disabled={isSubmitted}
-                checked={contact.isSameAsMobile}
+checked={contact.isSameAsMobile || false}
                 onChange={handleWhatsappSync}
                 className="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
               />
@@ -260,7 +386,7 @@ export default function ContactForm() {
             <Mail size={18} className="text-blue-600" /> Correspondence Address
           </h3>
           <label className="flex items-center gap-2 cursor-pointer">
-            <input type="checkbox" checked={contact.isSameAddress} onChange={handleAddressToggle} className="w-4 h-4 rounded border-slate-300" />
+            <input type="checkbox" checked={contact.isSameAddress || false} onChange={handleAddressToggle} className="w-4 h-4 rounded border-slate-300" />
             <span className="text-sm text-slate-500">Same as Permanent</span>
           </label>
         </div>

@@ -8,6 +8,136 @@ export default function HealthForm() {
   const health = useStore((state) => state.health);
   const updateSection = useStore((state) => state.updateSection);
 
+
+
+  const saveAndRefresh =
+  useStore((s) => s.saveAndRefresh);
+
+const handleSave = async () => {
+
+
+ 
+  console.log(
+  "HEALTH STATE",
+  health
+);
+
+console.log(
+  "VACCINATION DOC",
+  health.vaccinationDoc
+);
+
+console.log(
+  "VACCINATION FILE",
+  health.vaccinationFile
+);
+
+
+
+  const formData = new FormData();
+
+  
+if (health.disabilityFile instanceof File) {
+
+  formData.append(
+    "disabilityCertificate",
+    health.disabilityFile
+  );
+
+}
+
+if (health.vaccinationFile instanceof File) {
+
+  formData.append(
+    "vaccinationDoc",
+    health.vaccinationFile
+  );
+
+}
+
+  formData.append(
+    "health_details[bloodGroup]",
+    health.bloodGroup || ""
+  );
+
+  formData.append(
+    "health_details[physicalDimensions][height]",
+    health.physicalDimensions?.height || ""
+  );
+
+  formData.append(
+    "health_details[physicalDimensions][weight]",
+    health.physicalDimensions?.weight || ""
+  );
+
+  formData.append(
+    "health_details[disabilityStatus]",
+    health.disabilityStatus
+  );
+
+  formData.append(
+    "health_details[disabilityDetails][disabilityType]",
+    health.disabilityType || ""
+  );
+
+  formData.append(
+    "health_details[disabilityDetails][percentage]",
+    health.disabilityPercentage || ""
+  );
+
+ 
+
+  formData.append(
+    "health_details[chronicConditions]",
+    health.chronicConditions || ""
+  );
+
+  formData.append(
+    "health_details[regularMedications]",
+    health.regularMedications || ""
+  );
+
+  formData.append(
+    "health_details[insurance][provider]",
+    health.insurance?.provider || ""
+  );
+
+  formData.append(
+    "health_details[insurance][policyNumber]",
+    health.insurance?.policyNumber || ""
+  );
+
+  formData.append(
+    "health_details[vaccinationStatus]",
+    health.vaccinationStatus || ""
+  );
+
+
+
+
+
+console.log(
+  "DISABILITY FILE",
+  health.disabilityFile
+);
+
+console.log(
+  "VACCINATION FILE",
+  health.vaccinationFile
+);
+
+for (const [key, value] of formData.entries()) {
+  console.log(key, value);
+}
+
+
+  await saveAndRefresh(
+    formData,
+    true
+  );
+
+};
+
   /**
    * Helper for updating nested objects (physicalDimensions & insurance)
    */
@@ -62,7 +192,7 @@ export default function HealthForm() {
     <FormWrapper
       title="Health Details"
       description="Update and manage your health records for university requirements."
-      onSave={() => console.log('Final Health Data:', health)}
+  onSave={handleSave}
     >
       {/* BASIC HEALTH INFORMATION */}
       <FormSection title="Basic Health Information" icon={HeartPulse}>
@@ -132,7 +262,9 @@ export default function HealthForm() {
             <InputField 
               label="Disability Type" 
               id="disabilityType" 
-              value={health.disabilityType || ''} 
+              value={
+  health.disabilityDetails?.disabilityType || ""
+}
               onChange={handleChange} 
               placeholder="e.g. Locomotor" 
               disabled={isSubmitted}
@@ -145,19 +277,43 @@ export default function HealthForm() {
                 label="Percentage (%)" 
                 id="disabilityPercentage" 
                 type="number" 
-                value={health.disabilityPercentage || ''} 
-                onChange={handleChange} 
+value={
+  health.disabilityDetails?.percentage || ""
+}                onChange={handleChange} 
                 placeholder="Min 40%" 
                 disabled={isSubmitted}
               />
-              <FileInput
-                label="Disability Certificate"
-                required={true}
-                file={health.certificateName || health.disabilityDoc?.split('/').pop()}
-                error={health.uploadError}
-                disabled={isSubmitted}
-                onChange={(e) => handleFileUpload(e, 'disability')}
-              />
+              
+    <FileInput
+  label="Disability Certificate"
+  required
+  file={
+  health.disabilityCertificate?.name || ""
+}
+  fileUrl={
+    health.disabilityCertificate?.url
+  }
+  error={health.uploadError}
+  disabled={isSubmitted}
+ onChange={(e) => {
+
+  const { file, error } = e.target;
+
+  updateSection("health", {
+
+    disabilityFile: file,
+
+    disabilityCertificate: {
+      name: file?.name,
+      url: ""
+    },
+
+    uploadError: error,
+
+  });
+
+}}
+/>
             </>
           )}
         </div>
@@ -220,14 +376,35 @@ export default function HealthForm() {
         />
 
         {(health.vaccinationStatus === 'Completed' || health.vaccinationStatus === 'Partially') && (
-          <FileInput
-            label="Vaccination Certificate"
-            required={true}
-            file={health.vaccinationDocName || health.vaccinationDoc?.split('/').pop()}
-            error={health.vaccinationUploadError}
-            disabled={isSubmitted}
-            onChange={(e) => handleFileUpload(e, 'vaccination')}
-          />
+      <FileInput
+  label="Vaccination Certificate"
+  file={
+  health.vaccinationDoc?.name || ""
+}
+  fileUrl={
+    health.vaccinationDoc?.url
+  }
+  error={health.vaccinationUploadError}
+  disabled={isSubmitted}
+ onChange={(e) => {
+
+  const { file, error } = e.target;
+
+  updateSection("health", {
+
+    vaccinationFile: file,
+
+    vaccinationDoc: {
+      name: file?.name,
+      url: ""
+    },
+
+    vaccinationUploadError: error,
+
+  });
+
+}}
+/>
         )}
       </FormSection>
     </FormWrapper>

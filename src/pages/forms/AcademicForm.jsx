@@ -292,62 +292,100 @@ const handleSave = async () => {
 
   const academic =
     useStore.getState().academic;
+console.log("ACADEMIC", academic);
 
   const formData =
     new FormData();
 
-  // NORMAL DATA
+
+    for (const pair of formData.entries()) {
+  console.log(pair[0], pair[1]);
+}
+  if (academic.programLevel) {
   formData.append(
-    "academic_details",
-    JSON.stringify({
-
-      admissionApplicationNumber:
-        academic.admissionApplicationNumber,
-
-      universityEnrollmentNumber:
-        academic.universityEnrollmentNumber,
-
-      rollNumber:
-        academic.rollNumber,
-
-      faculty:
-        academic.faculty,
-
-      department:
-        academic.department,
-
-      degreeName:
-        academic.degreeName,
-
-      programLevel:
-        academic.programLevel,
-
-      specialization:
-        academic.specialization,
-
-      academicCycle:
-        academic.academicCycle,
-
-      admissionBatch:
-        academic.admissionBatch,
-
-      admissionCategory:
-        academic.admissionCategory,
-
-      currentSemester:
-        academic.currentSemester,
-
-      currentYear:
-        academic.currentYear,
-
-      fellowshipLetterNumber:
-        academic.fellowshipLetterNumber,
-
-      modeOfStudy:
-        academic.modeOfStudy,
-
-    })
+    "academic_details[programLevel]",
+    academic.programLevel
   );
+}
+
+if (academic.admissionCategory) {
+  formData.append(
+    "academic_details[admissionCategory]",
+    academic.admissionCategory
+  );
+}
+
+if (academic.modeOfStudy) {
+  formData.append(
+    "academic_details[modeOfStudy]",
+    academic.modeOfStudy
+  );
+}
+
+  // NORMAL DATA
+formData.append(
+  "academic_details[admissionApplicationNumber]",
+  academic.admissionApplicationNumber || ""
+);
+
+formData.append(
+  "academic_details[universityEnrollmentNumber]",
+  academic.universityEnrollmentNumber || ""
+);
+
+formData.append(
+  "academic_details[rollNumber]",
+  academic.rollNumber || ""
+);
+
+formData.append(
+  "academic_details[faculty]",
+  academic.faculty || ""
+);
+
+formData.append(
+  "academic_details[department]",
+  academic.department || ""
+);
+
+formData.append(
+  "academic_details[degreeName]",
+  academic.degreeName || ""
+);
+
+
+formData.append(
+  "academic_details[specialization]",
+  academic.specialization || ""
+);
+
+formData.append(
+  "academic_details[academicCycle]",
+  academic.academicCycle || ""
+);
+
+formData.append(
+  "academic_details[admissionBatch]",
+  academic.admissionBatch || ""
+);
+
+
+formData.append(
+  "academic_details[currentSemester]",
+  academic.currentSemester || ""
+);
+
+formData.append(
+  "academic_details[currentYear]",
+  academic.currentYear || ""
+);
+
+formData.append(
+  "academic_details[fellowshipLetterNumber]",
+  academic.fellowshipLetterNumber || ""
+);
+
+
 
 
   console.log(

@@ -215,6 +215,16 @@ export default function PersonalForm() {
 
   const handleSave = async () => {
     const personal = useStore.getState().personal;
+
+console.log(
+  "VACCINATION FILE",
+  health.vaccinationFile
+);
+for (const [k, v] of formData.entries()) {
+  console.log(k, v);
+}
+
+
     const cleanData = (obj) => {
       return Object.fromEntries(
         Object.entries(obj).filter(
@@ -237,6 +247,7 @@ export default function PersonalForm() {
 );  
 
 };
+
 
 const payload = {
 
@@ -288,7 +299,6 @@ passportExpiry:
   convertToISODate(
     personal.passportExpiry
   ),
-
   // 🔥 NESTED OBJECT
 visaDetails: {
 
@@ -327,6 +337,16 @@ expiryDate:
 
 };
 
+
+console.log(
+  "PAYLOAD",
+  payload
+);
+
+console.log(
+  "PAYLOAD PASSPORT EXPIRY",
+  payload.passportExpiry
+);
 
 const cleanedPersonal =
   cleanData(payload);
@@ -398,6 +418,9 @@ console.log(
   personal.birthCertificateDoc instanceof File
 );
 
+
+
+
    if (
   personal.birthCertificateDoc instanceof File
 ) {
@@ -412,6 +435,14 @@ console.log(
     if (personal.visaDoc instanceof File) {
       formData.append("visaDoc", personal.visaDoc);
     }
+
+    formData.append(
+  "personal_details[passportExpiry]",
+  convertToISODate(
+    personal.passportExpiry
+  )
+);
+
     await saveAndRefresh(formData, true);
   };
 

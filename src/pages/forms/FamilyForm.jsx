@@ -11,6 +11,11 @@ export default function FamilyForm() {
   const [openParentPhoneCode, setOpenParentPhoneCode] = useState(false);
   const phoneRef = useRef(null);
 
+
+
+const saveAndRefresh =
+  useStore((s) => s.saveAndRefresh);
+  
   const COUNTRY_CODES = [
     { value: "91", label: "India" },
     { value: "1", label: "USA" },
@@ -46,18 +51,58 @@ export default function FamilyForm() {
     updateSection('family', { [id]: value });
   };
 
-  const handlePhoneChange = (e) => {
-    let val = e.target.value;
-    let digits = val.replace(/\D/g, "").slice(0, 10);
-    val = digits.replace(/(\d{5})(?=\d)/g, "$1 ");
-    
-    updateSection('family', {
+const handlePhoneChange = (e) => {
+
+  let digits =
+    e.target.value
+      .replace(/\D/g, "")
+      .slice(0, 10);
+
+  const formatted =
+    digits.replace(
+      /(\d{5})(?=\d)/g,
+      "$1 "
+    );
+
+  updateSection("family", {
+
+    parentContact: {
+
+      countryCode:
+        family?.parentContact?.countryCode ||
+        "+91",
+
+      number:
+        formatted
+
+    }
+
+  });
+
+};
+
+useEffect(() => {
+
+  if (
+    !family?.parentContact?.countryCode
+  ) {
+
+    updateSection("family", {
+
       parentContact: {
+
         ...family.parentContact,
-        number: val
+
+        countryCode: "+91"
+
       }
+
     });
-  };
+
+  }
+
+}, []);
+
 
   const handleSelectCode = (val) => {
     updateSection('family', {
@@ -69,9 +114,72 @@ export default function FamilyForm() {
     setOpenParentPhoneCode(false);
   };
 
-  const handleSave = () => {
-    console.log('Saved Family Data:', family);
+const handleSave = async () => {
+
+  const payload = {
+
+    family_details: {
+
+      father: {
+        name:
+          family?.father?.name || "",
+
+        qualification:
+          family?.father?.qualification || "",
+
+        occupation:
+          family?.father?.occupation || "",
+      },
+
+      mother: {
+        name:
+          family?.mother?.name || "",
+
+        qualification:
+          family?.mother?.qualification || "",
+
+        occupation:
+          family?.mother?.occupation || "",
+      },
+
+      annualFamilyIncome:
+        family?.annualFamilyIncome || "",
+
+      parentContact: {
+        countryCode:
+          family?.parentContact?.countryCode ||
+          "+91",
+
+        number:
+          family?.parentContact?.number || "",
+      },
+
+      siblings:
+        family?.siblings || [],
+
+      guardian: {
+
+        address: {
+
+          addressLine:
+            family?.guardianResidentialAddress || "",
+
+        }
+
+      }
+
+    }
+
   };
+
+  console.log(
+    "FAMILY PAYLOAD",
+    payload
+  );
+
+  await saveAndRefresh(payload);
+
+};
 
   return (
     <FormWrapper
