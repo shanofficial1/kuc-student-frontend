@@ -1,5 +1,6 @@
-import { Link } from "react-router-dom";
+import { Link,useNavigate } from "react-router-dom";
 import { useStore } from "../store";
+import axios from "axios";
 import {
   School,
   User,
@@ -34,35 +35,72 @@ const residential = useStore((s) => s.residential);
 const documents = useStore((s) => s.documents);
 const mentor = useStore((s) => s.mentor);
 const isSubmitted = useStore((s) => s.isSubmitted);
-
-  const fetchStudent = useStore((s) => s.fetchStudent);
+const logout = useStore((state) => state.logout);
+const setProfileData = useStore((s) => s.setProfileData);
 const editStatus = "none"; 
+const token = useStore((state) => state.token);
+const navigate = useNavigate();
+  const SERVER = import.meta.env.VITE_SERVER;
 
   // 🔥 LOADING STATE
   const [loading, setLoading] = useState(true);
 
+  console.log("token", token);
   // 🔥 FETCH DATA
-  useEffect(() => {
-    const load = async () => {
-      try {
-        await fetchStudent();
-      } catch (err) {
-        console.error(err);
+useEffect(() => {
+
+  if (!token) {
+
+    logout();
+    navigate("/login");
+    return;
+
+  }
+
+  const loadProfile = async () => {
+
+    try {
+
+      const res = await axios.get(
+        `${SERVER}/api/student/profile`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      setProfileData(res.data.data);
+
+    } catch (err) {
+
+      console.error(err);
+
+      if (err.response?.status === 401) {
+
+        logout();
+        navigate("/login");
+
       }
+
+    } finally {
+
       setLoading(false);
-    };
 
-    load();
-  }, []);
+    }
+  };
 
-  // // 🔥 LOADING UI (NO STYLE CHANGE)
-  // if (loading) {
-  //   return (
-  //     <div className="min-h-screen flex items-center justify-center bg-slate-100">
-  //       <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
-  //     </div>
-  //   );
-  // }
+  // 🔥 FETCH ONLY IF EMPTY
+  if (!academic || Object.keys(academic).length === 0) {
+    loadProfile();
+  } else {
+    setLoading(false);
+  }
+
+}, []);
+
+
+
 
   // 🔥 STATUS LOGIC
   const getStatus = (section) => {

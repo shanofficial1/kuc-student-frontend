@@ -49,6 +49,22 @@ function Layout() {
     setLoading(false);
   }, []);
 
+  const token = useStore((s) => s.token);
+
+const fetchStudent = useStore(
+  (s) => s.fetchStudent
+);
+
+useEffect(() => {
+
+  if (token) {
+
+    fetchStudent();
+
+  }
+
+}, [token]);
+
   return (
     <>
       {isLoading && <GlobalLoader />}
@@ -122,6 +138,7 @@ function Layout() {
 }
 
 export default function App() {
+
   return (
     <Router>
       <Layout />

@@ -6,7 +6,7 @@ import { UserCheck, ShieldCheck } from "lucide-react";
 export default function MentorDetailsForm() {
   const isSubmitted = useStore((s) => s.isSubmitted);
   const mentor = useStore((state) => state.mentor);
-
+  console.log("Mentor State:", mentor); // Debugging log
   const handleSave = () => {
     console.log("Saved Mentor Data:", mentor);
   };

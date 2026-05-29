@@ -6,15 +6,21 @@ import FormWrapper, {
   FileInput,
   SelectField,
 } from "../../components/FormWrapper";
-import { Wallet, Landmark, ShieldCheck, FileText } from "lucide-react";
+import { Wallet, Landmark, ShieldCheck } from "lucide-react";
 
 export default function FinancialForm() {
   const isSubmitted = useStore((s) => s.isSubmitted);
   const financial = useStore((state) => state.financial);
   const updateSection = useStore((state) => state.updateSection);
 
-  const handleSave = () => {
-    console.log("Saved Financial Data:", financial);
+  // Helper for Nested Updates (educationLoan and bankAccount)
+  const handleNestedChange = (parent, child, value) => {
+    updateSection("financial", {
+      [parent]: {
+        ...financial[parent],
+        [child]: value,
+      },
+    });
   };
 
   const handleChange = (e) => {
@@ -22,28 +28,9 @@ export default function FinancialForm() {
     updateSection("financial", { [id]: value });
   };
 
-  const handleArrayFile = (file, index, key) => {
-  // 150KB in bytes
-  const limitBytes = 150 * 1024; 
-  const arr = [...(professional[key] || [])];
-  
-  if (file.size > limitBytes) {
-    arr[index] = { 
-      ...arr[index], 
-      docName: "", 
-      fileError: "File too large (Max 150KB allowed)" 
-    };
-  } else {
-    arr[index] = { 
-      ...arr[index], 
-      docName: file.name, 
-      fileError: "" 
-    };
-  }
-  
-  updateSection("professional", { [key]: arr });
-};
-
+  const handleSave = () => {
+    console.log("Saved Financial Data:", financial);
+  };
 
   return (
     <FormWrapper
@@ -53,99 +40,91 @@ export default function FinancialForm() {
     >
       {/* ===================== 1. SCHOLARSHIP ===================== */}
       <FormSection title="Scholarship & Support" icon={Wallet}>
-  {/* 1. Category Selection - Always Visible */}
-  <SelectField
-    label="Scholarship Category"
-    id="scholarshipCategory"
-    required
-    value={financial.scholarshipCategory || "none"}
-    onChange={(e) => {
-      const val = e.target.value;
-      if (val === "none") {
-        // Clear sub-fields if "none" is selected
-        updateSection("financial", {
-          scholarshipCategory: val,
-          scholarshipId: "",
-          feeDocName: "",
-        });
-      } else {
-        handleChange(e);
-      }
-    }}
-    disabled={isSubmitted}
-    options={[
-      { value: "none", label: "None" },
-      { value: "government", label: "Government" },
-      { value: "institutional", label: "Institutional" },
-      { value: "jrf", label: "JRF" },
-      { value: "egrant", label: "e-Grant" },
-    ]}
-  />
+        <SelectField
+          label="Scholarship Category"
+          id="schType" // Matches backend "schType"
+          required
+          value={financial.schType || "none"}
+          onChange={(e) => {
+            const val = e.target.value;
+            if (val === "none") {
+              updateSection("financial", {
+                schType: val,
+                schId: "",
+                feeWaiveUrl: { document: "" },
+              });
+            } else {
+              handleChange(e);
+            }
+          }}
+          disabled={isSubmitted}
+          options={[
+            { value: "none", label: "None" },
+            { value: "Government", label: "Government" },
+            { value: "Institutional", label: "Institutional" },
+            { value: "JRF", label: "JRF" },
+            { value: "e-Grant", label: "e-Grant" },
+          ]}
+        />
 
-  {/* 2. Conditional Fields - Visible only if NOT "none" */}
-  {financial.scholarshipCategory && financial.scholarshipCategory !== "none" && (
-    <>
-      <InputField
-        label={`${financial.scholarshipCategory.toUpperCase()} Unique ID`}
-        id="scholarshipId"
-        placeholder="Enter your registration ID"
-        required
-        value={financial.scholarshipId || ""}
-        onChange={handleChange}
-        disabled={isSubmitted}
-      />
+        {financial.schType && financial.schType !== "none" && (
+          <>
+            <InputField
+              label={`${financial.schType.toUpperCase()} Unique ID`}
+              id="schId" // Matches backend "schId"
+              placeholder="Enter your registration ID"
+              required
+              value={financial.schId || ""}
+              onChange={handleChange}
+              disabled={isSubmitted}
+            />
 
-    <FileInput
-  label="Fee Waiver Document"
-  file={financial.feeDocName}
-  error={financial.feeDocError}
-  onChange={(e) => {
-    // The component sends back the object we created in onFileChange
-    const { name, error } = e.target;
-    
-    updateSection("financial", {
-      feeDocName: name,
-      feeDocError: error,
-    });
-  }}
-/>
-    </>
-  )}
-</FormSection>
+            <FileInput
+              label="Fee Waiver Document"
+              // Shows existing document name from the URL path
+              file={financial.feeWaiveUrl?.document?.split('/').pop() || financial.feeDocName}
+              error={financial.feeDocError}
+              disabled={isSubmitted}
+              onChange={(e) => {
+                const { name, error, file } = e.target;
+                updateSection("financial", {
+                  feeDocName: name,
+                  feeDocError: error,
+                  // If binary is needed: feeDocFile: file
+                });
+              }}
+            />
+          </>
+        )}
+      </FormSection>
 
       {/* ===================== 2. EDUCATION LOAN ===================== */}
       <FormSection title="Education Loan Details" icon={Wallet}>
         <SelectField
           label="Bank Name"
-          id="loanBankName"
-          value={financial.loanBankName || ""}
-          onChange={handleChange}
+          value={financial.educationLoan?.bankName || ""}
+          onChange={(e) => handleNestedChange("educationLoan", "bankName", e.target.value)}
           disabled={isSubmitted}
           options={[
             { value: "", label: "Select Bank..." },
             { value: "SBI", label: "State Bank of India" },
             { value: "HDFC", label: "HDFC Bank" },
             { value: "ICICI", label: "ICICI Bank" },
-            { value: "Axis", label: "Axis Bank" },
-            { value: "Canara", label: "Canara Bank" },
-            { value: "Federal", label: "Federal Bank" },
           ]}
         />
 
         <InputField
           label="Branch Name"
-          id="loanBranch"
-          value={financial.loanBranch || ""}
-          onChange={handleChange}
+          value={financial.educationLoan?.branch || ""}
+          onChange={(e) => handleNestedChange("educationLoan", "branch", e.target.value)}
           disabled={isSubmitted}
         />
 
         <InputField
           label="Loan Amount"
-          id="loanAmount"
           type="number"
-          value={financial.loanAmount || ""}
-          onChange={handleChange}
+          value={financial.educationLoan?.amount || ""}
+          onChange={(e) => handleNestedChange("educationLoan", "amount", e.target.value)}
           disabled={isSubmitted}
         />
       </FormSection>
@@ -154,24 +133,20 @@ export default function FinancialForm() {
       <FormSection title="Student Bank Account Details" icon={Landmark}>
         <InputField
           label="Account Holder Name"
-          id="bankAccountHolder"
-          value={financial.bankAccountHolder || ""}
-          onChange={handleChange}
+          value={financial.bankAccount?.accountHolderName || ""}
+          onChange={(e) => handleNestedChange("bankAccount", "accountHolderName", e.target.value)}
           disabled={isSubmitted}
         />
 
         <InputField
           label="PAN Card Number"
-          id="panNumber"
-          value={financial.panNumber || ""}
+          id="pan" // Matches backend "pan"
+          value={financial.pan || ""}
           disabled={isSubmitted}
           onChange={(e) => {
             const value = e.target.value.toUpperCase();
-            // simple PAN format: ABCDE1234F
-            const valid = /^[A-Z]{0,5}[0-9]{0,4}[A-Z]{0,1}$/.test(value);
-
-            if (valid) {
-              updateSection("financial", { panNumber: value });
+            if (/^[A-Z]{0,5}[0-9]{0,4}[A-Z]{0,1}$/.test(value)) {
+              updateSection("financial", { pan: value });
             }
           }}
           placeholder="ABCDE1234F"
@@ -179,25 +154,19 @@ export default function FinancialForm() {
 
         <InputField
           label="Account Number"
-          id="accountNumber"
-          type="password"
-          value={financial.accountNumber || ""}
-          onChange={handleChange}
+          value={financial.bankAccount?.accountNumber || ""}
+          onChange={(e) => handleNestedChange("bankAccount", "accountNumber", e.target.value)}
           disabled={isSubmitted}
         />
 
         <InputField
           label="IFSC Code"
-          id="ifscCode"
-          value={financial.ifscCode || ""}
+          value={financial.bankAccount?.ifscCode || ""}
           disabled={isSubmitted}
           onChange={(e) => {
             const value = e.target.value.toUpperCase();
-            // IFSC: 4 letters + 0 + 6 digits
-            const valid = /^[A-Z]{0,4}0?[A-Z0-9]{0,6}$/.test(value);
-
-            if (valid) {
-              updateSection("financial", { ifscCode: value });
+            if (/^[A-Z]{0,4}0?[A-Z0-9]{0,6}$/.test(value)) {
+              handleNestedChange("bankAccount", "ifscCode", value);
             }
           }}
           placeholder="SBIN0001234"
@@ -205,14 +174,12 @@ export default function FinancialForm() {
       </FormSection>
 
       {/* ===================== INFO BOX ===================== */}
-      <div className="bg-blue-50 border-l-4 border-primary p-6 rounded-r-xl flex gap-4 items-start">
+      <div className="bg-blue-50 border-l-4 border-primary p-6 rounded-r-xl flex gap-4 items-start mt-6">
         <ShieldCheck className="w-6 h-6 text-primary shrink-0" />
         <div>
           <h3 className="font-bold text-primary">Data Protection Notice</h3>
           <p className="text-sm text-slate-600 mt-1">
-            Your financial details are encrypted and used only for university
-            disbursements and fee processing. All data handlers follow strict
-            confidentiality protocols.
+            Your financial details are encrypted and used only for university processing.
           </p>
         </div>
       </div>

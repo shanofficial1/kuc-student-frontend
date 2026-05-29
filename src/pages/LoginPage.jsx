@@ -1,58 +1,67 @@
 import React, { useState } from 'react';
 import { useStore } from '../store';
-import { Landmark, BadgeCheck, Lock, LogIn, School, Globe, Info, Mail } from 'lucide-react';
+import {
+  Landmark,
+  BadgeCheck,
+  Lock,
+  LogIn,
+  School,
+  Globe,
+  Info,
+  Mail
+} from 'lucide-react';
+
 import { Link, useNavigate } from 'react-router-dom';
 
 export default function LoginPage() {
-  const [enrollment, setEnrollment] = useState('');
+  const [email, setemail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-const fetchStudent = useStore((s) => s.fetchStudent);
+
+  const fetchStudent = useStore((s) => s.fetchStudent);
   const login = useStore((state) => state.login);
+
   const navigate = useNavigate();
-const DEV_LOGIN = true;
-const handleSubmit = async (e) => {
-  e.preventDefault();
 
-  setLoading(true);
+  const SERVER = import.meta.env.VITE_SERVER;
 
-  // 🔥 DEV MODE (skip API)
-  if (DEV_LOGIN) {
-    login({ email: enrollment }, "dummy-token"); // Zustand login
-    navigate("/");
-    setLoading(false);
-    return;
-  }
+  const handleSubmit = async (e) => {
+    e.preventDefault();
 
-  // 🔒 REAL LOGIN (keep for later)
-  try {
-    const res = await fetch("http://localhost:7002/api/login", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        mail: enrollment,
-        password,
-      }),
-    });
+    setLoading(true);
+    setError('');
 
-    const data = await res.json();
+    try {
+      const res = await fetch(`${SERVER}/api/auth/login`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email,
+          password,
+        }),
+      });
 
-    if (data.success) {
-      login(data.user, data.token);
-      navigate("/");
-    } else {
-      alert("Login failed");
+      const data = await res.json();
+
+      if (data.success) {
+        login(data.user, data.token);
+        navigate('/');
+      } else {
+        setError(data.message || 'Login failed');
+      }
+
+    } catch (err) {
+      console.error(err);
+      setError('Server error');
     }
 
-  } catch (err) {
-    console.error(err);
-  }
+    setLoading(false);
+  };
 
-  setLoading(false);
-};
+
   return (
     <div className="flex items-center justify-center min-h-[calc(100vh-160px)] px-4 py-12">
       <div className="w-full max-w-md">
@@ -70,18 +79,18 @@ const handleSubmit = async (e) => {
               
               {/* EMAIL */}
               <div className="space-y-2">
-                <label className="block text-sm font-medium text-slate-700" htmlFor="enrollment">
+                <label className="block text-sm font-medium text-slate-700" htmlFor="email">
                   Email
                 </label>
                 <div className="relative">
                   <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5" />
                   <input
-                    id="enrollment"
+                    id="email"
                     type="email"
                     required
-                    value={enrollment}
-                    onChange={(e) => setEnrollment(e.target.value)}
-                    placeholder="e.g. KNU/2024/0001"
+                    value={email}
+                    onChange={(e) => setemail(e.target.value)}
+                    placeholder="e.g. user@example.com"
                     className="w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-all"
                   />
                 </div>

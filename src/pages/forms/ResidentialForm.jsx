@@ -12,7 +12,7 @@ export default function ResidentialForm() {
   // Using the key "residential_details" to match your structure
   const residential = useStore((state) => state.residential_details) || {};
   const updateSection = useStore((state) => state.updateSection);
-
+console.log("Residential State:", residential); // Debugging log
   const handleSave = () => {
     console.log("Saved Residential Data:", residential);
   };

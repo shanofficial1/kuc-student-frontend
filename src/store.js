@@ -4,54 +4,70 @@ import { persist } from "zustand/middleware";
 /* ================= INITIAL STATE ================= */
 
 const initialState = {
+  /* APP */
   isLoggedIn: false,
   isSubmitted: false,
   isLoading: false,
-  isDemoLocked: true,
-  fileError: "",
+  isDemoLocked: false,
 
   user: null,
   token: null,
 
+  /* ACADEMIC */
   academic: {
     admissionApplicationNumber: "",
     universityEnrollmentNumber: "",
     rollNumber: "",
+
     faculty: "",
     department: "",
     programLevel: "",
     degreeName: "",
+
+
+    specialization: "",
+
     year: "",
     semester: "",
-    specialization: "",
-    batch: "",
+    admissionBatch: "",
+
     academicCycle: "",
     modeOfStudy: "",
     admissionCategory: "",
+
     fellowshipLetterNumber: "",
     fellowshipLetterUrl: "",
+
+    fellowshipFileName: "",
+    fellowshipFileUrl: "",
   },
 
+  /* PERSONAL */
   personal: {
     fullName: "",
     dob: "",
     gender: "",
-    nationality: "Indian",
-    domicileState: "Kerala",
+
+    nationality: "",
+    domicileState: "",
+
     religion: "",
     category: "",
     caste: "",
+
     languages: [],
+
     aadhaarNo: "",
     passportNo: "",
 
-    dobDoc: null,
     dobDocName: "",
-    dobDocError: "",
+    dobDocUrl: "",
 
     passportCountry: "",
     passportExpiry: "",
-    passportFile: null,
+
+    passportFileName: "",
+    passportFileUrl: "",
 
     visaType: "",
     visaNo: "",
@@ -59,152 +75,192 @@ const initialState = {
     visaIssueDate: "",
     visaExpiryDate: "",
     visaStatus: "",
-    visaFile: null,
+
+    visaFileName: "",
+    visaFileUrl: "",
   },
 
+  /* CONTACT */
   contact: {
     mobile: "",
     whatsapp: "",
+
     email: "",
     institutionalEmail: "",
+
     emergencyName: "",
     emergencyRelation: "",
     emergencyPhone: "",
+
     permanentAddress: "",
     correspondenceAddress: "",
-    isSameAddress: true,
+
+    isSameAddress: false,
+
     distanceFromCampus: "",
   },
 
+  /* HEALTH */
   health: {
     bloodGroup: "",
+
     height: "",
     weight: "",
+
     isDisabled: false,
+
     disabilityType: "",
     disabilityPercentage: "",
+
     chronicConditions: "",
     medications: "",
+
     insuranceProvider: "",
     policyNo: "",
+
     vaccinationStatus: "",
   },
 
+  /* FAMILY */
   family: {
     fatherName: "",
     fatherQualification: "",
     fatherOccupation: "",
+
     motherName: "",
     motherQualification: "",
     motherOccupation: "",
+
     annualIncome: "",
+
     parentPhone: "",
     parentEmail: "",
+
     siblings: [],
   },
 
+  /* EDUCATION */
   education: {
     academicRecords: [],
     competitiveExams: [],
+
     migrationCertificateUploaded: false,
+
     migrationDocName: "",
+    migrationDocUrl: "",
     migrationError: "",
   },
 
+  /* FINANCIAL */
   financial: {
-    scholarshipCategory: "none",
+    scholarshipCategory: "",
+
     feeWaiverDocUrl: "",
+
     loanBankName: "",
     loanBranch: "",
     loanAmount: "",
+
     bankAccountHolder: "",
+
     panNumber: "",
+
     accountNumber: "",
     ifscCode: "",
   },
 
+  /* PROFESSIONAL */
   professional: {
     publications: [],
     conferences: [],
     experience: [],
+
     skills: "",
-    patent: { docName: "", fileError: "" },
-    membership: { docName: "", fileError: "" },
+
+    patent: {
+      docName: "",
+      docUrl: "",
+      error: "",
+    },
+
+    membership: {
+      docName: "",
+      docUrl: "",
+      error: "",
+    },
   },
 
+  /* RESIDENTIAL */
   residential: {
-    type: "Day Scholar",
+    type: "",
+
     hostelBlock: "",
     roomNo: "",
     bedType: "",
-    messPreference: "Veg",
+
+    messPreference: "",
+
     transportOpted: false,
+
     busRouteId: "",
     pickupPoint: "",
+
     vehicleReg: "",
   },
 
+  /* MENTOR */
   mentor: {
-    tutorName: "tuit.it@kannuruniversity.ac.in",
-    tutorEmail: "Dr. ghhr M.",
-    hodName: "Dr. Sivaprasad M.",
-    hodEmail: "hod.it@kannuruniversity.ac.in",
+    tutorName: "",
+    tutorEmail: "",
+
+    hodName: "",
+    hodEmail: "",
   },
 
+  /* DOCUMENTS */
   documents: {
-    profilePhoto: { file: "", error: "" },
-    signature: { file: "", error: "" },
-    transcripts: { file: "", error: "" },
-    identity: { file: "", error: "" },
-    certificates: { file: "", error: "" },
-  },
+    profilePhoto: {
+      fileName: "",
+      fileUrl: "",
+      error: "",
+    },
 
-  grades: {
-    currentSemester: "Semester IV",
-    semesters: {
-      "Semester IV": {
-        sgpa: 8.65,
-        cgpa: 8.42,
-        subjects: [
-          { code: "BIT401", title: "DBMS", credits: 4, grade: "A+", result: "PASS" },
-        ],
-      },
+    signature: {
+      fileName: "",
+      fileUrl: "",
+      error: "",
+    },
+
+    transcripts: {
+      fileName: "",
+      fileUrl: "",
+      error: "",
+    },
+
+    identity: {
+      fileName: "",
+      fileUrl: "",
+      error: "",
+    },
+
+    certificates: {
+      fileName: "",
+      fileUrl: "",
+      error: "",
     },
   },
-  marksData: {
-  "Semester I": [
-    { code: "BIT101", title: "Engineering Mathematics I", credits: 4, CE: 19, TE: 72, result: "PASS" },
-    { code: "BIT102", title: "Engineering Physics", credits: 3, CE: 18, TE: 65, result: "PASS" },
-    { code: "BIT103", title: "Programming in C", credits: 3, CE: 20, TE: 75, result: "PASS" },
-    { code: "BIT104", title: "Engineering Graphics", credits: 3, CE: 17, TE: 60, result: "PASS" },
-    { code: "BIT105L", title: "Programming Lab in C", credits: 2, CE: 20, TE: 48, result: "PASS" }
-  ],
-  "Semester II": [
-    { code: "BIT201", title: "Engineering Mathematics II", credits: 4, CE: 19, TE: 68, result: "PASS" },
-    { code: "BIT202", title: "Engineering Chemistry", credits: 3, CE: 18, TE: 70, result: "PASS" },
-    { code: "BIT203", title: "Data Structures", credits: 3, CE: 19, TE: 72, result: "PASS" },
-    { code: "BIT204", title: "Basic Electrical Engineering", credits: 3, CE: 17, TE: 64, result: "PASS" },
-    { code: "BIT205L", title: "Data Structures Lab", credits: 2, CE: 20, TE: 46, result: "PASS" }
-  ],
-  "Semester III": [
-    { code: "BIT301", title: "Discrete Mathematics", credits: 4, CE: 18, TE: 75, result: "PASS" },
-    { code: "BIT302", title: "Computer Organization", credits: 3, CE: 19, TE: 62, result: "PASS" },
-    { code: "BIT303", title: "Object Oriented Programming", credits: 3, CE: 20, TE: 78, result: "PASS" },
-    { code: "BIT304", title: "Digital Electronics", credits: 3, CE: 19, TE: 66, result: "PASS" },
-    { code: "BIT305L", title: "OOP Lab using Java", credits: 2, CE: 20, TE: 49, result: "PASS" }
-  ],
-  "Semester IV": [
-    { code: "BIT401", title: "Database Management Systems", credits: 4, CE: 19, TE: 74, result: "PASS" },
-    { code: "BIT402", title: "Computer Networks", credits: 4, CE: 19, TE: 70, result: "PASS" },
-    { code: "BIT403", title: "Operating Systems", credits: 3, CE: 19, TE: 65, result: "PASS" },
-    { code: "BIT404", title: "Software Engineering", credits: 3, CE: 20, TE: 72, result: "PASS" },
-    { code: "BIT405L", title: "DBMS Laboratory", credits: 2, CE: 20, TE: 45, result: "PASS" }
-  ],
-},
 
+  /* GRADES */
+  grades: {
+    currentSemester: "",
+    semesters: {},
+  },
+
+  /* MARKS */
+  marksData: {},
 };
 
-/* ================= HELPER ================= */
+/* ================= HELPERS ================= */
 
 const clean = (obj) =>
   Object.fromEntries(
@@ -213,13 +269,40 @@ const clean = (obj) =>
 
 /* ================= STORE ================= */
 
+
+const formatDate = (date) => {
+
+  if (!date) return "";
+
+  const d = new Date(date);
+
+  if (isNaN(d.getTime())) {
+
+    return "";
+
+  }
+
+  const day =
+    String(d.getDate())
+      .padStart(2, "0");
+
+  const month =
+    String(d.getMonth() + 1)
+      .padStart(2, "0");
+
+  const year =
+    d.getFullYear();
+
+  return `${day}-${month}-${year}`;
+
+};
+
 export const useStore = create(
   persist(
     (set, get) => ({
-
       ...initialState,
 
-      /* 🔐 LOGIN */
+      /* LOGIN */
       login: (user, token) =>
         set({
           isLoggedIn: true,
@@ -227,16 +310,113 @@ export const useStore = create(
           token,
         }),
 
-      /* 🔓 LOGOUT */
+      /* LOGOUT */
       logout: () =>
         set({
           isLoggedIn: false,
           user: null,
           token: null,
         }),
-setIsLoading: (val) => set({ isLoading: val }),
+        
 
-      /* 🔄 UPDATE */
+      /* LOADING */
+      setLoading: (status) =>
+        set({
+          isLoading: status,
+        }),
+
+      /* SUBMIT */
+      setSubmitted: (status) =>
+        set({
+          isSubmitted: status,
+        }),
+
+saveAndRefresh: async (
+  payload,
+  isFormData = false
+) => {
+
+  try {
+
+    const token =
+      get().token;
+
+    get().setLoading(true);
+
+    const res = await fetch(
+      `${import.meta.env.VITE_SERVER}/api/student/profile`,
+      {
+
+        method: "POST",
+
+        headers: {
+
+          Authorization:
+            `Bearer ${token}`,
+
+          ...(isFormData
+            ? {}
+            : {
+                "Content-Type":
+                  "application/json"
+              })
+
+        },
+
+        body: isFormData
+          ? payload
+          : JSON.stringify(payload),
+
+      }
+    );
+
+    const result =
+      await res.json();
+
+    console.log(
+      "SAVE RESULT",
+      result
+    );
+
+    if (!res.ok) {
+
+      throw new Error(
+        result.message ||
+        "Save failed"
+      );
+
+    }
+
+    await get().fetchStudent();
+
+    console.log(
+      "FETCHED LATEST PROFILE FROM DB"
+    );
+
+  } catch (err) {
+
+    console.error(err);
+
+  } finally {
+
+    get().setLoading(false);
+
+  }
+
+},
+
+      toggleSubmitted: () =>
+        set((state) => ({
+          isSubmitted: !state.isSubmitted,
+        })),
+
+      /* DEMO LOCK */
+      setDemoLocked: (status) =>
+        set({
+          isDemoLocked: status,
+        }),
+
+      /* UPDATE SECTION */
       updateSection: (section, data) =>
         set((state) => ({
           [section]: {
@@ -244,87 +424,239 @@ setIsLoading: (val) => set({ isLoading: val }),
             ...data,
           },
         })),
-updateMark: (semester, code, newCE, newTE) => set((state) => ({
-    marksData: {
-      ...state.marksData,
-      [semester]: state.marksData[semester].map((subject) =>
-        subject.code === code 
-          ? { ...subject, CE: Number(newCE) || subject.CE, TE: Number(newTE) || subject.TE }
-          : subject
-      ),
-    },
-  })),
-      /* ⏳ LOADING */
-      setLoading: (status) => set({ isLoading: status }),
 
-      /* 🔐 SUBMIT */
-      setSubmitted: (status) => set({ isSubmitted: status }),
+         setProfileData: (data) => {
 
-      toggleSubmitted: () =>
-        set((s) => ({ isSubmitted: !s.isSubmitted })),
+    set({
 
-      /* 🔒 DEMO LOCK */
-      setDemoLocked: (status) => set({ isDemoLocked: status }),
+      academic: data.academic_details || {},
+      personal: data.personal_details || {},
+      contact: data.contact_details || {},
+      health: data.health_details || {},
+      family: data.family_details || {},
+      education: data.education_details || {},
+      financial: data.financial_details || {},
+      professional: data.professional_details || {},
+      residential: data.residential_details || {},
+      documents: data.documents || {},
+      mentor: data.mentor_details || {},
 
-      /* 📥 FETCH STUDENT (FIXED) */
-      fetchStudent: async () => {
-        try {
-          const mail = get().user?.email;
+    isSubmitted: !get().user?.canEdit,
+    });
 
-          if (!mail) {
-            console.warn("No email found, skipping fetch");
-            return;
-          }
+  },
 
-          const res = await fetch(`http://localhost:7002/api/student?mail=${mail}`);
-          const data = await res.json();
 
-          set({
-            academic: clean(data.academic_details),
-            personal: clean(data.personal_details),
-            contact: clean(data.contact_details),
-            health: clean(data.health_details),
-            family: clean(data.family_details),
-            education: clean(data.education_details),
-            financial: clean(data.financial_details),
-            professional: clean(data.professional_details),
-            residential: clean(data.residential_details),
-            mentor: clean(data.mentor_details),
-            documents: clean(data.documents_details),
-          });
+      /* UPDATE MARK */
+      updateMark: (semester, code, newCE, newTE) =>
+        set((state) => ({
+          marksData: {
+            ...state.marksData,
 
-        } catch (err) {
-          console.error("Fetch error:", err);
-        }
-      },
-
-      /* 📂 FILE UPLOAD FIX */
-      setMigrationFile: (file) => {
-        if (!file) return;
-
-        if (file.size > 2 * 1024 * 1024) {
-          set({
-            education: {
-              ...get().education,
-              migrationDocName: "",
-              migrationError: "Max 2MB allowed",
-            },
-          });
-          return;
-        }
-
-        set({
-          education: {
-            ...get().education,
-            migrationDocName: file.name,
-            migrationError: "",
+            [semester]: state.marksData[semester].map((subject) =>
+              subject.code === code
+                ? {
+                    ...subject,
+                    CE: Number(newCE) || subject.CE,
+                    TE: Number(newTE) || subject.TE,
+                  }
+                : subject
+            ),
           },
-        });
-      },
+        })),
+        
 
+      /* FETCH STUDENT */
+fetchStudent: async () => {
+
+  try {
+
+    const token = get().token;
+
+    if (!token) return;
+
+    const res = await fetch(
+      `${import.meta.env.VITE_SERVER}/api/student/profile`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+
+    const result = await res.json();
+
+    console.log("STUDENT DATA", result);
+
+    if (!result.success) {
+
+      throw new Error(
+        result.message || "Fetch failed"
+      );
+
+    }
+
+    const data = result.data || {};
+
+    // =========================
+    // PERSONAL DATA
+    // =========================
+
+    const personalData =
+      clean(data.personal_details);
+
+    const visa =
+      personalData?.visaDetails || {};
+
+    // =========================
+    // FORMAT AADHAAR
+    // =========================
+
+    const formattedAadhaar =
+      personalData?.aadhaarNumber
+        ? personalData.aadhaarNumber
+            .replace(/\D/g, "")
+            .replace(
+              /(\d{4})(?=\d)/g,
+              "$1 "
+            )
+        : "";
+
+ 
+
+   
+    set({
+
+      academic: {
+        ...clean(data.academic_details),
+        fellowshipLetter: data.academic_details ?.fellowshipLetter || {},
+      },
+      personal: {
+
+  ...personalData,
+
+  // AADHAAR
+  aadhaarNo:
+    formattedAadhaar,
+
+  // DOB
+  dob:
+    formatDate(
+      personalData?.dob
+    ),
+
+  // PASSPORT
+  passportExpiry:
+    formatDate(
+      personalData?.passportExpiry
+    ),
+
+  passportCountry:
+    visa?.issuingCountry || "",
+
+  passportDoc:
+    personalData?.passportDoc || "",
+
+  // VISA
+  visaType:
+    visa?.visaType || "",
+
+  visaNo:
+    visa?.visaNumber || "",
+
+  visaCountry:
+    visa?.issuingCountry || "",
+
+  visaIssueDate:
+    formatDate(
+      visa?.issueDate
+    ),
+
+  visaExpiryDate:
+    formatDate(
+      visa?.expiryDate
+    ),
+
+  visaStatus:
+    visa?.status || "",
+
+  visaDoc:
+    personalData?.visaDoc || "",
+
+  // DOB FILE
+  birthCertificateDoc:
+    personalData?.birthCertificateDoc || "",
+
+  // YES / NO
+  isInternational:
+    visa?.visaType
+      ? "yes"
+      : "no",
+
+},
+
+      contact:
+        clean(data.contact_details),
+
+      health:
+        clean(data.health_details),
+
+      family:
+        clean(data.family_details),
+
+      education:
+        clean(data.education_details),
+
+      financial:
+        clean(data.financial_details),
+
+      professional:
+        clean(data.professional_details),
+
+      residential:
+        clean(data.residential_details),
+
+      mentor:
+        clean(data.mentor_details),
+
+      documents:
+        clean(data.documents_details),
+
+    });
+
+    console.log(
+      "FETCHED LATEST PROFILE FROM DB"
+    );
+
+  } catch (err) {
+
+    console.error(
+      "Fetch error:",
+      err
+    );
+
+  }
+
+},
+
+      /* RESET */
+      resetStore: () =>
+        set({
+          ...initialState,
+        }),
     }),
     {
-      name: "student-app-storage",
-    }
+  name: "student-app-storage",
+
+  partialize: (state) => ({
+
+    isLoggedIn: state.isLoggedIn,
+
+    token: state.token,
+
+    user: state.user,
+
+  }),
+}
   )
 );

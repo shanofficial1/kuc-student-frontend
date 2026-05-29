@@ -266,20 +266,108 @@ export function SelectField({
 
 
 /* ================= FILE INPUT FIELD ================= */
-export function FileInput({ label, file, error, onChange, disabled, required }) {
+export function FileInput({ label, file, fileUrl, error, onChange, disabled, required }) {
   const isSubmitted = useStore((s) => s.isSubmitted);
   const isDisabled = disabled || isSubmitted;
 
+
+const handlePreview = (e) => {
+
+  e.preventDefault();
+
+  console.log("FILE URL =", fileUrl);
+
+  // No file
+  if (!fileUrl) {
+
+    alert("Preview unavailable");
+
+    return;
+
+  }
+
+  let url = "";
+
+  // Existing saved file
+  if (
+    typeof fileUrl === "object" &&
+    fileUrl?.url
+  ) {
+
+    url = fileUrl.url;
+
+  }
+
+  // Direct string path
+  else if (
+    typeof fileUrl === "string"
+  ) {
+
+    url = fileUrl;
+
+  }
+
+  // New File object cannot be opened from server
+  else if (
+    fileUrl instanceof File
+  ) {
+
+    const localUrl =
+      URL.createObjectURL(fileUrl);
+
+    window.open(
+      localUrl,
+      "_blank"
+    );
+
+    return;
+
+  }
+
+  else {
+
+    alert("Preview unavailable");
+
+    return;
+
+  }
+
+  // Convert Windows path
+  const cleanUrl =
+    url.replace(/\\/g, "/");
+
+  const fullUrl =
+    `${import.meta.env.VITE_SERVER}/${cleanUrl}`;
+
+  console.log(
+    "PREVIEW URL =",
+    fullUrl
+  );
+
+  window.open(
+    fullUrl,
+    "_blank"
+  );
+
+};
+
+
   // Helper to format the display name of the file
-  const formatFileName = (fileName) => {
-    if (!fileName) return "Upload File";
-    const name = typeof fileName === "string" ? fileName.split('/').pop() : fileName.name;
-    
-    if (name.length > 22) {
-      return name.substring(0, 15) + "..." + name.slice(-6);
-    }
-    return name;
-  };
+const formatFileName = (name) => {
+  if (!name) return "Upload File";
+
+  const cleanName = String(name).split("/").pop();
+
+  if (cleanName.length > 22) {
+    return (
+      cleanName.substring(0, 15) +
+      "..." +
+      cleanName.slice(-6)
+    );
+  }
+
+  return cleanName;
+};
 
   // ✅ New internal validation handler
   const onFileChange = (e) => {
@@ -352,13 +440,31 @@ export function FileInput({ label, file, error, onChange, disabled, required }) 
           accept=".pdf,.jpg,.jpeg,.png"
         />
 
-        {file && !error && (
-          <div className="text-green-600 shrink-0">
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24">
-              <polyline points="20 6 9 17 4 12" />
-            </svg>
-          </div>
-        )}
+       <div className="flex items-center gap-3 shrink-0">
+
+{(file || fileUrl) && !error && (    <button
+      type="button"
+      onClick={handlePreview}
+      className="text-[11px] font-semibold text-primary hover:underline"
+    >
+      View
+    </button>
+  )}
+
+{(file || fileUrl) && !error && (    <div className="text-green-600">
+      <svg
+        className="w-5 h-5"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="3"
+        viewBox="0 0 24 24"
+      >
+        <polyline points="20 6 9 17 4 12" />
+      </svg>
+    </div>
+  )}
+
+</div>
       </label>
 
       <p className={cn(

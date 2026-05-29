@@ -1,120 +1,56 @@
 import React from "react";
-import FormWrapper, { FormSection } from "../../components/FormWrapper";
-import { FileText, Image as ImageIcon, PenTool, ShieldCheck } from "lucide-react";
+import FormWrapper, { FormSection, FileInput } from "../../components/FormWrapper";
+import { FileText, Image as ImageIcon, ShieldCheck } from "lucide-react";
 import { useStore } from "../../store";
-
-/* ================= REUSABLE INPUT ================= */
-
-/* ================= REUSABLE INPUT ================= */
-
-const FileInput = ({
-  label,
-  file,
-  error,
-  onChange,
-  disabled,
-}) => {
-  // Helper function to truncate filename: "verylongfilename.pdf" -> "verylo...pdf"
-  const formatFileName = (fileName) => {
-    if (!fileName) return "Upload File";
-    const name = typeof fileName === "string" ? fileName.split('/').pop() : fileName.name;
-    
-    // If name is longer than 20 chars, truncate it
-    if (name.length > 20) {
-      return name.substring(0, 15) + "..." + name.slice(-5);
-    }
-    return name;
-  };
-
-  return (
-    <div className="flex flex-col gap-2">
-      <label className="block text-sm font-medium text-slate-600">
-        {label}
-      </label>
-
-      <label
-        className={`w-full h-12 flex items-center justify-between px-3 border rounded-lg cursor-pointer transition 
-        ${file ? "border-green-500 bg-green-50" : "border-slate-200 bg-white"}`}
-      >
-        <div className="flex items-center gap-3 w-[85%]"> {/* Constrain width here */}
-          <div
-            className={`flex-shrink-0 w-8 h-8 flex items-center justify-center rounded-md 
-            ${file ? "bg-green-100" : "bg-slate-100"}`}
-          >
-            <FileText
-              size={18}
-              className={file ? "text-green-600" : "text-slate-500"}
-            />
-          </div>
-
-          <span
-            className={`text-sm truncate block
-            ${error
-              ? "text-red-600"
-              : file
-              ? "text-green-700 font-medium"
-              : "text-slate-500"}`}
-          >
-            {error || formatFileName(file)}
-          </span>
-        </div>
-
-        <input
-          type="file"
-          className="hidden"
-          accept=".pdf,.jpg,.png"
-          onChange={onChange}
-          disabled={disabled}
-        />
-        
-        {/* Visual Checkmark for uploaded files */}
-        {file && !error && (
-          <div className="text-green-600 flex-shrink-0">
-             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
-          </div>
-        )}
-      </label>
-
-      <p className="text-[10px] text-red-600 font-medium">
-        PDF / JPG / PNG (Max 2MB)
-      </p>
-    </div>
-  );
-};
-
-/* ================= MAIN COMPONENT ================= */
 
 export default function DocumentsForm() {
   const isSubmitted = useStore((s) => s.isSubmitted);
   const documents = useStore((s) => s.documents) || {};
   const updateSection = useStore((s) => s.updateSection);
 
-  // Updated handler to support nested objects for legalCertificates
-  const handleFile = (key, file, isLegal = false) => {
-    const sizeMB = file.size / (1024 * 1024);
-    const fileData = sizeMB > 2 
-      ? { file: "", error: "Max 2MB allowed" } 
-      : { file: file.name, error: "" };
+  // Helper to extract filename from backend URL
+  const getFileName = (path) => (path ? path.split("/").pop() : "");
 
-    if (isLegal) {
-      // Structure for legalCertificates object
+  /**
+   * Universal file handler supporting nested structures
+   * @param {string} parent - 'identityProof', 'legalCertificates', or top-level key
+   * @param {string} child - Specific field name
+   * @param {File} file - The file object from input
+   */
+  const handleFileChange = (parent, child, file) => {
+    const sizeMB = file.size / (1024 * 1024);
+    if (sizeMB > 2) {
+      updateSection("documents", { [`${child}Error`]: "Max 2MB allowed" });
+      return;
+    }
+
+    if (parent === "legalCertificates") {
       updateSection("documents", {
-        ...documents,
         legalCertificates: {
           ...documents.legalCertificates,
-          [key]: fileData
-        }
+          [child]: file.name, // Local display name
+        },
+        [`${child}File`]: file, // Store binary for upload
+        [`${child}Error`]: "",
+      });
+    } else if (parent === "identityProof") {
+      updateSection("documents", {
+        identityProof: { ...documents.identityProof, document: file.name },
+        identityProofFile: file,
+        identityProofError: "",
       });
     } else {
-      // Standard structure for top-level keys
+      // Top level like profilePhoto or signature
       updateSection("documents", {
-        [key]: fileData,
+        [child]: file.name,
+        [`${child}File`]: file,
+        [`${child}Error`]: "",
       });
     }
   };
 
   const handleSave = () => {
-    console.log("Saved Documents Data Structure:", documents);
+    console.log("Saving Documents State:", documents);
   };
 
   return (
@@ -128,22 +64,22 @@ export default function DocumentsForm() {
         <div className="md:col-span-2 grid md:grid-cols-2 gap-4">
           <FileInput
             label="Profile Photo"
-            file={documents.profilePhoto?.file}
-            error={documents.profilePhoto?.error}
+            file={getFileName(documents.profilePhoto)}
+            error={documents.profilePhotoError}
             disabled={isSubmitted}
             onChange={(e) => {
               const file = e.target.files?.[0];
-              if (file) handleFile("profilePhoto", file);
+              if (file) handleFileChange(null, "profilePhoto", file);
             }}
           />
           <FileInput
             label="Digital Signature"
-            file={documents.signature?.file}
-            error={documents.signature?.error}
+            file={getFileName(documents.signature)}
+            error={documents.signatureError}
             disabled={isSubmitted}
             onChange={(e) => {
               const file = e.target.files?.[0];
-              if (file) handleFile("signature", file);
+              if (file) handleFileChange(null, "signature", file);
             }}
           />
         </div>
@@ -154,76 +90,83 @@ export default function DocumentsForm() {
         <div className="md:col-span-2 grid md:grid-cols-2 gap-4">
           <FileInput
             label="Identity Proof (Passport / Voter ID)"
-            file={documents.identityProof?.file}
-            error={documents.identityProof?.error}
+            file={getFileName(documents.identityProof?.document)}
+            error={documents.identityProofError}
             disabled={isSubmitted}
             onChange={(e) => {
               const file = e.target.files?.[0];
-              if (file) handleFile("identityProof", file);
+              if (file) handleFileChange("identityProof", "document", file);
             }}
           />
           <FileInput
             label="Academic Transcripts"
-            file={documents.transcripts?.file}
-            error={documents.transcripts?.error}
+            // Shows name from transcripts array first object
+            file={documents.transcripts?.[0]?.name || getFileName(documents.transcripts?.[0]?.file)}
+            error={documents.transcriptsError}
             disabled={isSubmitted}
             onChange={(e) => {
               const file = e.target.files?.[0];
-              if (file) handleFile("transcripts", file);
+              if (file) {
+                  // Simplified for single transcript upload matching JSON array structure
+                  updateSection("documents", {
+                      transcripts: [{ name: file.name, file: "" }],
+                      transcriptsFile: file,
+                      transcriptsError: ""
+                  });
+              }
             }}
           />
         </div>
       </FormSection>
 
-      {/* ================= LEGAL CERTIFICATES (SEPARATED) ================= */}
+      {/* ================= LEGAL CERTIFICATES ================= */}
       <FormSection title="Legal Certificates" icon={ShieldCheck}>
         <div className="md:col-span-2 grid md:grid-cols-2 gap-4">
           <FileInput
             label="Caste Certificate"
-            file={documents.legalCertificates?.casteCertificate?.file}
-            error={documents.legalCertificates?.casteCertificate?.error}
+            file={getFileName(documents.legalCertificates?.casteCertificate)}
+            error={documents.casteCertificateError}
             disabled={isSubmitted}
             onChange={(e) => {
               const file = e.target.files?.[0];
-              if (file) handleFile("casteCertificate", file, true);
+              if (file) handleFileChange("legalCertificates", "casteCertificate", file);
             }}
           />
 
           <FileInput
             label="Income Certificate"
-            file={documents.legalCertificates?.incomeCertificate?.file}
-            error={documents.legalCertificates?.incomeCertificate?.error}
+            file={getFileName(documents.legalCertificates?.incomeCertificate)}
+            error={documents.incomeCertificateError}
             disabled={isSubmitted}
             onChange={(e) => {
               const file = e.target.files?.[0];
-              if (file) handleFile("incomeCertificate", file, true);
+              if (file) handleFileChange("legalCertificates", "incomeCertificate", file);
             }}
           />
 
           <FileInput
             label="Domicile (Nativity) Certificate"
-            file={documents.legalCertificates?.nativityCertificate?.file}
-            error={documents.legalCertificates?.nativityCertificate?.error}
+            file={getFileName(documents.legalCertificates?.nativityCertificate)}
+            error={documents.nativityCertificateError}
             disabled={isSubmitted}
             onChange={(e) => {
               const file = e.target.files?.[0];
-              if (file) handleFile("nativityCertificate", file, true);
+              if (file) handleFileChange("legalCertificates", "nativityCertificate", file);
             }}
           />
 
           <FileInput
             label="Non-Creamy Layer Certificate"
-            file={documents.legalCertificates?.nonCreamyLayerCertificate?.file}
-            error={documents.legalCertificates?.nonCreamyLayerCertificate?.error}
+            file={getFileName(documents.legalCertificates?.nonCreamyLayerCertificate)}
+            error={documents.nonCreamyLayerCertificateError}
             disabled={isSubmitted}
             onChange={(e) => {
               const file = e.target.files?.[0];
-              if (file) handleFile("nonCreamyLayerCertificate", file, true);
+              if (file) handleFileChange("legalCertificates", "nonCreamyLayerCertificate", file);
             }}
           />
-
         </div>
       </FormSection>
     </FormWrapper>
   );
-} 
+}

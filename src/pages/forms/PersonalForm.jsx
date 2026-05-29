@@ -1,7 +1,22 @@
-import React, { useState ,useEffect,useRef } from 'react';
-import { useStore } from '../../store';
-import FormWrapper, { FormSection, InputField, SelectField, FileInput } from '../../components/FormWrapper';
-import { User, Flag, Languages,Globe, CreditCard, Keyboard, FileText, CheckCircle } from 'lucide-react';
+import React, { useState, useEffect, useRef } from "react";
+import { useStore } from "../../store";
+import FormWrapper, {
+  FormSection,
+  InputField,
+  SelectField,
+  FileInput,
+} from "../../components/FormWrapper";
+import {
+  User,
+  Flag,
+  Languages,
+  Globe,
+  CreditCard,
+  Keyboard,
+  FileText,
+  CheckCircle,
+} from "lucide-react";
+import GlobalLoader from "@/src/components/GlobalLoader";
 const COLS = 11;
 
 const baseKeys = [
@@ -35,14 +50,14 @@ export function MalayalamKeyboard({ value, onChange, onClose }) {
   const [isShift, setIsShift] = useState(false);
   const [pos, setPos] = useState({ x: 0, y: 0 });
   const [dragging, setDragging] = useState(false);
-  
+
   // Ref to track the keyboard container for outside clicks
   const keyboardRef = useRef(null);
 
   // 1. Initial Position: Center of the screen
   useEffect(() => {
-    const centerX = window.innerWidth / 2 - 180; 
-    const centerY = window.innerHeight / 2 - 100; 
+    const centerX = window.innerWidth / 2 - 180;
+    const centerY = window.innerHeight / 2 - 100;
     setPos({ x: centerX, y: centerY });
   }, []);
 
@@ -83,10 +98,10 @@ export function MalayalamKeyboard({ value, onChange, onClose }) {
   };
 
   const handleMouseMove = (e) => handleMove(e.clientX, e.clientY);
-  
+
   const handleTouchMove = (e) => {
     if (dragging) {
-      e.preventDefault(); 
+      e.preventDefault();
       const touch = e.touches[0];
       handleMove(touch.clientX, touch.clientY);
     }
@@ -112,10 +127,12 @@ export function MalayalamKeyboard({ value, onChange, onClose }) {
       >
         <div className="flex items-center gap-2">
           <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
-          <span className="text-white text-[10px] font-bold uppercase tracking-widest">Keyboard</span>
+          <span className="text-white text-[10px] font-bold uppercase tracking-widest">
+            Keyboard
+          </span>
         </div>
-        <button 
-          onClick={onClose} 
+        <button
+          onClick={onClose}
           className="text-slate-400 hover:text-red-400 transition-colors p-1"
         >
           ✕
@@ -131,9 +148,11 @@ export function MalayalamKeyboard({ value, onChange, onClose }) {
                 key={index}
                 onClick={() => k && handleKey(k)}
                 className={`h-8 text-xs rounded transition-all active:scale-95
-                  ${k
-                    ? "bg-neutral-800 text-white active:bg-green-600 md:hover:bg-green-600"
-                    : "bg-transparent cursor-default"}
+                  ${
+                    k
+                      ? "bg-neutral-800 text-white active:bg-green-600 md:hover:bg-green-600"
+                      : "bg-transparent cursor-default"
+                  }
                 `}
               >
                 {k}
@@ -148,7 +167,9 @@ export function MalayalamKeyboard({ value, onChange, onClose }) {
         <button
           onClick={() => setIsShift(!isShift)}
           className={`px-3 h-8 text-[10px] font-bold rounded transition-colors ${
-            isShift ? "bg-green-600 text-white" : "bg-neutral-700 text-slate-300"
+            isShift
+              ? "bg-green-600 text-white"
+              : "bg-neutral-700 text-slate-300"
           }`}
         >
           SHIFT
@@ -174,15 +195,224 @@ export default function PersonalForm() {
   const isSubmitted = useStore((s) => s.isSubmitted);
   const personal = useStore((state) => state.personal);
   const updateSection = useStore((state) => state.updateSection);
-  
+  console.log("PERSONAL STORE DATA", personal);
+
   const [errors, setErrors] = useState({});
   const [showKeyboard, setShowKeyboard] = useState(false);
-  const [nativeName, setNativeName] = useState("");
 
-  const DATE_FIELDS = ["dob", "passportExpiry", "visaIssueDate", "visaExpiryDate"];
+  const DATE_FIELDS = [
+    "dob",
+    "passportExpiry",
+    "visaIssueDate",
+    "visaExpiryDate",
+  ];
 
-  const handleSave = () => {
-    console.log('Saved Personal Data:', personal);
+  const store = useStore();
+
+  const isLoading = useStore((state) => state.isLoading);
+
+  const saveAndRefresh = useStore((s) => s.saveAndRefresh);
+
+  const handleSave = async () => {
+    const personal = useStore.getState().personal;
+    const cleanData = (obj) => {
+      return Object.fromEntries(
+        Object.entries(obj).filter(
+          ([_, value]) => value !== "" && value !== null && value !== undefined,
+        ),
+      );
+    };
+    const convertToISODate = (dateStr) => {
+
+  if (!dateStr) return undefined;
+
+  const parts = dateStr.split("-");
+
+  if (parts.length !== 3) return undefined;
+
+  const [dd, mm, yyyy] = parts;
+
+ return new Date(
+  `${yyyy}-${mm}-${dd}`
+);  
+
+};
+
+const payload = {
+
+  fullName: personal.fullName,
+
+  fullNameNative:
+    personal.fullNameNative,
+
+dob:
+  convertToISODate(
+    personal.dob
+  ),
+    gender: personal.gender,
+
+  nationality:
+    personal.nationality,
+
+  dualCitizenship:
+    personal.dualCitizenship,
+
+  domicileState:
+    personal.domicileState,
+
+  religion:
+    personal.religion,
+
+  caste:
+    personal.caste,
+
+  motherTongue:
+    personal.motherTongue,
+
+  languagesKnown:
+    personal.languagesKnown,
+
+  socialCategory:
+    personal.socialCategory,
+
+  // 🔥 CORRECT NAME
+  aadhaarNumber:
+  personal.aadhaarNo
+    ?.replace(/\s/g, ""),
+
+  // 🔥 CORRECT NAME
+  passportNumber:
+    personal.passportNumber,
+passportCountry: personal.passportCountry,
+passportExpiry:
+  convertToISODate(
+    personal.passportExpiry
+  ),
+
+  // 🔥 NESTED OBJECT
+visaDetails: {
+
+  ...(personal.visaType && {
+    visaType: personal.visaType
+  }),
+
+  ...(personal.visaNo && {
+    visaNumber: personal.visaNo
+  }),
+
+  ...(personal.visaCountry && {
+    issuingCountry:
+      personal.visaCountry
+  }),
+
+  ...(personal.visaIssueDate && {
+issueDate:
+  convertToISODate(
+    personal.visaIssueDate
+  ),  }),
+
+  ...(personal.visaExpiryDate && {
+expiryDate:
+  convertToISODate(
+    personal.visaExpiryDate
+  ),  }),
+
+  ...(personal.visaStatus && {
+    status:
+      personal.visaStatus
+  }),
+
+}
+
+
+};
+
+
+const cleanedPersonal =
+  cleanData(payload);
+      const formData = new FormData();
+Object.entries(cleanedPersonal).forEach(
+  ([key, value]) => {
+
+    // 🔥 HANDLE OBJECT
+    if (
+      typeof value === "object" &&
+      !Array.isArray(value)
+    ) {
+
+      Object.entries(value).forEach(
+        ([subKey, subValue]) => {
+
+          formData.append(
+            `personal_details[${key}][${subKey}]`,
+            subValue
+          );
+
+        }
+      );
+
+    }
+
+    // 🔥 HANDLE ARRAY
+    else if (Array.isArray(value)) {
+
+      value.forEach((item) => {
+
+        formData.append(
+          `personal_details[${key}][]`,
+          item
+        );
+
+      });
+
+    }
+
+    // 🔥 NORMAL VALUE
+    else {
+
+      console.log(
+  "birthCertificateDoc",
+  personal.birthCertificateDoc
+);
+
+console.log(
+  personal.birthCertificateDoc instanceof File
+);
+
+      formData.append(
+        `personal_details[${key}]`,
+        value
+      );
+
+    }
+
+  }
+);
+
+console.log(
+  "DOB FILE =",
+  personal.birthCertificateDoc
+);
+
+console.log(
+  personal.birthCertificateDoc instanceof File
+);
+
+   if (
+  personal.birthCertificateDoc instanceof File
+) {
+  formData.append(
+    "birthCertificateDoc",
+    personal.birthCertificateDoc
+  );
+}
+    if (personal.passportDoc instanceof File) {
+      formData.append("passportDoc", personal.passportDoc);
+    }
+    if (personal.visaDoc instanceof File) {
+      formData.append("visaDoc", personal.visaDoc);
+    }
+    await saveAndRefresh(formData, true);
   };
 
   const handleDOBFileChange = (e) => {
@@ -249,7 +479,11 @@ export default function PersonalForm() {
     if (dob.length !== 10) return "Enter full date";
     const [dd, mm, yyyy] = dob.split("-").map(Number);
     const date = new Date(yyyy, mm - 1, dd);
-    const isValid = date && date.getDate() === dd && date.getMonth() === mm - 1 && date.getFullYear() === yyyy;
+    const isValid =
+      date &&
+      date.getDate() === dd &&
+      date.getMonth() === mm - 1 &&
+      date.getFullYear() === yyyy;
     if (!isValid) return "Invalid date";
     const today = new Date();
     if (date > today) return "Future date not allowed";
@@ -266,38 +500,39 @@ export default function PersonalForm() {
 
   const handleChange = (e) => {
     const { id, value } = e.target;
+
     let val = value;
 
+    // PHONE FORMAT
     if (id === "mobile" || id === "whatsapp") {
       let digits = val.replace(/\D/g, "").slice(0, 10);
+
       val = digits.replace(/(\d{5})(?=\d)/g, "$1 ");
-    } 
-    else if (DATE_FIELDS.includes(id)) {
-      let digits = val.replace(/\D/g, "").slice(0, 8);
-      let dd = digits.slice(0, 2);
-      let mm = digits.slice(2, 4);
-      let yyyy = digits.slice(4, 8);
-
-      if (dd.length === 2) {
-        let dayNum = parseInt(dd);
-        if (dayNum > 31) dd = "31";
-        if (dayNum === 0) dd = "01";
-      }
-      if (mm.length === 2) {
-        let monthNum = parseInt(mm);
-        if (monthNum > 12) mm = "12";
-        if (monthNum === 0) mm = "01";
-      }
-
-      if (digits.length <= 2) val = dd;
-      else if (digits.length <= 4) val = `${dd}-${mm}`;
-      else val = `${dd}-${mm}-${yyyy}`;
     }
 
-    const updates = { [id]: val };
-    updateSection("personal", updates);
-  };
+    // DATE FORMAT
+    else if (DATE_FIELDS.includes(id)) {
+      let digits = val.replace(/\D/g, "").slice(0, 8);
 
+      let dd = digits.slice(0, 2);
+
+      let mm = digits.slice(2, 4);
+
+      let yyyy = digits.slice(4, 8);
+
+      if (digits.length <= 2) {
+        val = dd;
+      } else if (digits.length <= 4) {
+        val = `${dd}-${mm}`;
+      } else {
+        val = `${dd}-${mm}-${yyyy}`;
+      }
+    }
+
+    updateSection("personal", {
+      [id]: val,
+    });
+  };
   const handleAadhaarChange = (e) => {
     let value = e.target.value.replace(/\D/g, "");
     if (value.length > 12) value = value.slice(0, 12);
@@ -305,261 +540,599 @@ export default function PersonalForm() {
     updateSection("personal", { aadhaarNo: value });
   };
 
-  const NATIONALITIES = ["Indian", "NRI", "Afghan", "Albanian", "Algerian", "American", "Andorran", "Angolan", "Argentinian", "Armenian", "Australian", "Austrian", "Bangladeshi", "Belgian", "Bhutanese", "Brazilian", "British", "Bulgarian", "Canadian", "Chinese", "Colombian", "Croatian", "Cuban", "Czech", "Danish", "Dutch", "Egyptian", "Ethiopian", "Finnish", "French", "German", "Greek", "Hungarian", "Icelandic", "Indonesian", "Iranian", "Iraqi", "Irish", "Israeli", "Italian", "Japanese", "Jordanian", "Kenyan", "Kuwaiti", "Lebanese", "Malaysian", "Maldivian", "Mexican", "Moroccan", "Nepalese", "New Zealander", "Nigerian", "Norwegian", "Omani", "Pakistani", "Palestinian", "Peruvian", "Philippine", "Polish", "Portuguese", "Qatari", "Romanian", "Russian", "Saudi", "Singaporean", "South African", "South Korean", "Spanish", "Sri Lankan", "Sudanese", "Swedish", "Swiss", "Syrian", "Thai", "Turkish", "Ukrainian", "Uruguayan", "Venezuelan", "Vietnamese", "Yemeni", "Zimbabwean"];
-  const CASTES = ["Ezhava", "Nair", "Brahmin", "Pulaya", "Paraya", "Vannan", "Viswakarma", "Kammalan", "Mappila", "Latin Catholic", "Syrian Christian", "Dalit", "Adivasi", "Kurava", "Thiyya", "Marar", "Moothan", "Chaliya", "Namboothiri", "Warrier", "Menon", "Panicker", "Chekavar", "Vellalar", "Gounder", "Reddy", "Yadav", "Rajput", "Kayastha", "Bania", "Jat", "Maratha", "Lingayat", "Patel", "Kshatriya", "Vaishya", "Shudra", "SC", "ST", "OBC", "Other"];
-  const COUNTRIES = ["India","USA","UK","Canada","Australia","UAE","Saudi Arabia","Germany","France","Singapore","Malaysia","Qatar","Kuwait","Oman","South Africa","Japan","China","Sri Lanka","Nepal","Bangladesh"];
-  const countryOptions = COUNTRIES.map(c => ({ value: c, label: c }));
-  const VISA_TYPES = ["Student Visa", "Work Visa", "Tourist Visa", "Business Visa", "Dependent Visa"];
+  const NATIONALITIES = [
+    "Indian",
+    "NRI",
+    "Afghan",
+    "Albanian",
+    "Algerian",
+    "American",
+    "Andorran",
+    "Angolan",
+    "Argentinian",
+    "Armenian",
+    "Australian",
+    "Austrian",
+    "Bangladeshi",
+    "Belgian",
+    "Bhutanese",
+    "Brazilian",
+    "British",
+    "Bulgarian",
+    "Canadian",
+    "Chinese",
+    "Colombian",
+    "Croatian",
+    "Cuban",
+    "Czech",
+    "Danish",
+    "Dutch",
+    "Egyptian",
+    "Ethiopian",
+    "Finnish",
+    "French",
+    "German",
+    "Greek",
+    "Hungarian",
+    "Icelandic",
+    "Indonesian",
+    "Iranian",
+    "Iraqi",
+    "Irish",
+    "Israeli",
+    "Italian",
+    "Japanese",
+    "Jordanian",
+    "Kenyan",
+    "Kuwaiti",
+    "Lebanese",
+    "Malaysian",
+    "Maldivian",
+    "Mexican",
+    "Moroccan",
+    "Nepalese",
+    "New Zealander",
+    "Nigerian",
+    "Norwegian",
+    "Omani",
+    "Pakistani",
+    "Palestinian",
+    "Peruvian",
+    "Philippine",
+    "Polish",
+    "Portuguese",
+    "Qatari",
+    "Romanian",
+    "Russian",
+    "Saudi",
+    "Singaporean",
+    "South African",
+    "South Korean",
+    "Spanish",
+    "Sri Lankan",
+    "Sudanese",
+    "Swedish",
+    "Swiss",
+    "Syrian",
+    "Thai",
+    "Turkish",
+    "Ukrainian",
+    "Uruguayan",
+    "Venezuelan",
+    "Vietnamese",
+    "Yemeni",
+    "Zimbabwean",
+  ];
+  const CASTES = [
+    "Ezhava",
+    "Nair",
+    "Brahmin",
+    "Pulaya",
+    "Paraya",
+    "Vannan",
+    "Viswakarma",
+    "Kammalan",
+    "Mappila",
+    "Latin Catholic",
+    "Syrian Christian",
+    "Dalit",
+    "Adivasi",
+    "Kurava",
+    "Thiyya",
+    "Marar",
+    "Moothan",
+    "Chaliya",
+    "Namboothiri",
+    "Warrier",
+    "Menon",
+    "Panicker",
+    "Chekavar",
+    "Vellalar",
+    "Gounder",
+    "Reddy",
+    "Yadav",
+    "Rajput",
+    "Kayastha",
+    "Bania",
+    "Jat",
+    "Maratha",
+    "Lingayat",
+    "Patel",
+    "Kshatriya",
+    "Vaishya",
+    "Shudra",
+    "SC",
+    "ST",
+    "OBC",
+    "Other",
+  ];
+  const COUNTRIES = [
+    "India",
+    "USA",
+    "UK",
+    "Canada",
+    "Australia",
+    "UAE",
+    "Saudi Arabia",
+    "Germany",
+    "France",
+    "Singapore",
+    "Malaysia",
+    "Qatar",
+    "Kuwait",
+    "Oman",
+    "South Africa",
+    "Japan",
+    "China",
+    "Sri Lanka",
+    "Nepal",
+    "Bangladesh",
+  ];
+  const countryOptions = COUNTRIES.map((c) => ({ value: c, label: c }));
+  const VISA_TYPES = [
+    "Student",
+    "Work Visa",
+    "Tourist Visa",
+    "Business Visa",
+    "Dependent Visa",
+  ];
 
   return (
-    <FormWrapper
-      title="Personal Information"
-      description="Please provide your official personal information as per documents."
-      onSave={handleSave}
-    >
-      {showKeyboard && (
-        <MalayalamKeyboard
-          value={nativeName}
-          onChange={setNativeName}
-          onClose={() => setShowKeyboard(false)}
-        />
-      )}
+    <>
+      {isLoading && <GlobalLoader />}
 
-      <FormSection title="Basic Identity" icon={User}>
-        <InputField
-          label="Full Name (as per SSLC)"
-          id="fullName"
-          required
-          value={personal.fullName}
-          onChange={handleChange}
-        />
+      <FormWrapper
+        title="Personal Information"
+        description="Please provide your official personal information as per documents."
+        onSave={handleSave}
+      >
+        {showKeyboard && (
+  <MalayalamKeyboard
+    value={personal.fullNameNative || ""}
+    onChange={(value) => {
+
+      updateSection("personal", {
+        fullNameNative: value,
+      });
+
+    }}
+    onClose={() => setShowKeyboard(false)}
+  />
+)}
+
+        <FormSection title="Basic Identity" icon={User}>
+          <InputField
+            label="Full Name (as per SSLC)"
+            id="fullName"
+            required
+            value={personal.fullName || ""}
+            onChange={handleChange}
+          />
         <div className="space-y-2">
-          <label className="block text-sm font-medium text-slate-600">
-            Full Name (Native)
-          </label>
-          <div className="relative">
-            <input
-              value={nativeName}
-              onChange={(e) => setNativeName(e.target.value)}
-              disabled={isSubmitted}
-              className={`w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-lg outline-none transition-all placeholder:text-slate-400 
-              ${!isSubmitted ? "focus:ring-2 focus:ring-primary focus:border-primary" : ""}
-              ${isSubmitted ? "bg-gray-100 cursor-not-allowed opacity-70" : ""}`}
-              placeholder="Enter name in Malayalam"
-            />
-            <button
-              type="button"
-              onClick={() => setShowKeyboard(true)}
-              disabled={isSubmitted}
-              className={`absolute right-3 top-1/2 -translate-y-1/2 transition ${isSubmitted
-                  ? "text-gray-400 cursor-not-allowed"
-                  : "text-slate-500 hover:text-green-600"
-                }`}
-            >
-              <Keyboard size={18} />
-            </button>
-          </div>
-        </div>
+  <label className="block text-sm font-medium text-slate-600">
+    Full Name (Native)
+  </label>
 
-        <InputField
-          label="Date of Birth"
-          id="dob"
-          type="text"
-          placeholder="DD-MM-YYYY"
-          value={personal.dob}
-          onChange={handleChange}
-          onBlur={handleBlur}
-          error={errors.dob}
-        />
+  <div className="relative">
 
-      <FileInput
+    <input
+      value={personal.fullNameNative || ""}
+      onChange={handleChange}
+      disabled={isSubmitted}
+      id="fullNameNative"
+      autoComplete="off"
+      className={`w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-lg outline-none transition-all placeholder:text-slate-400
+      ${
+        !isSubmitted
+          ? "focus:ring-2 focus:ring-primary focus:border-primary"
+          : ""
+      }
+      ${
+        isSubmitted
+          ? "bg-gray-100 cursor-not-allowed opacity-70"
+          : ""
+      }`}
+      placeholder="Enter name in Malayalam"
+    />
+
+    <button
+      type="button"
+      onClick={() => {
+
+        document
+          .getElementById(
+            "fullNameNative"
+          )
+          ?.focus();
+
+        setShowKeyboard(true);
+
+      }}
+      disabled={isSubmitted}
+      className={`absolute right-3 top-1/2 -translate-y-1/2 transition ${
+        isSubmitted
+          ? "text-gray-400 cursor-not-allowed"
+          : "text-slate-500 hover:text-green-600"
+      }`}
+    >
+      <Keyboard size={18} />
+    </button>
+
+  </div>
+</div>
+          <InputField
+            label="Date of Birth"
+            id="dob"
+            type="text"
+            placeholder="DD-MM-YYYY"
+            value={personal.dob || ""}
+            onChange={handleChange}
+            onBlur={handleBlur}
+            error={errors.dob}
+          />
+
+         <FileInput
   label="Date of Birth Proof"
-  required={true}
-  file={personal.dobDocName || (personal.dobDoc ? personal.dobDoc.name : "")}
+  file={
+    personal.birthCertificateDoc?.name ||
+    personal.birthCertificateDoc
+  }
+  fileUrl={
+    personal.birthCertificateDoc?.url
+  }
   error={personal.dobDocError}
   disabled={isSubmitted}
   onChange={(e) => {
-    const { name, error } = e.target;
-    
+
+    const { file, error } = e.target;
+
     updateSection("personal", {
-      dobDocName: name,
+
+      birthCertificateDoc: file,
+
       dobDocError: error,
-      // If you are storing the actual file object, 
-      // it is passed as e.target.file in our component logic
-      dobDoc: e.target.file 
+
     });
+
   }}
 />
+          <SelectField
+            disabled={isSubmitted}
+            label="Gender"
+            id="gender"
+            value={personal.gender || ""}
+            onChange={handleChange}
+            options={[
+              { value: "", label: "Select Gender" },
+              { value: "Male", label: "Male" },
+              { value: "Female", label: "Female" },
+              { value: "Other", label: "Other/Transgender" },
+            ]}
+          />
+        </FormSection>
 
-        <SelectField disabled={isSubmitted}
-          label="Gender"
-          id="gender"
-          value={personal.gender}
-          onChange={handleChange}
-          options={[
-            { value: '', label: 'Select Gender' },
-            { value: 'male', label: 'Male' },
-            { value: 'female', label: 'Female' },
-            { value: 'other', label: 'Other/Transgender' },
-          ]}
-        />
-      </FormSection>
+        <FormSection title="Social & Demographics" icon={Flag}>
+          <SelectField
+            disabled={isSubmitted}
+            label="Nationality"
+            id="nationality"
+            value={personal.nationality || ""}
+            onChange={handleChange}
+            options={NATIONALITIES.map((nat) => ({ value: nat, label: nat }))}
+          />
+          <SelectField
+            disabled={isSubmitted}
+            label="Domicile State"
+            id="domicileState"
+            value={personal.domicileState || ""}
+            onChange={handleChange}
+            options={[
+              { value: "Kerala", label: "Kerala" },
+              { value: "Tamil Nadu", label: "Tamil Nadu" },
+              { value: "Karnataka", label: "Karnataka" },
+            ]}
+          />
+          <SelectField
+            disabled={isSubmitted}
+            label="Religion"
+            id="religion"
+            value={personal.religion || ""}
+            onChange={handleChange}
+            options={[
+              { value: "Hindu", label: "Hindu" },
+              { value: "Muslim", label: "Muslim" },
+              { value: "Christian", label: "Christian" },
+              { value: "Other", label: "Other" },
+            ]}
+          />
+          <SelectField
+            disabled={isSubmitted}
+            label="Social Category"
+            id="socialCategory" // Updated ID to match backend key
+            value={personal.socialCategory || ""} // Changed from .category to .socialCategory
+            onChange={handleChange}
+            options={[
+              { value: "General", label: "General" },
+              { value: "OBC", label: "OBC" },
+              { value: "SC", label: "SC" },
+              { value: "ST", label: "ST" },
+            ]}
+          />{" "}
+          <SelectField
+            disabled={isSubmitted}
+            label="Caste"
+            id="caste"
+            value={personal.caste}
+            onChange={handleChange}
+            options={CASTES.map((caste) => ({ value: caste, label: caste }))}
+          />
+          <SelectField
+            disabled={isSubmitted}
+            label="Dual Citizenship"
+            id="dualCitizenship"
+            // Convert the boolean from backend/state into a string for the UI
+            value={String(personal.dualCitizenship || "")}
+            onChange={(e) => {
+              // If your handleChange doesn't handle booleans,
+              // convert the string back to a boolean for the backend
+              const val = e.target.value === "true";
+              handleChange({
+                target: {
+                  id: "dualCitizenship",
+                  value: val,
+                },
+              });
+            }}
+            options={[
+              { value: "true", label: "Yes" },
+              { value: "false", label: "No" },
+            ]}
+          />
+        </FormSection>
 
-      <FormSection title="Social & Demographics" icon={Flag}>
-        <SelectField disabled={isSubmitted} label="Nationality" id="nationality" value={personal.nationality} onChange={handleChange} options={NATIONALITIES.map((nat) => ({ value: nat, label: nat }))} />
-        <SelectField disabled={isSubmitted} label="Domicile State" id="domicileState" value={personal.domicileState} onChange={handleChange} options={[{ value: "Kerala", label: "Kerala" }, { value: "Tamil Nadu", label: "Tamil Nadu" }, { value: "Karnataka", label: "Karnataka" }]} />
-        <SelectField disabled={isSubmitted} label="Religion" id="religion" value={personal.religion} onChange={handleChange} options={[{ value: "Hindu", label: "Hindu" }, { value: "Muslim", label: "Muslim" }, { value: "Christian", label: "Christian" }, { value: "Other", label: "Other" }]} />
-        <SelectField disabled={isSubmitted} label="Social Category" id="category" value={personal.category} onChange={handleChange} options={[{ value: "general", label: "General" }, { value: "obc", label: "OBC" }, { value: "sc", label: "SC" }, { value: "st", label: "ST" }]} />
-        <SelectField disabled={isSubmitted} label="Caste" id="caste" value={personal.caste} onChange={handleChange} options={CASTES.map((caste) => ({ value: caste, label: caste }))} />
-        <SelectField disabled={isSubmitted} label="Dual Citizenship" id="dualCitizenship" value={personal.dualCitizenship} onChange={handleChange} options={[{ value: "", label: "Select" }, { value: "yes", label: "Yes" }, { value: "no", label: "No" }]} />
-      </FormSection>
+        <FormSection title="Identity Proof" icon={CreditCard}>
+          <InputField
+            label="Aadhaar Number"
+            id="aadhaarNo"
+value={ personal.aadhaarNo ? personal.aadhaarNo .replace(/\D/g, "") .replace(/(\d{4})(?=\d)/g, "$1 ") : "" }            onChange={handleAadhaarChange}
+            placeholder="0000 0000 0000"
+            maxLength={14}
+          />
+          <InputField
+            label="Passport Number"
+            id="passportNumber"
+            value={personal.passportNumber || ""}
+            onChange={handleChange}
+          />
+          <SelectField
+            label="Country of Issue"
+            id="passportCountry"
+            value={personal.passportCountry || ""}
+            onChange={handleChange}
+            options={countryOptions}
+          />
+          <InputField
+            label="Passport Expiry Date"
+            id="passportExpiry"
+            type="text"
+            placeholder="DD-MM-YYYY"
+            value={personal.passportExpiry || ""}
+            onChange={handleChange}
+            onBlur={handleBlur}
+            error={errors.passportExpiry}
+          />
 
-      <FormSection title="Identity Proof" icon={CreditCard}>
-        <InputField label="Aadhaar Number" id="aadhaarNo" value={personal.aadhaarNo} onChange={handleAadhaarChange} placeholder="0000 0000 0000" maxLength={14} />
-        <InputField label="Passport Number" id="passportNo" value={personal.passportNo} onChange={handleChange} />
-        <SelectField label="Country of Issue" id="passportCountry" value={personal.passportCountry} onChange={handleChange} options={countryOptions} />
-        <InputField label="Passport Expiry Date" id="passportExpiry" type="text" placeholder="DD-MM-YYYY" value={personal.passportExpiry} onChange={handleChange} onBlur={handleBlur} error={errors.passportExpiry} />
-
-       <FileInput
+        <FileInput
   label="Passport Document"
-  required={false} // Set to true if this is mandatory
-  file={personal.passportDocName || (personal.passportDoc ? personal.passportDoc.name : "")}
+  required={false}
+  file={
+    personal.passportDoc?.name ||
+    personal.passportDoc
+  }
+  fileUrl={
+    personal.passportDoc?.url
+  }
   error={personal.passportDocError}
   disabled={isSubmitted}
   onChange={(e) => {
-    const { name, error, file } = e.target;
-    
+
+    const { file, error } = e.target;
+
     updateSection("personal", {
-      passportDocName: name,
+
+      passportDoc: file,
+
       passportDocError: error,
-      passportDoc: file // Stores the actual file object if needed
+
     });
+
   }}
 />
-      </FormSection>
+        </FormSection>
 
-      {/* New Dedicated International Student Section */}
-<FormSection title="International Student Details" icon={Globe}>
-  <div className="md:col-span-2 space-y-6">
-    {/* Row 1: The Question and Visa Type */}
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-      <SelectField 
-        label="Are you an International Student?" 
-        id="isInternational" 
-        value={personal.isInternational || "no"} 
-        disabled={isSubmitted}
-        options={[
-          { value: "no", label: "No" },
-          { value: "yes", label: "Yes" }
-        ]} 
-        onChange={(e) => {
-          const isInt = e.target.value === "yes";
-          updateSection("personal", { 
-            isInternational: e.target.value,
-            ...( !isInt && {
-              visaType: "", visaNo: "", visaCountry: "", 
-              visaIssueDate: "", visaExpiryDate: "", visaStatus: "",
-              visaDoc: null, visaDocName: "", visaDocError: ""
-            })
-          });
-        }} 
-      />
+        {/* New Dedicated International Student Section */}
+        <FormSection title="International Student Details" icon={Globe}>
+          <div className="md:col-span-2 space-y-6">
+            {/* Row 1: The Question and Visa Type */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <SelectField
+                label="Are you an International Student?"
+                id="isInternational"
+value={ personal.visaDetails || personal.visaType ? "yes" : "no" }
+                disabled={isSubmitted}
+                options={[
+                  { value: "no", label: "No" },
+                  { value: "yes", label: "Yes" },
+                ]}
+                onChange={(e) => {
+                  const isInt = e.target.value === "yes";
+                  updateSection("personal", {
+                    isInternational: e.target.value,
+                    ...(!isInt && {
+                      visaType: "",
+                      visaNo: "",
+                      visaCountry: "",
+                      visaIssueDate: "",
+                      visaExpiryDate: "",
+                      visaStatus: "",
+                      visaDoc: null,
+                      visaDocName: "",
+                      visaDocError: "",
+                    }),
+                  });
+                }}
+              />
 
-      {personal.isInternational === "yes" && (
-        <SelectField 
-          label="Visa Type" 
-          id="visaType" 
-          value={personal.visaType} 
-          onChange={handleChange} 
-          disabled={isSubmitted}
-          options={VISA_TYPES.map(v => ({ value: v, label: v }))} 
-          className="animate-in fade-in slide-in-from-left-2 duration-300"
-        />
-      )}
-    </div>
+              {( personal.visaDetails || personal.visaType ) && (
+                <SelectField
+                  label="Visa Type"
+                  id="visaType"
+                  value={personal.visaType || ""}
+                  onChange={handleChange}
+                  disabled={isSubmitted}
+                  options={VISA_TYPES.map((v) => ({ value: v, label: v }))}
+                  className="animate-in fade-in slide-in-from-left-2 duration-300"
+                />
+              )}
+            </div>
 
-    {/* Conditional Rows for Yes */}
-    {personal.isInternational === "yes" && (
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 animate-in fade-in slide-in-from-top-2 duration-500">
-        
-        {/* Row 2: Visa Number & Issuing Country */}
-        <InputField 
-          label="Visa Number" 
-          id="visaNo" 
-          value={personal.visaNo} 
-          onChange={handleChange} 
-          disabled={isSubmitted}
-        />
-        <SelectField 
-          label="Issuing Country" 
-          id="visaCountry" 
-          value={personal.visaCountry} 
-          onChange={handleChange} 
-          disabled={isSubmitted}
-          options={countryOptions} 
-        />
+            {/* Conditional Rows for Yes */}
+            {( personal.visaDetails || personal.visaType ) && (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 animate-in fade-in slide-in-from-top-2 duration-500">
+                {/* Row 2: Visa Number & Issuing Country */}
+                <InputField
+                  label="Visa Number"
+                  id="visaNo"
+                  value={personal.visaNo || ""}
+                  onChange={handleChange}
+                  disabled={isSubmitted}
+                />
+                <SelectField
+                  label="Issuing Country"
+                  id="visaCountry"
+                  value={personal.visaCountry || ""}
+                  onChange={handleChange}
+                  disabled={isSubmitted}
+                  options={countryOptions}
+                />
 
-        {/* Row 3: Dates */}
-        <InputField 
-          label="Visa Issue Date" 
-          id="visaIssueDate" 
-          type="text" 
-          placeholder="DD-MM-YYYY" 
-          value={personal.visaIssueDate} 
-          onChange={handleChange} 
-          onBlur={handleBlur} 
-          error={errors.visaIssueDate} 
-          disabled={isSubmitted}
-        />
-        <InputField 
-          label="Visa Expiry Date" 
-          id="visaExpiryDate" 
-          type="text" 
-          placeholder="DD-MM-YYYY" 
-          value={personal.visaExpiryDate} 
-          onChange={handleChange} 
-          onBlur={handleBlur} 
-          error={errors.visaExpiryDate} 
-          disabled={isSubmitted}
-        />
+                {/* Row 3: Dates */}
+                <InputField
+                  label="Visa Issue Date"
+                  id="visaIssueDate"
+                  type="text"
+                  placeholder="DD-MM-YYYY"
+                  value={personal.visaIssueDate || ""}
+                  onChange={handleChange}
+                  onBlur={handleBlur}
+                  error={errors.visaIssueDate}
+                  disabled={isSubmitted}
+                />
+                <InputField
+                  label="Visa Expiry Date"
+                  id="visaExpiryDate"
+                  type="text"
+                  placeholder="DD-MM-YYYY"
+                  value={personal.visaExpiryDate || ""}
+                  onChange={handleChange}
+                  onBlur={handleBlur}
+                  error={errors.visaExpiryDate}
+                  disabled={isSubmitted}
+                />
 
-        {/* Row 4: Status and Document */}
-        <SelectField 
-          label="Visa Status" 
-          id="visaStatus" 
-          value={personal.visaStatus} 
-          onChange={handleChange} 
-          disabled={isSubmitted}
-          options={[
-            { value: "active", label: "Active" }, 
-            { value: "expired", label: "Expired" }, 
-            { value: "pending", label: "Pending" }
-          ]} 
-        />
-        
-        <FileInput
-          label="Visa / Permit Document"
-          file={personal.visaDocName || (personal.visaDoc ? personal.visaDoc.name : "")}
-          error={personal.visaDocError}
-          disabled={isSubmitted}
-          onChange={(e) => {
-            const { name, error, file } = e.target;
-            updateSection("personal", {
-              visaDocName: name,
-              visaDocError: error,
-              visaDoc: file
-            });
-          }}
-        />
-      </div>
-    )}
-  </div>
-</FormSection>
+                {/* Row 4: Status and Document */}
+                <SelectField
+                  label="Visa Status"
+                  id="visaStatus"
+                  value={personal.visaStatus || ""}
+                  onChange={handleChange}
+                  disabled={isSubmitted}
+                  options={[
+                    { value: "Active", label: "Active" }, { value: "Expired", label: "Expired" }, { value: "Pending", label: "Pending" }
+                  ]}
+                />
+<FileInput
+  label="Visa / Permit Document"
+  file={
+    personal.visaDoc?.name ||
+    personal.visaDoc
+  }
+  fileUrl={
+    personal.visaDoc?.url
+  }
+  error={personal.visaDocError}
+  disabled={isSubmitted}
+  onChange={(e) => {
 
-      <FormSection title="Language Details" icon={Languages}>
-        <SelectField disabled={isSubmitted} label="Mother Tongue" id="motherTongue" value={personal.motherTongue} onChange={handleChange} required options={[{ value: "", label: "Select Mother Tongue" }, { value: "Malayalam", label: "Malayalam" }, { value: "English", label: "English" }]} />
-        <SelectField label="Languages Known" id="languages" value={personal.languages} onChange={(e) => updateSection("personal", { languages: e.target.value })} options={[{ value: "Malayalam", label: "Malayalam" }, { value: "English", label: "English" }]} multiple />
-      </FormSection>
-    </FormWrapper>
+    const { file, error } = e.target;
+
+    updateSection("personal", {
+
+      visaDoc: file,
+
+      visaDocError: error,
+
+    });
+
+  }}
+/>
+              </div>
+            )}
+          </div>
+        </FormSection>
+
+        <FormSection title="Language Details" icon={Languages}>
+          <SelectField
+            disabled={isSubmitted}
+            label="Mother Tongue"
+            id="motherTongue"
+            value={personal.motherTongue}
+            onChange={handleChange}
+            required
+            options={[
+              { value: "", label: "Select Mother Tongue" },
+              { value: "Malayalam", label: "Malayalam" },
+              { value: "English", label: "English" },
+            ]}
+          />
+          <SelectField
+            label="Languages Known"
+            id="languagesKnown" // Updated to match backend key
+            // Ensure the value is always an array, even if the backend returns null
+            value={personal.languagesKnown || []}
+            onChange={(e) => {
+              // For multiple select, e.target.value is usually the updated array
+              updateSection("personal", { languagesKnown: e.target.value });
+            }}
+            options={[
+              { value: "Malayalam", label: "Malayalam" },
+              { value: "English", label: "English" },
+              { value: "Hindi", label: "Hindi" },
+            ]}
+            multiple
+          />{" "}
+        </FormSection>
+      </FormWrapper>
+    </>
   );
 }
