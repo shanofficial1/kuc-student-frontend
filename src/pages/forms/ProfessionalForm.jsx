@@ -52,11 +52,216 @@ export default function ProfessionalForm() {
     updateSection("professional", { skills: newSkills });
   };
 
+  const saveAndRefresh =
+  useStore(
+    (s) => s.saveAndRefresh
+  );
+
+const handleSave = async () => {
+
+  const formData =
+    new FormData();
+
+  // Publications
+
+professional.membershipUrl?.forEach((mem) => {
+
+  if (mem.docFile instanceof File) {
+
+    formData.append(
+      "membershipDocs",
+      mem.docFile
+    );
+
+  }
+
+});
+console.log(
+  "MEMBERSHIP URL",
+  professional.membershipUrl
+);
+
+professional.membershipUrl?.forEach((mem, index) => {
+
+  formData.append(
+    `professional_details[membershipUrl][${index}][name]`,
+    mem.name || ""
+  );
+
+  formData.append(
+    `professional_details[membershipUrl][${index}][url]`,
+    mem.url || ""
+  );
+
+});
+
+
+  professional.publications?.forEach(
+    (pub, index) => {
+
+      formData.append(
+        `professional_details[publications][${index}][journal]`,
+        pub.journal || ""
+      );
+
+      formData.append(
+        `professional_details[publications][${index}][issn]`,
+        pub.issn || ""
+      );
+
+      formData.append(
+        `professional_details[publications][${index}][date]`,
+        pub.date || ""
+      );
+
+      if (
+        pub.docFile
+          instanceof File
+      ) {
+
+        formData.append(
+          "publicationDocs",
+          pub.docFile
+        );
+
+      }
+
+    }
+  );
+
+  // Conferences
+
+
+  professional.membershipUrl?.forEach(
+  (mem) => {
+
+    if (
+      mem.docFile instanceof File
+    ) {
+
+      formData.append(
+        "membershipDocs",
+        mem.docFile
+      );
+
+    }
+
+  }
+);
+
+  professional.conferences?.forEach(
+    (conf, index) => {
+
+      formData.append(
+        `professional_details[conferences][${index}][title]`,
+        conf.title || ""
+      );
+
+      formData.append(
+        `professional_details[conferences][${index}][name]`,
+        conf.name || ""
+      );
+
+      if (
+        conf.docFile
+          instanceof File
+      ) {
+
+        formData.append(
+          "conferenceDocs",
+          conf.docFile
+        );
+
+      }
+
+    }
+  );
+
+  // Experience
+
+  professional.experience?.forEach(
+    (exp, index) => {
+
+      formData.append(
+        `professional_details[experience][${index}][company]`,
+        exp.company || ""
+      );
+
+      formData.append(
+        `professional_details[experience][${index}][designation]`,
+        exp.designation || ""
+      );
+
+      formData.append(
+        `professional_details[experience][${index}][years]`,
+        exp.years || ""
+      );
+
+      if (
+        exp.docFile
+          instanceof File
+      ) {
+
+        formData.append(
+          "experienceDocs",
+          exp.docFile
+        );
+
+      }
+
+    }
+  );
+
+  // Patents
+
+  professional.patents?.forEach(
+    (pat, index) => {
+
+      formData.append(
+        `professional_details[patents][${index}][title]`,
+        pat.title || ""
+      );
+
+      formData.append(
+        `professional_details[patents][${index}][status]`,
+        pat.status || ""
+      );
+
+      if (
+        pat.docFile
+          instanceof File
+      ) {
+
+        formData.append(
+          "patentDocs",
+          pat.docFile
+        );
+
+      }
+
+    }
+  );
+
+  // Skills
+
+  formData.append(
+    "professional_details[skills]",
+    professional.skills || ""
+  );
+
+  await saveAndRefresh(
+    formData,
+    true
+  );
+
+};
+
+
   return (
     <FormWrapper
       title="Professional & Research"
       description="Manage publications, conferences, experience, and skills."
-      onSave={() => console.log("Saving Professional:", professional)}
+onSave={handleSave}
     >
       {/* ================= JOURNAL PUBLICATIONS ================= */}
       <FormSection title="Journal Publications" icon={BookOpen}>
@@ -73,18 +278,41 @@ export default function ProfessionalForm() {
               <InputField label="Journal Name" value={pub.journal || ""} onChange={(e) => handleArrayUpdate("publications", index, "journal", e.target.value)} />
               <InputField label="ISSN" value={pub.issn || ""} onChange={(e) => handleArrayUpdate("publications", index, "issn", e.target.value)} />
               <InputField label="Year" value={pub.date ? pub.date.split("-")[0] : ""} onChange={(e) => handleArrayUpdate("publications", index, "date", e.target.value)} />
-              <FileInput
-                label="Upload Publication"
-                file={pub.docName || pub.url?.split('/').pop()}
-                error={pub.fileError}
-                disabled={isSubmitted}
-                onChange={(e) => {
-                  const { name, error, file } = e.target;
-                  const arr = [...professional.publications];
-                  arr[index] = { ...arr[index], docName: name, fileError: error, docFile: file };
-                  updateSection("professional", { publications: arr });
-                }}
-              />
+             <FileInput
+  label="Upload Publication"
+  file={
+    pub.url?.name ||
+    pub.docName
+  }
+  fileUrl={
+    pub.url?.url
+  }
+  onChange={(e) => {
+
+    const arr =
+      [...professional.publications];
+
+    arr[index] = {
+
+      ...arr[index],
+
+      docFile:
+        e.target.file,
+
+      url:
+        e.target.file
+
+    };
+
+    updateSection(
+      "professional",
+      {
+        publications: arr
+      }
+    );
+
+  }}
+/>
             </div>
           ))}
           <button type="button" onClick={() => updateSection("professional", { publications: [...(professional.publications || []), {}] })} className="flex items-center gap-2 text-primary font-medium">
@@ -103,19 +331,46 @@ export default function ProfessionalForm() {
               </button>
               <InputField label="Conference Name" value={conf.name || ""} onChange={(e) => handleArrayUpdate("conferences", index, "name", e.target.value)} />
               <InputField label="Paper Title" value={conf.title || ""} onChange={(e) => handleArrayUpdate("conferences", index, "title", e.target.value)} />
-              <FileInput
-                label="Upload Presentation Proof"
-                className="md:col-span-2"
-                file={conf.docName || conf.url?.split('/').pop()}
-                error={conf.fileError}
-                disabled={isSubmitted}
-                onChange={(e) => {
-                  const { name, error, file } = e.target;
-                  const arr = [...professional.conferences];
-                  arr[index] = { ...arr[index], docName: name, fileError: error, docFile: file };
-                  updateSection("professional", { conferences: arr });
-                }}
-              />
+             <FileInput
+  label="Upload Presentation Proof"
+  file={
+    conf.url?.name ||
+    conf.docName
+  }
+  fileUrl={
+    conf.url?.url
+  }
+  error={conf.fileError}
+  disabled={isSubmitted}
+  onChange={(e) => {
+
+    const arr =
+      [...professional.conferences];
+
+    arr[index] = {
+
+      ...arr[index],
+
+      docFile:
+        e.target.file,
+
+      url:
+        e.target.file,
+
+      fileError:
+        e.target.error
+
+    };
+
+    updateSection(
+      "professional",
+      {
+        conferences: arr
+      }
+    );
+
+  }}
+/>
             </div>
           ))}
           <button type="button" onClick={() => updateSection("professional", { conferences: [...(professional.conferences || []), {}] })} className="flex gap-2 text-primary font-medium">
@@ -135,18 +390,46 @@ export default function ProfessionalForm() {
               <InputField label="Company" value={exp.company || ""} onChange={(e) => handleArrayUpdate("experience", index, "company", e.target.value)} />
               <InputField label="Designation" value={exp.designation || ""} onChange={(e) => handleArrayUpdate("experience", index, "designation", e.target.value)} />
               <InputField label="Year of Experience" value={exp.years || ""} onChange={(e) => handleArrayUpdate("experience", index, "years", e.target.value)} />
-              <FileInput
-                label="Experience Certificate"
-                file={exp.docName || exp.url?.split('/').pop()}
-                error={exp.fileError}
-                disabled={isSubmitted}
-                onChange={(e) => {
-                  const { name, error, file } = e.target;
-                  const arr = [...professional.experience];
-                  arr[index] = { ...arr[index], docName: name, fileError: error, docFile: file };
-                  updateSection("professional", { experience: arr });
-                }}
-              />
+            <FileInput
+  label="Experience Certificate"
+  file={
+    exp.url?.name ||
+    exp.docName
+  }
+  fileUrl={
+    exp.url?.url
+  }
+  error={exp.fileError}
+  disabled={isSubmitted}
+  onChange={(e) => {
+
+    const arr =
+      [...professional.experience];
+
+    arr[index] = {
+
+      ...arr[index],
+
+      docFile:
+        e.target.file,
+
+      url:
+        e.target.file,
+
+      fileError:
+        e.target.error
+
+    };
+
+    updateSection(
+      "professional",
+      {
+        experience: arr
+      }
+    );
+
+  }}
+/>
             </div>
           ))}
           <button type="button" onClick={() => updateSection("professional", { experience: [...(professional.experience || []), {}] })} className="flex gap-2 text-primary font-medium">
@@ -175,18 +458,46 @@ export default function ProfessionalForm() {
                 ]}
               />
               <FileInput
-                label="Upload Patent Document"
-                className="md:col-span-2"
-                file={pat.docName || pat.document?.split('/').pop()}
-                error={pat.fileError}
-                disabled={isSubmitted}
-                onChange={(e) => {
-                  const { name, error, file } = e.target;
-                  const arr = [...professional.patents];
-                  arr[index] = { ...arr[index], docName: name, fileError: error, docFile: file };
-                  updateSection("professional", { patents: arr });
-                }}
-              />
+  label="Upload Patent Document"
+  className="md:col-span-2"
+  file={
+    pat.document?.name ||
+    pat.document
+  }
+  fileUrl={
+    pat.document?.url
+  }
+  error={pat.fileError}
+  disabled={isSubmitted}
+  onChange={(e) => {
+
+    const arr =
+      [...professional.patents];
+
+    arr[index] = {
+
+      ...arr[index],
+
+      docFile:
+        e.target.file,
+
+      document:
+        e.target.file,
+
+      fileError:
+        e.target.error
+
+    };
+
+    updateSection(
+      "professional",
+      {
+        patents: arr
+      }
+    );
+
+  }}
+/>
             </div>
           ))}
           <button type="button" onClick={() => updateSection("professional", { patents: [...(professional.patents || []), {}] })} className="flex gap-2 text-primary font-medium">
@@ -199,61 +510,116 @@ export default function ProfessionalForm() {
      {/* ================= MEMBERSHIP PROOF (Multiple Files) ================= */}
 <FormSection title="Membership Proof" icon={Users}>
   <div className="md:col-span-2 space-y-4">
-    {/* Map through existing memberships or new uploads */}
-    {(professional.membershipProof || []).map((mem, index) => (
-      <div key={index} className="flex items-start gap-4 bg-slate-50 p-4 rounded-xl border border-slate-100 relative">
+
+    {(professional.membershipUrl || []).map((mem, index) => (
+
+      <div
+        key={index}
+        className="flex items-start gap-4 bg-slate-50 p-4 rounded-xl border border-slate-100 relative"
+      >
+
         <div className="flex-1">
+
           <FileInput
             label={`Membership Document ${index + 1}`}
-            // Check for temporary uploaded name OR existing backend URL filename
-            file={mem.docName || mem.url?.split('/').pop()}
+            file={mem.name}
+            fileUrl={mem.url}
             error={mem.fileError}
             disabled={isSubmitted}
             onChange={(e) => {
-              const { name, error, file } = e.target;
-              const updated = [...professional.membershipProof];
-              updated[index] = { 
-                ...updated[index], 
-                docName: name, 
-                fileError: error, 
-                docFile: file 
+
+              const updated =
+                [...(professional.membershipUrl || [])];
+
+              updated[index] = {
+
+                ...updated[index],
+
+                docFile:
+                  e.target.file,
+
+                name:
+                  e.target.file?.name,
+
+                url:
+                  "",
+
+                fileError:
+                  e.target.error
+
               };
-              updateSection("professional", { membershipProof: updated });
+
+              updateSection(
+                "professional",
+                {
+                  membershipUrl:
+                    updated
+                }
+              );
+
             }}
           />
+
         </div>
-        
+
         {!isSubmitted && (
           <button
             type="button"
             onClick={() => {
-              const updated = professional.membershipProof.filter((_, i) => i !== index);
-              updateSection("professional", { membershipProof: updated });
+
+              const updated =
+                professional.membershipUrl.filter(
+                  (_, i) => i !== index
+                );
+
+              updateSection(
+                "professional",
+                {
+                  membershipUrl:
+                    updated
+                }
+              );
+
             }}
-            className="mt-8 p-2 text-red-500 hover:bg-red-50 rounded-full transition-colors"
+            className="mt-8 p-2 text-red-500 hover:bg-red-50 rounded-full"
           >
             <Trash2 size={18} />
           </button>
         )}
+
       </div>
+
     ))}
 
-    {/* Add More Button */}
     {!isSubmitted && (
       <button
         type="button"
         onClick={() => {
-          const current = professional.membershipProof || [];
-          updateSection("professional", { 
-            membershipProof: [...current, { docName: "", url: "" }] 
-          });
+
+          const current =
+            professional.membershipUrl || [];
+
+          updateSection(
+            "professional",
+            {
+              membershipUrl: [
+                ...current,
+                {
+                  name: "",
+                  url: ""
+                }
+              ]
+            }
+          );
+
         }}
-        className="flex items-center gap-2 text-sm font-semibold text-primary hover:bg-blue-50 px-4 py-2 rounded-lg transition-all w-fit"
+        className="flex items-center gap-2 text-sm font-semibold text-primary"
       >
         <Plus size={16} />
         Add Another Membership Proof
       </button>
     )}
+
   </div>
 </FormSection>
 

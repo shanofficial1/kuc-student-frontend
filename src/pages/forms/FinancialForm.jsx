@@ -13,6 +13,10 @@ export default function FinancialForm() {
   const financial = useStore((state) => state.financial);
   const updateSection = useStore((state) => state.updateSection);
 
+
+  const saveAndRefresh =
+  useStore((s) => s.saveAndRefresh);
+
   // Helper for Nested Updates (educationLoan and bankAccount)
   const handleNestedChange = (parent, child, value) => {
     updateSection("financial", {
@@ -28,10 +32,113 @@ export default function FinancialForm() {
     updateSection("financial", { [id]: value });
   };
 
-  const handleSave = () => {
-    console.log("Saved Financial Data:", financial);
-  };
+const handleSave = async () => {
 
+  const formData =
+    new FormData();
+
+  // Scholarship
+
+  formData.append(
+    "financial_details[schType]",
+    financial.schType || ""
+  );
+
+  formData.append(
+    "financial_details[schId]",
+    financial.schId || ""
+  );
+
+  // Fee Waiver File
+
+  if (
+    financial.feeWaiveUrl?.document
+      instanceof File
+  ) {
+
+    formData.append(
+      "feeWaiveDocument",
+      financial.feeWaiveUrl.document
+    );
+
+  }
+
+  // Education Loan
+
+  formData.append(
+    "financial_details[educationLoan][bankName]",
+    financial.educationLoan?.bankName || ""
+  );
+
+  formData.append(
+    "financial_details[educationLoan][branch]",
+    financial.educationLoan?.branch || ""
+  );
+
+  formData.append(
+    "financial_details[educationLoan][amount]",
+    financial.educationLoan?.amount || ""
+  );
+
+  // Bank Account
+
+  formData.append(
+    "financial_details[bankAccount][accountHolderName]",
+    financial.bankAccount?.accountHolderName || ""
+  );
+
+  formData.append(
+    "financial_details[bankAccount][accountNumber]",
+    financial.bankAccount?.accountNumber || ""
+  );
+
+  formData.append(
+    "financial_details[bankAccount][bankName]",
+    financial.bankAccount?.bankName || ""
+  );
+
+  formData.append(
+    "financial_details[bankAccount][branchName]",
+    financial.bankAccount?.branchName || ""
+  );
+
+  formData.append(
+    "financial_details[bankAccount][ifscCode]",
+    financial.bankAccount?.ifscCode || ""
+  );
+
+  // PAN
+
+  formData.append(
+    "financial_details[pan]",
+    financial.pan || ""
+  );
+
+  // Debug
+
+  for (
+    const [key, value]
+    of formData.entries()
+  ) {
+
+    console.log(
+      key,
+      value
+    );
+
+  }
+
+  console.log(
+  "PAN VALUE =",
+  financial.pan
+);
+
+  await saveAndRefresh(
+    formData,
+    true
+  );
+
+};
   return (
     <FormWrapper
       title="Financial Details"
@@ -78,22 +185,32 @@ export default function FinancialForm() {
               onChange={handleChange}
               disabled={isSubmitted}
             />
+<FileInput
+  label="Fee Waiver Document"
+  file={
+    financial.feeWaiveUrl?.document?.name ||
+    financial.feeWaiveUrl?.document
+  }
+  fileUrl={
+    financial.feeWaiveUrl?.document?.url
+  }
+  error={financial.feeDocError}
+  disabled={isSubmitted}
+  onChange={(e) => {
 
-            <FileInput
-              label="Fee Waiver Document"
-              // Shows existing document name from the URL path
-              file={financial.feeWaiveUrl?.document?.split('/').pop() || financial.feeDocName}
-              error={financial.feeDocError}
-              disabled={isSubmitted}
-              onChange={(e) => {
-                const { name, error, file } = e.target;
-                updateSection("financial", {
-                  feeDocName: name,
-                  feeDocError: error,
-                  // If binary is needed: feeDocFile: file
-                });
-              }}
-            />
+    updateSection("financial", {
+
+      feeWaiveUrl: {
+        document: e.target.file
+      },
+
+      feeDocError:
+        e.target.error,
+
+    });
+
+  }}
+/>
           </>
         )}
       </FormSection>
@@ -138,19 +255,34 @@ export default function FinancialForm() {
           disabled={isSubmitted}
         />
 
-        <InputField
-          label="PAN Card Number"
-          id="pan" // Matches backend "pan"
-          value={financial.pan || ""}
-          disabled={isSubmitted}
-          onChange={(e) => {
-            const value = e.target.value.toUpperCase();
-            if (/^[A-Z]{0,5}[0-9]{0,4}[A-Z]{0,1}$/.test(value)) {
-              updateSection("financial", { pan: value });
-            }
-          }}
-          placeholder="ABCDE1234F"
-        />
+      <InputField
+  label="PAN Card Number"
+  id="pan"
+  value={financial.pan || ""}
+  disabled={isSubmitted}
+  onChange={(e) => {
+
+    const value =
+      e.target.value
+        .toUpperCase();
+
+    if (
+      value.length <= 10 &&
+      /^[A-Z0-9]*$/.test(value)
+    ) {
+
+      updateSection(
+        "financial",
+        {
+          pan: value
+        }
+      );
+
+    }
+
+  }}
+  placeholder="ABCDE1234F"
+/>
 
         <InputField
           label="Account Number"

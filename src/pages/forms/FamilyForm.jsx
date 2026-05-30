@@ -120,55 +120,34 @@ const handleSave = async () => {
 
     family_details: {
 
-      father: {
-        name:
-          family?.father?.name || "",
+  father: family.father,
 
-        qualification:
-          family?.father?.qualification || "",
+  mother: family.mother,
 
-        occupation:
-          family?.father?.occupation || "",
-      },
+  annualFamilyIncome:
+    family.annualFamilyIncome,
 
-      mother: {
-        name:
-          family?.mother?.name || "",
+  parentEmail:
+    family.parentEmail || "",
 
-        qualification:
-          family?.mother?.qualification || "",
+  guardianResidentialAddress:
+    family.guardianResidentialAddress || "",
 
-        occupation:
-          family?.mother?.occupation || "",
-      },
+  guardianOfficeAddress:
+    family.guardianOfficeAddress || "",
 
-      annualFamilyIncome:
-        family?.annualFamilyIncome || "",
+  siblings:
+    family.siblings || [],
 
-      parentContact: {
-        countryCode:
-          family?.parentContact?.countryCode ||
-          "+91",
+  parentContact: {
+    countryCode:
+      family.parentContact?.countryCode || "+91",
 
-        number:
-          family?.parentContact?.number || "",
-      },
+    number:
+      family.parentContact?.number || ""
+  }
 
-      siblings:
-        family?.siblings || [],
-
-      guardian: {
-
-        address: {
-
-          addressLine:
-            family?.guardianResidentialAddress || "",
-
-        }
-
-      }
-
-    }
+}
 
   };
 

@@ -11,9 +11,144 @@ export default function EducationForm() {
   const education = useStore((state) => state.education);
   const updateSection = useStore((state) => state.updateSection);
   console.log('Education State:', education); // Debugging log
-  const handleSave = () => {
-    console.log('Saved Education Data:', education);
-  };
+
+  const saveAndRefresh =
+  useStore((s) => s.saveAndRefresh);
+
+
+   const handleSave = async () => {
+
+  const formData =
+    new FormData();
+
+  // ======================
+  // EDUCATION ARRAY
+  // ======================
+
+  (education.education || [])
+    .forEach((record, index) => {
+
+      formData.append(
+        `education_details[education][${index}][qualType]`,
+        record.qualType || ""
+      );
+
+      formData.append(
+        `education_details[education][${index}][stream]`,
+        record.stream || ""
+      );
+
+      formData.append(
+        `education_details[education][${index}][regNo]`,
+        record.regNo || ""
+      );
+
+      formData.append(
+        `education_details[education][${index}][board]`,
+        record.board || ""
+      );
+
+      formData.append(
+        `education_details[education][${index}][institution]`,
+        record.institution || ""
+      );
+
+      formData.append(
+        `education_details[education][${index}][passMonth]`,
+        record.passMonth || ""
+      );
+
+      formData.append(
+        `education_details[education][${index}][passYear]`,
+        record.passYear || ""
+      );
+
+      formData.append(
+        `education_details[education][${index}][percentage]`,
+        record.percentage || ""
+      );
+
+      if (
+        record.docFile instanceof File
+      ) {
+
+        formData.append(
+          "educationDocuments",
+          record.docFile
+        );
+
+      }
+
+    });
+
+  // ======================
+  // COMPETITIVE EXAMS
+  // ======================
+
+  (education.competitiveExams || [])
+    .forEach((exam, index) => {
+
+      formData.append(
+        `education_details[competitiveExams][${index}][examName]`,
+        exam.examName || ""
+      );
+
+      formData.append(
+        `education_details[competitiveExams][${index}][score]`,
+        exam.score || ""
+      );
+
+      formData.append(
+        `education_details[competitiveExams][${index}][year]`,
+        exam.year || ""
+      );
+
+      if (
+        exam.docFile instanceof File
+      ) {
+
+        formData.append(
+          "competitiveExamDocs",
+          exam.docFile
+        );
+
+      }
+
+    });
+
+  // ======================
+  // MIGRATION CERTIFICATE
+  // ======================
+
+  if (
+    education.migrationFile instanceof File
+  ) {
+
+    formData.append(
+      "migrationUrl",
+      education.migrationFile
+    );
+
+  }
+
+  for (
+    const [key, value]
+    of formData.entries()
+  ) {
+
+    console.log(
+      key,
+      value
+    );
+
+  }
+
+  await saveAndRefresh(
+    formData,
+    true
+  );
+
+};
 
   // Helper for Academic Records (mapped to backend key 'education')
   const updateAcademic = (index, field, value) => {
@@ -74,22 +209,67 @@ export default function EducationForm() {
 
                 <div className="grid grid-cols-2 gap-4">
                   <SelectField label="Month" value={record.passMonth || ''} options={MONTHS.map(m => ({ value: m, label: m }))} onChange={(e) => updateAcademic(index, 'passMonth', e.target.value)} disabled={isSubmitted} />
-                  <SelectField label="Year" value={record.passYear || ''} options={YEARS.map(y => ({ value: y, label: y }))} onChange={(e) => updateAcademic(index, 'passYear', e.target.value)} disabled={isSubmitted} />
-                </div>
+<SelectField
+  label="Year"
+  value={String(record.passYear || "")}
+  options={YEARS.map(y => ({
+    value: y,
+    label: y
+  }))}
+  onChange={(e) =>
+    updateAcademic(
+      index,
+      "passYear",
+      e.target.value
+    )
+  }
+  disabled={isSubmitted}
+/>                </div>
 
-                <FileInput
-                  label="Upload Document"
-                  className="md:col-span-2"
-                  file={record.docName || record.documentUrl?.split('/').pop()} // Show backend filename
-                  error={record.fileError}
-                  disabled={isSubmitted}
-                  onChange={(e) => {
-                    const { name, error, file } = e.target;
-                    updateAcademic(index, 'docName', name);
-                    updateAcademic(index, 'fileError', error);
-                    updateAcademic(index, 'docFile', file);
-                  }}
-                />
+
+
+<FileInput
+  label="Upload Document"
+  required
+  file={
+    record.documentUrl?.name ||
+    record.documentUrl
+  }
+  fileUrl={
+    record.documentUrl?.url
+  }
+  error={record.fileError}
+  disabled={isSubmitted}
+  onChange={(e) => {
+
+    const newRecords =
+      [...(education.education || [])];
+
+    newRecords[index] = {
+
+      ...newRecords[index],
+
+      docFile:
+        e.target.file,
+
+      documentUrl:
+        e.target.file,
+
+      fileError:
+        e.target.error,
+
+    };
+
+    updateSection(
+      "education",
+      {
+        education:
+          newRecords
+      }
+    );
+
+  }}
+/>
               </div>
             </div>
           ))}
@@ -121,19 +301,51 @@ export default function EducationForm() {
                 <InputField label="Score" value={exam.score || ''} onChange={(e) => updateExam(index, 'score', e.target.value)} disabled={isSubmitted} />
                 <SelectField label="Year" value={exam.year || ''} options={YEARS.map(y => ({ value: y, label: y }))} onChange={(e) => updateExam(index, 'year', e.target.value)} disabled={isSubmitted} />
                 
-                <FileInput
-                  label="Upload Scorecard"
-                  className="md:col-span-3"
-                  file={exam.docName || exam.documentUrl?.split('/').pop()}
-                  error={exam.fileError}
-                  disabled={isSubmitted}
-                  onChange={(e) => {
-                    const { name, error, file } = e.target;
-                    updateExam(index, 'docName', name);
-                    updateExam(index, 'fileError', error);
-                    updateExam(index, 'docFile', file);
-                  }}
-                />
+               <FileInput
+  label="Upload Scorecard"
+  className="md:col-span-3"
+  file={
+    exam.documentUrl?.name ||
+    exam.docName
+  }
+  fileUrl={
+    exam.documentUrl?.url
+  }
+  error={exam.fileError}
+  disabled={isSubmitted}
+  onChange={(e) => {
+
+    const newExams =
+      [...(education.competitiveExams || [])];
+
+    newExams[index] = {
+
+      ...newExams[index],
+
+      docFile:
+        e.target.file,
+
+      documentUrl: {
+        name:
+          e.target.file?.name,
+        url: ""
+      },
+
+      fileError:
+        e.target.error
+
+    };
+
+    updateSection(
+      "education",
+      {
+        competitiveExams:
+          newExams
+      }
+    );
+
+  }}
+/>
               </div>
             </div>
           ))}
@@ -145,21 +357,44 @@ export default function EducationForm() {
 
       {/* MIGRATION CERTIFICATE */}
       <FormSection title="Migration & Transfer Details" icon={FileText}>
-        <FileInput
-          label="Upload Migration Certificate"
-          className="md:col-span-3"
-          file={education.migrationDocName || education.migrationUrl?.split('/').pop()}
-          error={education.migrationError}
-          disabled={isSubmitted}
-          onChange={(e) => {
-            const { name, error, file } = e.target;
-            updateSection("education", {
-              migrationDocName: name,
-              migrationError: error,
-              migrationFile: file
-            });
-          }}
-        />
+       <FileInput
+  label="Upload Migration Certificate"
+  file={
+    education.migrationUrl?.name ||
+    education.migrationDocName
+  }
+  fileUrl={
+    education.migrationUrl?.url
+  }
+  error={education.migrationError}
+  disabled={isSubmitted}
+  onChange={(e) => {
+
+    updateSection(
+      "education",
+      {
+
+        migrationFile:
+          e.target.file,
+
+        migrationUrl: {
+
+          name:
+            e.target.file?.name,
+
+          url: ""
+
+        },
+
+        migrationError:
+          e.target.error
+
+      }
+
+    );
+
+  }}
+/>
       </FormSection>
     </FormWrapper>
   );

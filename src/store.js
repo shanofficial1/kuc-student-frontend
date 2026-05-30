@@ -500,6 +500,11 @@ fetchStudent: async () => {
 
     const data = result.data || {};
 
+    console.log(
+  "CONFERENCES FROM DB",
+  data.professional_details?.conferences
+);
+
     // =========================
     // PERSONAL DATA
     // =========================
