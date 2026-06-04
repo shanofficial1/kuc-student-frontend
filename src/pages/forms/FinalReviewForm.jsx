@@ -46,42 +46,76 @@ const isHiddenKey = (key) => {
 };
 
 // --- COMPONENTS ---
-const FileCard = ({ fileName, fileUrl, displayName }) => {
-  const targetPath = fileUrl || fileName;
-  if (!targetPath || typeof targetPath !== 'string') return null;
-  
-  const name = displayName || targetPath.split("/").pop(); 
-  const ext = name.split(".").pop()?.toLowerCase();
+const FileCard = ({ name, url }) => {
+
+  if (!url) return null;
+
+  const ext =
+    name?.split(".").pop()?.toLowerCase();
 
   const getIcon = () => {
-    if (["jpg", "jpeg", "png"].includes(ext)) return <ImageIcon className="w-5 h-5 text-orange-400" />;
-    if (ext === "pdf") return <FileTextIcon className="w-5 h-5 text-green-400" />;
-    return <FileIcon className="w-5 h-5 text-slate-400" />;
+
+    if (
+      ["jpg", "jpeg", "png", "webp"]
+        .includes(ext)
+    ) {
+      return (
+        <ImageIcon className="w-5 h-5 text-orange-400" />
+      );
+    }
+
+    if (ext === "pdf") {
+      return (
+        <FileTextIcon className="w-5 h-5 text-green-400" />
+      );
+    }
+
+    return (
+      <FileIcon className="w-5 h-5 text-slate-400" />
+    );
+
   };
 
-  const targetUrl = targetPath.startsWith('http') ? targetPath : `/${targetPath}`;
-
+  const targetUrl =
+  url.startsWith("http")
+    ? url
+    : `http://localhost:3002/${url}`;
   return (
-    <div className="flex items-center justify-between gap-3 p-3 border border-slate-200 rounded-xl bg-slate-50/50 w-full max-w-full">
+
+    <div className="flex items-center justify-between gap-3 p-3 border border-slate-200 rounded-xl bg-slate-50/50">
+
       <div className="flex items-center gap-3 overflow-hidden">
+
         <div className="w-10 h-10 bg-white border border-slate-100 rounded-lg flex items-center justify-center shadow-sm shrink-0">
           {getIcon()}
         </div>
+
         <div className="overflow-hidden">
-          <p className="text-xs font-semibold text-slate-700 truncate pr-4">{name}</p>
-          <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">FILE DOCUMENT</p>
+          <p className="text-xs font-semibold text-slate-700 truncate">
+            {name}
+          </p>
+
+          <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">
+            FILE DOCUMENT
+          </p>
         </div>
+
       </div>
-      <a 
-        href={targetUrl} 
-        target="_blank" 
+
+      <a
+        href={targetUrl}
+        target="_blank"
         rel="noopener noreferrer"
-        className="flex items-center gap-1 px-3 py-2 rounded-lg bg-white border border-slate-200 text-slate-600 text-xs font-bold shadow-sm hover:bg-slate-50 hover:text-primary hover:border-primary/30 transition-all shrink-0"
+        className="flex items-center gap-1 px-3 py-2 rounded-lg bg-white border border-slate-200 text-slate-600 text-xs font-bold shadow-sm hover:bg-slate-50"
       >
-        <Eye className="w-3.5 h-3.5 text-primary" /> View
+        <Eye className="w-3.5 h-3.5" />
+        View
       </a>
+
     </div>
+
   );
+
 };
 
 // --- MAIN REVIEW COMPONENT ---
@@ -107,13 +141,31 @@ export default function FinalReviewForm() {
     if (value === null || value === undefined || value === "") return <span className="text-slate-300 italic text-sm">Empty</span>;
 
     // 1. Intercept Nested Object Files First
-    if (typeof value === "object" && !Array.isArray(value)) {
-      if (value.document && isFileLink(value.document)) {
-        return <FileCard fileName={value.document} />;
-      }
-      if (value.url && isFileLink(value.url)) {
-        return <FileCard fileName={value.url} />;
-      }
+   if (typeof value === "object" && !Array.isArray(value)) {
+
+  if (value.document?.url) {
+
+    return (
+      <FileCard
+        name={value.document.name}
+        url={value.document.url}
+      />
+    );
+
+  }
+
+  if (value.url) {
+
+    return (
+      <FileCard
+        name={value.name}
+        url={value.url}
+      />
+    );
+
+  }
+
+
 
       const activeEntries = Object.entries(value).filter(([subKey]) => !isHiddenKey(subKey));
       if (activeEntries.length === 0) return null;
@@ -136,11 +188,20 @@ export default function FinalReviewForm() {
       );
     }
 
-    // 2. Handle Flat String Files
-    if (isFileLink(value) || key.toLowerCase().includes("doc") || key.toLowerCase().includes("url")) {
-       return <FileCard fileName={String(value)} />;
-    }
+ if (
+  isFileLink(value) ||
+  key.toLowerCase().includes("doc") ||
+  key.toLowerCase().includes("url")
+) {
 
+  return (
+    <FileCard
+      name={String(value).split("/").pop()}
+      url={String(value)}
+    />
+  );
+
+}
     // 3. Handle Arrays
     if (Array.isArray(value)) {
       const filteredArray = value.filter(item => item && Object.keys(item).length > 0);
@@ -150,14 +211,29 @@ export default function FinalReviewForm() {
         return <span className="text-sm text-slate-700 font-semibold">{filteredArray.join(", ")}</span>;
       }
 
-      if (key === "transcripts") {
-        const fileTarget = filteredArray[0].file || filteredArray[0].url || filteredArray[0].document;
-        const displayName = filteredArray[0].name || "Academic Transcript Document";
-        if (fileTarget) {
-          return <FileCard fileName={fileTarget} displayName={displayName} />;
-        }
-      }
+     if (key === "transcripts") {
 
+  const fileTarget =
+    filteredArray[0]?.file ||
+    filteredArray[0]?.url ||
+    filteredArray[0]?.document;
+
+  const displayName =
+    filteredArray[0]?.name ||
+    "Academic Transcript Document";
+
+  if (fileTarget) {
+
+    return (
+      <FileCard
+        name={displayName}
+        url={fileTarget}
+      />
+    );
+
+  }
+
+}
       // --- ROW-BASED CARDS FOR ARRAY OBJECTS ---
       return (
         <div className="space-y-3 w-full mt-2">

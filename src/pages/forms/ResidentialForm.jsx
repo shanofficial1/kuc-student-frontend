@@ -13,10 +13,66 @@ export default function ResidentialForm() {
   const residential = useStore((state) => state.residential_details) || {};
   const updateSection = useStore((state) => state.updateSection);
 console.log("Residential State:", residential); // Debugging log
-  const handleSave = () => {
-    console.log("Saved Residential Data:", residential);
-  };
+ const saveAndRefresh =
+  useStore((s) => s.saveAndRefresh);
 
+  
+const handleSave = async () => {
+
+  const formData =
+    new FormData();
+
+  formData.append(
+    "residential_details[resType]",
+    residential.resType || ""
+  );
+
+  formData.append(
+    "residential_details[mess]",
+    residential.mess || ""
+  );
+
+  formData.append(
+    "residential_details[vehicleReg]",
+    residential.vehicleReg || ""
+  );
+
+  formData.append(
+    "residential_details[hostel][roomNo]",
+    residential.hostel?.roomNo || ""
+  );
+
+  formData.append(
+    "residential_details[hostel][block]",
+    residential.hostel?.block || ""
+  );
+
+  formData.append(
+    "residential_details[hostel][bedType]",
+    residential.hostel?.bedType || ""
+  );
+
+  formData.append(
+    "residential_details[transport][opted]",
+    residential.transport?.opted || false
+  );
+
+  formData.append(
+    "residential_details[transport][routeNumber]",
+    residential.transport?.routeNumber || ""
+  );
+
+  formData.append(
+    "residential_details[transport][boardingPoint]",
+    residential.transport?.boardingPoint || ""
+  );
+
+  await saveAndRefresh(
+    formData,
+    true
+  );
+
+};
   /**
    * Helper to handle nested state updates
    * @param {string} parent - 'hostel' or 'transport'

@@ -47,26 +47,41 @@ function Layout() {
 
 
 
+  const fetchStudent =
+  useStore(
+    s => s.fetchStudent
+  );
+
+const fetchCanEdit =
+  useStore(
+    s => s.fetchCanEdit
+  );
+
+
   useEffect(() => {
     setLoading(false);
   }, []);
 
   const token = useStore((s) => s.token);
 
-const fetchStudent = useStore(
-  (s) => s.fetchStudent
-);
 
 useEffect(() => {
 
-  if (token) {
+  const load = async () => {
 
-    fetchStudent();
+    if (token) {
 
-  }
+      await fetchStudent();
+
+      await fetchCanEdit();
+
+    }
+
+  };
+
+  load();
 
 }, [token]);
-
   return (
     <>
       {isLoading && <GlobalLoader />}
@@ -132,7 +147,6 @@ useEffect(() => {
             </Routes>
           </main>
 
-          <DemoToggleButton />
         </div>
       </div>
     </>

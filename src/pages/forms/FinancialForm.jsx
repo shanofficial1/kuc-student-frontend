@@ -137,6 +137,7 @@ const handleSave = async () => {
     formData,
     true
   );
+  await fetchCanEdit();
 
 };
   return (

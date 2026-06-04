@@ -135,6 +135,7 @@ for (const [key, value] of formData.entries()) {
     formData,
     true
   );
+  await fetchCanEdit();
 
 };
 

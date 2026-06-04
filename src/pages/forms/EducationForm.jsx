@@ -148,6 +148,7 @@ export default function EducationForm() {
     true
   );
 
+  await fetchCanEdit();
 };
 
   // Helper for Academic Records (mapped to backend key 'education')

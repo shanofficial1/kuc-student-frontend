@@ -421,6 +421,8 @@ console.log(
     true
   );
 
+  await fetchCanEdit();
+
 };
 
   const handleChange = (e) => {

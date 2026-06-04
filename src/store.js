@@ -388,7 +388,6 @@ saveAndRefresh: async (
 
     }
 
-    await get().fetchStudent();
 
     console.log(
       "FETCHED LATEST PROFILE FROM DB"
@@ -403,6 +402,10 @@ saveAndRefresh: async (
     get().setLoading(false);
 
   }
+
+  await get().fetchStudent();
+
+await get().fetchCanEdit();
 
 },
 
@@ -446,6 +449,80 @@ saveAndRefresh: async (
     });
 
   },
+
+  fetchCanEdit: async () => {
+
+
+   
+   
+
+  try {
+
+    const token =
+      get().token;
+
+ const user =
+  get().user;
+
+const email =
+  get().user?.email;
+
+if (!email) {
+
+  console.log(
+    "Email missing"
+  );
+
+  return;
+
+}
+
+const response =
+  await fetch(
+
+    `http://localhost:3002/api/user/${email}/can-edit`,
+
+    {
+      headers: {
+        Authorization:
+          `Bearer ${token}`
+      }
+    }
+
+  );
+
+    const data =
+      await response.json();
+
+console.log("API RESPONSE", data);
+
+set({
+  isSubmitted: !data.canEdit
+});
+
+console.log(
+  "AFTER SET",
+  get().isSubmitted
+);
+
+    set({
+
+      isSubmitted:
+        !data.canEdit
+
+    });
+    console.log(
+  "isSubmitted",
+  get().isSubmitted
+);
+
+  } catch (error) {
+
+    console.log(error);
+
+  }
+
+},
 
 
       /* UPDATE MARK */
@@ -666,6 +743,7 @@ fetchStudent: async () => {
 
 }
 
+await get().fetchCanEdit();
 },
 
       /* RESET */
