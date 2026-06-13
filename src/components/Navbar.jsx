@@ -461,7 +461,7 @@ const mobileSearchRef = useRef(null);
             setSearchQuery("");
             setSearchOpen(false);
           }}
-          className="ml-2 rounded-lg p-1 text-[0px] text-slate-400 transition hover:bg-slate-200 hover:text-slate-700 white:hover:bg-slate-800 white:hover:text-slate-200"
+          className="ml-2 rounded-lg p-1 text-[0px] text-slate-400 transition hover:bg-slate-200 hover:text-slate-700 dark:hover:bg-slate-800 dark:hover:text-slate-200"
           aria-label="Close search"
         >
           <X className="h-4 w-4" />

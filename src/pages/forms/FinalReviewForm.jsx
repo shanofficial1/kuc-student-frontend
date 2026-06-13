@@ -1,9 +1,7 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import {
-  Banknote,
   Briefcase,
-  Bus,
   CheckCircle2,
   CreditCard,
   Edit3,
@@ -15,7 +13,6 @@ import {
   HeartPulse,
   Home,
   ImageIcon,
-  Mail,
   MapPin,
   Phone,
   School,
