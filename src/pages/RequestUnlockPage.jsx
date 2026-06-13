@@ -407,8 +407,6 @@ console.log("disabled =", !corr.section);
 
             <div className="pt-6 border-t border-slate-100 flex flex-col md:flex-row items-center justify-between gap-6">
               <div className="flex items-center gap-3 text-slate-400">
-                <Info className="w-5 h-5" />
-                <span className="text-[11px] font-bold uppercase tracking-widest leading-none">Logged via Student ID: {store.user?.id || "KU-STUDENT"}</span>
               </div>
   {requestType === "specific" ? (
 

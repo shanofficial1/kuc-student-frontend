@@ -1,4 +1,4 @@
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useStore } from "../store";
 import { useState, useEffect, useRef } from "react";
 
@@ -9,6 +9,7 @@ import {
   Key,
   Search,
   History,
+  X,
 } from "lucide-react";
 
 const SEARCH_ITEMS = [
@@ -157,7 +158,6 @@ const SEARCH_ITEMS = [
 import logo from "../assets/logo.png";
 
 export default function Navbar() {
-  const location = useLocation(); // (optional: remove if unused)
   const navigate = useNavigate();
   const logout = useStore((state) => state.logout);
 
@@ -194,7 +194,7 @@ const mobileSearchRef = useRef(null);
     document.addEventListener("mousedown", handleClickOutside);
     return () =>
       document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
+  }, [mobileSearchOpen]);
 
   const user = useStore((state) => state.user);
   const filteredItems = SEARCH_ITEMS.filter((item) =>
@@ -261,15 +261,15 @@ const mobileSearchRef = useRef(null);
   return (
     <>
 
-<header className="bg-white border-b border-border-subtle sticky top-0 z-50">
-  <div className="flex justify-between items-center w-full max-w-7xl mx-auto px-4 md:px-6 h-16">
+<header className="sticky top-0 z-50 border-b border-border-subtle bg-white/90 shadow-sm shadow-slate-900/5 backdrop-blur-xl white:border-slate-800 white:bg-slate-950/90">
+  <div className="mx-auto flex h-16 w-full max-w-7xl items-center justify-between gap-3 px-3 sm:px-4 md:px-6">
 
         {/* LOGO */}
-        <Link to="/" className="flex items-center">
+        <Link to="/" className="flex min-w-0 items-center">
           <img
             src={logo}
             alt="Kannur University SIS"
-            className="h-8 md:h-10 w-auto object-contain"
+            className="h-8 w-auto max-w-[180px] object-contain sm:max-w-none md:h-10"
           />
         </Link>
 
@@ -327,7 +327,8 @@ const mobileSearchRef = useRef(null);
           <div className="md:hidden">
   <button
     onClick={() => setMobileSearchOpen(true)}
-    className="p-2 rounded-lg hover:bg-slate-100"
+    className="rounded-xl p-2 text-slate-600 transition hover:bg-slate-100 hover:text-primary white:text-slate-200 white:hover:bg-slate-900"
+    aria-label="Open search"
   >
     <Search className="w-5 h-5" />
   </button>
@@ -339,7 +340,8 @@ const mobileSearchRef = useRef(null);
             {/* AVATAR BUTTON */}
             <button
               onClick={() => setOpen((prev) => !prev)}
-              className="p-2 text-primary hover:bg-slate-100 rounded-full transition-all"
+              className="p-2 text-primary hover:bg-slate-100 rounded-full transition-all white:hover:bg-slate-900"
+              aria-label="Open user menu"
             >
               <UserCircle className="w-6 h-6" />
             </button>
@@ -433,7 +435,10 @@ const mobileSearchRef = useRef(null);
         setSearchOpen(false);
       }}
     />
-<div  className="fixed top-0 left-0 right-0 z-[9999] bg-white shadow-xl">    
+<div
+  ref={mobileSearchRef}
+  className="fixed left-0 right-0 top-0 z-[9999] bg-white/95 shadow-2xl backdrop-blur-xl white:bg-slate-950/95"
+>
     <div className="p-4">
       <div className="relative flex items-center rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2">
         <Search className="w-4 h-4 text-slate-400" />
@@ -456,8 +461,10 @@ const mobileSearchRef = useRef(null);
             setSearchQuery("");
             setSearchOpen(false);
           }}
-          className="ml-2 text-slate-400"
+          className="ml-2 rounded-lg p-1 text-[0px] text-slate-400 transition hover:bg-slate-200 hover:text-slate-700 white:hover:bg-slate-800 white:hover:text-slate-200"
+          aria-label="Close search"
         >
+          <X className="h-4 w-4" />
           ✕
         </button>
       </div>

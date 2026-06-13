@@ -1,590 +1,761 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
-FileText,
-Eye,
-Clock,
-CheckCircle,
-XCircle,
-AlertCircle,
+  AlertCircle,
+  CalendarDays,
+  CheckCircle,
+  Clock,
+  Eye,
+  FileText,
+  Hash,
+  Tag,
+  X,
+  XCircle,
 } from "lucide-react";
 import { useStore } from "../store";
+import { cn } from "../lib/utils";
 
-export default function RequestHistory() {
-const token = useStore((s) => s.token);
-
-const [requests, setRequests] = useState([]);
-const [selectedRequest, setSelectedRequest] = useState(null);
-const [loading, setLoading] = useState(true);
-const getMyProfileRequests =
-  useStore(
-    s => s.getMyProfileRequests
-  );
-
-const getMyUnlockRequests =
-  useStore(
-    s => s.getMyUnlockRequests
-  );
-
-useEffect(() => {
-fetchRequests();
-}, []);
-
-const fetchRequests = async () => {
-
-  try {
-
-    setLoading(true);
-
-    const [
-      profileRequests,
-      unlockRequests
-    ] = await Promise.all([
-
-      getMyProfileRequests(),
-
-      getMyUnlockRequests()
-
-    ]);
-
-    const merged = [
-
-      ...(profileRequests || [])
-      .map(item => ({
-
-        ...item,
-
-        category:
-          "Profile Update"
-
-      })),
-
-      ...(unlockRequests || [])
-      .map(item => ({
-
-        ...item,
-
-        category:
-          item.requestType ===
-          "field_correction"
-
-          ? "Field Correction"
-
-          : "Full Unlock"
-
-      }))
-
-    ];
-
-    merged.sort(
-      (a, b) =>
-        new Date(
-          b.createdAt
-        ) -
-        new Date(
-          a.createdAt
-        )
-    );
-
-    setRequests(merged);
-
-  } catch (err) {
-
-    console.error(err);
-
-  } finally {
-
-    setLoading(false);
-
-  }
-
+const STATUS_CONFIG = {
+  approved: {
+    label: "Approved",
+    icon: CheckCircle,
+    className:
+      "bg-emerald-50 text-emerald-700 ring-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-300 dark:ring-emerald-500/20",
+  },
+  rejected: {
+    label: "Rejected",
+    icon: XCircle,
+    className:
+      "bg-rose-50 text-rose-700 ring-rose-200 dark:bg-rose-500/10 dark:text-rose-300 dark:ring-rose-500/20",
+  },
+  pending: {
+    label: "Pending",
+    icon: Clock,
+    className:
+      "bg-amber-50 text-amber-700 ring-amber-200 dark:bg-amber-500/10 dark:text-amber-300 dark:ring-amber-500/20",
+  },
 };
 
-const getStatusBadge = (status) => {
-switch (status) {
-case "approved":
-return ( <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-green-100 text-green-700 text-xs font-semibold"> <CheckCircle size={14} />
-Approved </span>
-);
+const CATEGORY_CONFIG = {
+  "Profile Update": "bg-blue-50 text-blue-700 ring-blue-200 dark:bg-blue-500/10 dark:text-blue-300 dark:ring-blue-500/20",
+  "Field Correction":
+    "bg-violet-50 text-violet-700 ring-violet-200 dark:bg-violet-500/10 dark:text-violet-300 dark:ring-violet-500/20",
+  "Full Unlock":
+    "bg-orange-50 text-orange-700 ring-orange-200 dark:bg-orange-500/10 dark:text-orange-300 dark:ring-orange-500/20",
+};
 
-  case "rejected":
-    return (
-      <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-red-100 text-red-700 text-xs font-semibold">
-        <XCircle size={14} />
-        Rejected
-      </span>
-    );
+const normalizeList = (response) => {
+  if (Array.isArray(response)) return response;
+  if (Array.isArray(response?.data)) return response.data;
+  if (Array.isArray(response?.requests)) return response.requests;
+  return [];
+};
 
-  default:
-    return (
-      <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-yellow-100 text-yellow-700 text-xs font-semibold">
-        <Clock size={14} />
-        Pending
-      </span>
-    );
+const formatLabel = (value) =>
+  String(value || "")
+    .replace(/_/g, " ")
+    .replace(/([a-z])([A-Z])/g, "$1 $2")
+    .replace(/\s+/g, " ")
+    .trim()
+    .replace(/\b\w/g, (letter) => letter.toUpperCase());
+
+const formatDate = (value) => {
+  if (!value) return "-";
+
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "-";
+
+  return new Intl.DateTimeFormat("en-IN", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  }).format(date);
+};
+
+const formatDateTime = (value) => {
+  if (!value) return "-";
+
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "-";
+
+  return new Intl.DateTimeFormat("en-IN", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(date);
+};
+
+const formatValue = (value) => {
+  if (value === null || value === undefined || value === "") return "Not provided";
+  if (typeof value === "boolean") return value ? "Yes" : "No";
+  if (value instanceof Date) return formatDate(value);
+  if (Array.isArray(value)) return value.length ? value.join(", ") : "Not provided";
+  return String(value);
+};
+
+const isPlainObject = (value) =>
+  value && typeof value === "object" && !Array.isArray(value);
+
+const getStatusKey = (status) => String(status || "pending").toLowerCase();
+
+const getRequestReason = (request) =>
+  request?.remarks || request?.reason || request?.message || "-";
+
+const getDetailTitle = (request) => {
+  if (request?.category === "Profile Update") return "Submitted Changes";
+  if (request?.category === "Field Correction") return "Requested Corrections";
+  return "Unlock Request";
+};
+
+function StatusBadge({ status }) {
+  const key = getStatusKey(status);
+  const config = STATUS_CONFIG[key] || STATUS_CONFIG.pending;
+  const Icon = config.icon;
+
+  return (
+    <span
+      className={cn(
+        "inline-flex max-w-full items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold ring-1 ring-inset",
+        config.className
+      )}
+    >
+      <Icon className="h-3.5 w-3.5 shrink-0" />
+      <span className="truncate">{config.label}</span>
+    </span>
+  );
 }
 
-};
-
-const renderObject = (obj) => {
-
-  return Object.entries(obj).map(
-    ([key, value]) => {
-
-      if (
-        typeof value === "object" &&
-        value !== null &&
-        !Array.isArray(value)
-      ) {
-
-        return (
-          <div
-            key={key}
-            className="mb-4"
-          >
-            <h5 className="font-semibold capitalize">
-              {key.replaceAll("_", " ")}
-            </h5>
-
-            <div className="grid md:grid-cols-2 gap-3 mt-2">
-
-              {Object.entries(value).map(
-                ([k, v]) => (
-
-                  <div
-                    key={k}
-                    className="bg-slate-50 p-3 rounded-lg"
-                  >
-                    <p className="text-xs text-slate-500 capitalize">
-                      {k}
-                    </p>
-
-                    <p className="font-medium">
-                      {String(v)}
-                    </p>
-                  </div>
-
-                )
-              )}
-
-            </div>
-          </div>
-        );
-
-      }
-
-      return (
-        <div
-          key={key}
-          className="bg-slate-50 p-3 rounded-lg"
-        >
-          <p className="text-xs text-slate-500 capitalize">
-            {key.replaceAll("_", " ")}
-          </p>
-
-          <p className="font-medium">
-            {String(value)}
-          </p>
-        </div>
-      );
-
-    }
-  );
-
-};
-
-return ( <div className="max-w-7xl mx-auto p-6">
-
-  <div className="bg-white rounded-2xl shadow-sm border border-slate-200">
-
-    <div className="p-6 border-b border-slate-100 flex items-center gap-3">
-
-      <div className="w-10 h-10 bg-blue-50 rounded-lg flex items-center justify-center text-primary">
-        <FileText size={20} />
-      </div>
-
-      <div>
-        <h2 className="text-lg font-bold text-slate-800">
-          My Requests
-        </h2>
-
-        <p className="text-xs text-slate-500">
-          View all profile update requests submitted for verification
-        </p>
-      </div>
-
-    </div>
-
-    <div className="p-6">
-
-      {loading ? (
-
-        <div className="text-center py-10 text-slate-500">
-          Loading requests...
-        </div>
-
-      ) : requests.length === 0 ? (
-
-        <div className="text-center py-12">
-
-          <FileText
-            size={40}
-            className="mx-auto text-slate-300 mb-3"
-          />
-
-          <p className="text-slate-500">
-            No requests submitted yet
-          </p>
-
-        </div>
-
-      ) : (
-
-        <div className="overflow-x-auto">
-
-          <table className="w-full">
-
-            <thead>
-
-              <tr className="border-b border-slate-200 text-left">
-
-                <th className="py-3 text-sm font-semibold text-slate-600">
-                  Request No
-                </th>
-                <th>Type</th>
-
-                <th className="py-3 text-sm font-semibold text-slate-600">
-                  Date
-                </th>
-
-                <th className="py-3 text-sm font-semibold text-slate-600">
-                  Status
-                </th>
-
-                <th className="py-3 text-sm font-semibold text-slate-600">
-                  Reason
-                </th>
-
-                <th className="py-3 text-sm font-semibold text-slate-600">
-                  Action
-                </th>
-
-              </tr>
-
-            </thead>
-
-            <tbody>
-
-              {requests.map((request) => (
-
-                <tr
-                  key={request._id}
-                  className="border-b border-slate-100"
-                >
-
-                  <td className="py-4 font-medium text-slate-800">
-                    {request.requestNo}
-                  </td>
-                  <td className="py-4">
-
-  <span
-    className={`
-      px-3 py-1 rounded-full text-xs font-semibold
-
-      ${
-        request.category ===
-        "Profile Update"
-
-          ? "bg-blue-100 text-blue-700"
-
-          : request.category ===
-            "Field Correction"
-
-          ? "bg-purple-100 text-purple-700"
-
-          : "bg-orange-100 text-orange-700"
-      }
-    `}
-  >
-
-    {request.category}
-
-  </span>
-
-</td>
-
-                  <td className="py-4 text-slate-600">
-                    {new Date(
-                      request.createdAt
-                    ).toLocaleDateString()}
-                  </td>
-
-                  <td className="py-4">
-                    {getStatusBadge(
-                      request.status
-                    )}
-                  </td>
-
-                  <td className="py-4 text-sm text-slate-600">
-
-                    {request.remarks
-                      ? request.remarks
-                      : "-"}
-
-                  </td>
-
-                  <td className="py-4">
-
-                    <button
-                      onClick={() =>
-                        setSelectedRequest(
-                          request
-                        )
-                      }
-                      className="inline-flex items-center gap-2 px-4 py-2 bg-blue-50 text-primary rounded-lg hover:bg-blue-100 transition"
-                    >
-                      <Eye size={16} />
-                      View
-                    </button>
-
-                  </td>
-
-                </tr>
-
-              ))}
-
-            </tbody>
-
-          </table>
-
-        </div>
-
+function CategoryBadge({ category }) {
+  return (
+    <span
+      className={cn(
+        "inline-flex max-w-full items-center rounded-full px-3 py-1 text-xs font-bold ring-1 ring-inset",
+        CATEGORY_CONFIG[category] ||
+          "bg-slate-100 text-slate-700 ring-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:ring-slate-700"
       )}
+    >
+      <span className="truncate">{category || "Request"}</span>
+    </span>
+  );
+}
 
-    </div>
-
-  </div>
-
-  {selectedRequest && (
-
-    <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
-
-      <div className="bg-white rounded-2xl shadow-xl max-w-5xl w-full max-h-[90vh] overflow-y-auto">
-
-        <div className="p-6 border-b flex justify-between items-center">
-
-        <div>
-
-  <h4 className="font-bold text-slate-800 mb-4">
-
-    {selectedRequest.category ===
-      "Profile Update"
-        ? "Submitted Changes"
-        : selectedRequest.category ===
-          "Field Correction"
-        ? "Requested Corrections"
-        : "Unlock Request"}
-
-  </h4>
-
-  {/* CONTENT */}
-
-</div>
-
-          <button
-            onClick={() =>
-              setSelectedRequest(null)
-            }
-            className="text-slate-500 hover:text-slate-800"
-          >
-            ✕
-          </button>
-
+function SummaryTile({ icon: Icon, label, value, className }) {
+  return (
+    <div className="rounded-2xl bg-white p-4 shadow-sm ring-1 ring-slate-200/70 dark:bg-slate-950 dark:ring-slate-800">
+      <div className="flex items-center gap-3">
+        <div
+          className={cn(
+            "flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-600 dark:bg-slate-900 dark:text-slate-300",
+            className
+          )}
+        >
+          <Icon className="h-5 w-5" />
         </div>
+        <div className="min-w-0">
+          <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+            {label}
+          </p>
+          <p className="mt-1 truncate text-lg font-bold text-slate-900 dark:text-white">
+            {value}
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
 
-        <div className="p-6 space-y-6">
+function DetailField({ label, value, accent }) {
+  return (
+    <div className="min-w-0 rounded-xl bg-slate-50 p-4 dark:bg-slate-900/70">
+      <p className="text-[11px] font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+        {label}
+      </p>
+      <p
+        className={cn(
+          "mt-1 break-words text-sm font-semibold leading-6 text-slate-800 dark:text-slate-100",
+          accent
+        )}
+      >
+        {formatValue(value)}
+      </p>
+    </div>
+  );
+}
 
-          <div className="grid md:grid-cols-3 gap-4">
+function NestedValue({ label, value }) {
+  if (Array.isArray(value)) {
+    if (!value.length) {
+      return <DetailField label={formatLabel(label)} value="Not provided" />;
+    }
 
-            <div className="bg-slate-50 rounded-xl p-4">
-              <p className="text-xs text-slate-500">
-                Status
+    const hasObjects = value.some((item) => isPlainObject(item));
+
+    if (!hasObjects) {
+      return <DetailField label={formatLabel(label)} value={value.join(", ")} />;
+    }
+
+    return (
+      <div className="rounded-2xl bg-white p-4 shadow-sm ring-1 ring-slate-200/70 dark:bg-slate-950 dark:ring-slate-800">
+        <h5 className="text-sm font-bold text-slate-900 dark:text-white">
+          {formatLabel(label)}
+        </h5>
+        <div className="mt-4 space-y-3">
+          {value.map((item, index) => (
+            <div
+              key={`${label}-${index}`}
+              className="rounded-xl bg-slate-50 p-4 dark:bg-slate-900/70"
+            >
+              <p className="mb-3 text-[11px] font-bold uppercase tracking-wide text-slate-400">
+                Item {index + 1}
               </p>
-
-              <div className="mt-2">
-                {getStatusBadge(
-                  selectedRequest.status
+              <div className="grid gap-3 sm:grid-cols-2">
+                {isPlainObject(item) ? (
+                  Object.entries(item).map(([childKey, childValue]) => (
+                    <NestedValue
+                      key={`${label}-${index}-${childKey}`}
+                      label={childKey}
+                      value={childValue}
+                    />
+                  ))
+                ) : (
+                  <DetailField label="Value" value={item} />
                 )}
               </div>
             </div>
-
-            <div className="bg-slate-50 rounded-xl p-4">
-              <p className="text-xs text-slate-500">
-                Submitted
-              </p>
-
-              <p className="font-medium">
-                {new Date(
-                  selectedRequest.createdAt
-                ).toLocaleString()}
-              </p>
-            </div>
-
-            <div className="bg-slate-50 rounded-xl p-4">
-              <p className="text-xs text-slate-500">
-                Reason
-              </p>
-
-              <p className="font-medium">
-                {selectedRequest.remarks || "-"}
-              </p>
-            </div>
-
-          </div>
-
-          {selectedRequest.status ===
-            "rejected" &&
-            selectedRequest.remarks && (
-
-              <div className="bg-red-50 border border-red-200 rounded-xl p-4 flex gap-3">
-
-                <AlertCircle
-                  size={18}
-                  className="text-red-600 mt-0.5"
-                />
-
-                <div>
-
-                  <p className="font-semibold text-red-700">
-                    Rejection Reason
-                  </p>
-
-                  <p className="text-red-600 text-sm">
-                    {selectedRequest.remarks}
-                  </p>
-
-                </div>
-
-              </div>
-
-            )}
-
-          <div>
-
-           <h4 className="font-bold text-slate-800 mb-4">
-
-  {selectedRequest.category ===
-    "Profile Update"
-      ? "Submitted Changes"
-      : selectedRequest.category ===
-        "Field Correction"
-      ? "Requested Corrections"
-      : "Unlock Request"}
-
-</h4>
-
-     {selectedRequest.requestType ===
-  "field_correction" ? (
-
-  <div className="space-y-4">
-
-    {selectedRequest.correctionFields?.map(
-      (item, index) => (
-
-        <div
-          key={index}
-          className="border border-slate-200 rounded-xl p-4"
-        >
-
-          <div className="font-semibold text-slate-800 mb-3 capitalize">
-            {item.section}
-          </div>
-
-          <div className="grid md:grid-cols-3 gap-4">
-
-            <div>
-              <p className="text-xs text-slate-500">
-                Field
-              </p>
-
-              <p className="font-medium">
-                {item.field}
-              </p>
-            </div>
-
-            <div>
-              <p className="text-xs text-slate-500">
-                Current Value
-              </p>
-
-              <p className="font-medium text-red-600">
-                {item.currentValue}
-              </p>
-            </div>
-
-            <div>
-              <p className="text-xs text-slate-500">
-                Requested Value
-              </p>
-
-              <p className="font-medium text-green-600">
-                {item.requestedValue}
-              </p>
-            </div>
-
-          </div>
-
+          ))}
         </div>
+      </div>
+    );
+  }
 
-      )
-    )}
-
-  </div>
-
-) : (
-
-  <div className="space-y-4">
-
-    {selectedRequest.changes &&
-      Object.entries(
-        selectedRequest.changes
-      ).map(
-        ([section, values]) => (
-
-          <div
-            key={section}
-            className="border border-slate-200 rounded-xl"
-          >
-
-            <div className="px-4 py-3 bg-slate-50 border-b font-semibold capitalize">
-              {section.replaceAll(
-                "_",
-                " "
-              )}
-            </div>
-
-            <div className="p-4">
-              {renderObject(values)}
-            </div>
-
-          </div>
-
-        )
-      )}
-
-  </div>
-
-)}
-          </div>
-
+  if (isPlainObject(value)) {
+    return (
+      <div className="rounded-2xl bg-white p-4 shadow-sm ring-1 ring-slate-200/70 dark:bg-slate-950 dark:ring-slate-800">
+        <h5 className="text-sm font-bold text-slate-900 dark:text-white">
+          {formatLabel(label)}
+        </h5>
+        <div className="mt-4 grid gap-3 sm:grid-cols-2">
+          {Object.entries(value).map(([childKey, childValue]) => (
+            <NestedValue key={childKey} label={childKey} value={childValue} />
+          ))}
         </div>
+      </div>
+    );
+  }
 
+  return <DetailField label={formatLabel(label)} value={value} />;
+}
+
+function RequestHistoryCard({ request, onView }) {
+  return (
+    <article className="rounded-2xl bg-white p-4 shadow-sm ring-1 ring-slate-200/80 transition hover:shadow-md dark:bg-slate-950 dark:ring-slate-800">
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <p className="text-[11px] font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+            Request No
+          </p>
+          <h3 className="mt-1 break-words text-base font-bold text-slate-900 dark:text-white">
+            {request.requestNo || "Not assigned"}
+          </h3>
+        </div>
+        <StatusBadge status={request.status} />
       </div>
 
+      <div className="mt-4 flex flex-wrap gap-2">
+        <CategoryBadge category={request.category} />
+        <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600 dark:bg-slate-900 dark:text-slate-300">
+          <CalendarDays className="h-3.5 w-3.5" />
+          {formatDate(request.createdAt)}
+        </span>
+      </div>
+
+      <div className="mt-4 rounded-xl bg-slate-50 p-3 dark:bg-slate-900/70">
+        <p className="text-[11px] font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+          Reason
+        </p>
+        <p className="mt-1 break-words text-sm leading-6 text-slate-700 dark:text-slate-200">
+          {getRequestReason(request)}
+        </p>
+      </div>
+
+      <button
+        type="button"
+        onClick={() => onView(request)}
+        className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-primary px-4 py-3 text-sm font-bold text-white shadow-sm shadow-blue-900/10 transition hover:bg-primary-container focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 dark:focus:ring-offset-slate-950"
+      >
+        <Eye className="h-4 w-4" />
+        View details
+      </button>
+    </article>
+  );
+}
+
+function RequestHistoryTable({ requests, onView }) {
+  return (
+    <div className="hidden overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-slate-200/80 dark:bg-slate-950 dark:ring-slate-800 lg:block">
+      <table className="w-full table-fixed">
+        <colgroup>
+          <col className="w-[18%]" />
+          <col className="w-[18%]" />
+          <col className="w-[14%]" />
+          <col className="w-[14%]" />
+          <col className="w-[24%]" />
+          <col className="w-[12%]" />
+        </colgroup>
+        <thead className="bg-slate-50/80 dark:bg-slate-900/80">
+          <tr>
+            {["Request No", "Type", "Date", "Status", "Reason", "Action"].map(
+              (heading) => (
+                <th
+                  key={heading}
+                  className="px-5 py-4 text-left text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400"
+                >
+                  {heading}
+                </th>
+              )
+            )}
+          </tr>
+        </thead>
+        <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+          {requests.map((request, index) => (
+            <tr
+              key={request._id || request.requestNo || index}
+              className="transition hover:bg-blue-50/40 dark:hover:bg-slate-900/70"
+            >
+              <td className="px-5 py-5 align-top">
+                <p className="break-words text-sm font-bold text-slate-900 dark:text-white">
+                  {request.requestNo || "Not assigned"}
+                </p>
+              </td>
+              <td className="px-5 py-5 align-top">
+                <CategoryBadge category={request.category} />
+              </td>
+              <td className="px-5 py-5 align-top text-sm font-medium text-slate-600 dark:text-slate-300">
+                {formatDate(request.createdAt)}
+              </td>
+              <td className="px-5 py-5 align-top">
+                <StatusBadge status={request.status} />
+              </td>
+              <td className="px-5 py-5 align-top">
+                <p className="line-clamp-2 break-words text-sm leading-6 text-slate-600 dark:text-slate-300">
+                  {getRequestReason(request)}
+                </p>
+              </td>
+              <td className="px-5 py-5 align-top">
+                <button
+                  type="button"
+                  onClick={() => onView(request)}
+                  className="inline-flex items-center justify-center gap-2 rounded-xl bg-blue-50 px-3 py-2 text-sm font-bold text-primary transition hover:bg-blue-100 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 dark:bg-blue-500/10 dark:text-blue-300 dark:hover:bg-blue-500/20 dark:focus:ring-offset-slate-950"
+                >
+                  <Eye className="h-4 w-4" />
+                  View
+                </button>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </div>
+  );
+}
 
-  )}
+function RequestDetailModal({ request, isClosing, onClose }) {
+  const statusKey = getStatusKey(request.status);
+  const detailTitle = getDetailTitle(request);
+  const correctionFields = request.correctionFields || [];
+  const changeEntries = Object.entries(request.changes || {});
+  const hasProfileChanges = changeEntries.length > 0;
 
-</div>
+  return (
+    <div
+      className="request-modal-backdrop fixed inset-0 z-50 flex items-end justify-center bg-slate-950/55 p-0 backdrop-blur-sm sm:items-center sm:p-4"
+      data-closing={isClosing}
+      onMouseDown={(event) => {
+        if (event.target === event.currentTarget) onClose();
+      }}
+    >
+      <section
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="request-detail-title"
+        className="request-modal-panel flex max-h-[92vh] w-full flex-col overflow-hidden rounded-t-3xl bg-slate-50 shadow-2xl dark:bg-slate-950 sm:max-h-[88vh] sm:max-w-5xl sm:rounded-3xl"
+        data-closing={isClosing}
+      >
+        <header className="flex items-start justify-between gap-4 bg-white/95 px-4 py-4 shadow-sm shadow-slate-900/5 backdrop-blur dark:bg-slate-950/95 sm:px-6 sm:py-5">
+          <div className="min-w-0">
+            <div className="mb-3 flex flex-wrap gap-2">
+              <CategoryBadge category={request.category} />
+              <StatusBadge status={request.status} />
+            </div>
+            <h2
+              id="request-detail-title"
+              className="break-words text-xl font-black tracking-tight text-slate-950 dark:text-white sm:text-2xl"
+            >
+              {detailTitle}
+            </h2>
+            <p className="mt-1 break-words text-sm text-slate-500 dark:text-slate-400">
+              {request.requestNo || "Request number not assigned"}
+            </p>
+          </div>
 
-);
+          <button
+            type="button"
+            onClick={onClose}
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-slate-100 text-slate-500 transition hover:bg-slate-200 hover:text-slate-900 focus:outline-none focus:ring-2 focus:ring-primary dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white"
+            aria-label="Close details"
+          >
+            <X className="h-5 w-5" />
+          </button>
+        </header>
+
+        <div className="flex-1 overflow-y-auto px-4 py-5 sm:px-6 sm:py-6">
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <SummaryTile
+              icon={Hash}
+              label="Request No"
+              value={request.requestNo || "Not assigned"}
+              className="bg-blue-50 text-primary dark:bg-blue-500/10 dark:text-blue-300"
+            />
+            <SummaryTile
+              icon={Tag}
+              label="Type"
+              value={request.category || "Request"}
+              className="bg-violet-50 text-violet-700 dark:bg-violet-500/10 dark:text-violet-300"
+            />
+            <SummaryTile
+              icon={CalendarDays}
+              label="Submitted"
+              value={formatDateTime(request.createdAt)}
+              className="bg-slate-100 text-slate-700 dark:bg-slate-900 dark:text-slate-300"
+            />
+            <SummaryTile
+              icon={STATUS_CONFIG[statusKey]?.icon || Clock}
+              label="Status"
+              value={STATUS_CONFIG[statusKey]?.label || "Pending"}
+              className="bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300"
+            />
+          </div>
+
+          <section className="mt-5 rounded-2xl bg-white p-4 shadow-sm ring-1 ring-slate-200/70 dark:bg-slate-950 dark:ring-slate-800 sm:p-5">
+            <p className="text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+              Reason or remarks
+            </p>
+            <p className="mt-2 break-words text-sm leading-6 text-slate-700 dark:text-slate-200">
+              {getRequestReason(request)}
+            </p>
+          </section>
+
+          {statusKey === "rejected" && getRequestReason(request) !== "-" && (
+            <section className="mt-5 flex gap-3 rounded-2xl bg-rose-50 p-4 text-rose-800 shadow-sm ring-1 ring-rose-100 dark:bg-rose-500/10 dark:text-rose-200 dark:ring-rose-500/20">
+              <AlertCircle className="mt-0.5 h-5 w-5 shrink-0" />
+              <div>
+                <p className="font-bold">Rejection reason</p>
+                <p className="mt-1 break-words text-sm leading-6">
+                  {getRequestReason(request)}
+                </p>
+              </div>
+            </section>
+          )}
+
+          <section className="mt-6">
+            <div className="mb-4 flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-primary dark:bg-blue-500/10 dark:text-blue-300">
+                <FileText className="h-5 w-5" />
+              </div>
+              <div>
+                <h3 className="text-base font-black text-slate-950 dark:text-white">
+                  {detailTitle}
+                </h3>
+                <p className="text-sm text-slate-500 dark:text-slate-400">
+                  Review the submitted request information.
+                </p>
+              </div>
+            </div>
+
+            {request.requestType === "field_correction" ? (
+              correctionFields.length ? (
+                <div className="space-y-4">
+                  {correctionFields.map((item, index) => (
+                    <article
+                      key={`${item.section}-${item.field}-${index}`}
+                      className="rounded-2xl bg-white p-4 shadow-sm ring-1 ring-slate-200/70 dark:bg-slate-950 dark:ring-slate-800 sm:p-5"
+                    >
+                      <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
+                        <h4 className="break-words text-sm font-black uppercase tracking-wide text-slate-900 dark:text-white">
+                          {formatLabel(item.section || `Correction ${index + 1}`)}
+                        </h4>
+                        <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-bold text-slate-500 dark:bg-slate-900 dark:text-slate-300">
+                          Field {index + 1}
+                        </span>
+                      </div>
+                      <div className="grid gap-3 md:grid-cols-3">
+                        <DetailField label="Field" value={formatLabel(item.field)} />
+                        <DetailField
+                          label="Current value"
+                          value={item.currentValue}
+                          accent="text-rose-700 dark:text-rose-300"
+                        />
+                        <DetailField
+                          label="Requested value"
+                          value={item.requestedValue}
+                          accent="text-emerald-700 dark:text-emerald-300"
+                        />
+                      </div>
+                    </article>
+                  ))}
+                </div>
+              ) : (
+                <div className="rounded-2xl bg-white p-6 text-center text-sm text-slate-500 shadow-sm ring-1 ring-slate-200/70 dark:bg-slate-950 dark:text-slate-400 dark:ring-slate-800">
+                  No field corrections were included with this request.
+                </div>
+              )
+            ) : hasProfileChanges ? (
+              <div className="space-y-4">
+                {changeEntries.map(([section, values]) => (
+                  <article
+                    key={section}
+                    className="rounded-2xl bg-white p-4 shadow-sm ring-1 ring-slate-200/70 dark:bg-slate-950 dark:ring-slate-800 sm:p-5"
+                  >
+                    <h4 className="mb-4 text-sm font-black uppercase tracking-wide text-slate-900 dark:text-white">
+                      {formatLabel(section)}
+                    </h4>
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      {isPlainObject(values) ? (
+                        Object.entries(values).map(([key, value]) => (
+                          <NestedValue key={key} label={key} value={value} />
+                        ))
+                      ) : (
+                        <NestedValue label={section} value={values} />
+                      )}
+                    </div>
+                  </article>
+                ))}
+              </div>
+            ) : (
+              <div className="rounded-2xl bg-white p-6 text-sm leading-6 text-slate-600 shadow-sm ring-1 ring-slate-200/70 dark:bg-slate-950 dark:text-slate-300 dark:ring-slate-800">
+                This request asks for the profile to be unlocked. No individual
+                field changes were attached.
+              </div>
+            )}
+          </section>
+        </div>
+      </section>
+    </div>
+  );
+}
+
+export default function RequestHistory() {
+  const [requests, setRequests] = useState([]);
+  const [selectedRequest, setSelectedRequest] = useState(null);
+  const [isModalClosing, setIsModalClosing] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const closingTimerRef = useRef(null);
+
+  const getMyProfileRequests = useStore((s) => s.getMyProfileRequests);
+  const getMyUnlockRequests = useStore((s) => s.getMyUnlockRequests);
+
+  const fetchRequests = useCallback(async () => {
+    try {
+      setLoading(true);
+
+      const [profileResponse, unlockResponse] = await Promise.all([
+        getMyProfileRequests(),
+        getMyUnlockRequests(),
+      ]);
+
+      const profileRequests = normalizeList(profileResponse);
+      const unlockRequests = normalizeList(unlockResponse);
+
+      const merged = [
+        ...profileRequests.map((item) => ({
+          ...item,
+          category: "Profile Update",
+        })),
+        ...unlockRequests.map((item) => ({
+          ...item,
+          category:
+            item.requestType === "field_correction"
+              ? "Field Correction"
+              : "Full Unlock",
+        })),
+      ];
+
+      merged.sort(
+        (a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0)
+      );
+
+      setRequests(merged);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  }, [getMyProfileRequests, getMyUnlockRequests]);
+
+  useEffect(() => {
+    fetchRequests();
+  }, [fetchRequests]);
+
+  useEffect(
+    () => () => {
+      if (closingTimerRef.current) {
+        window.clearTimeout(closingTimerRef.current);
+      }
+    },
+    []
+  );
+
+  const closeModal = useCallback(() => {
+    if (isModalClosing) return;
+
+    setIsModalClosing(true);
+    closingTimerRef.current = window.setTimeout(() => {
+      setSelectedRequest(null);
+      setIsModalClosing(false);
+    }, 160);
+  }, [isModalClosing]);
+
+  useEffect(() => {
+    if (!selectedRequest) return undefined;
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
+    const handleKeyDown = (event) => {
+      if (event.key === "Escape") closeModal();
+    };
+
+    document.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [closeModal, selectedRequest]);
+
+  const stats = useMemo(() => {
+    const total = requests.length;
+    const approved = requests.filter(
+      (request) => getStatusKey(request.status) === "approved"
+    ).length;
+    const rejected = requests.filter(
+      (request) => getStatusKey(request.status) === "rejected"
+    ).length;
+    const pending = total - approved - rejected;
+
+    return { total, approved, rejected, pending };
+  }, [requests]);
+
+  const openRequest = (request) => {
+    if (closingTimerRef.current) {
+      window.clearTimeout(closingTimerRef.current);
+    }
+    setIsModalClosing(false);
+    setSelectedRequest(request);
+  };
+
+  return (
+    <div className="mx-auto w-full max-w-7xl space-y-5 px-0 py-2 sm:space-y-6 sm:px-2 md:py-4">
+      <section className="overflow-hidden rounded-3xl bg-white shadow-sm ring-1 ring-slate-200/80 dark:bg-slate-950 dark:ring-slate-800">
+        <div className="bg-gradient-to-br from-blue-50 via-white to-slate-50 px-4 py-5 dark:from-blue-500/10 dark:via-slate-950 dark:to-slate-950 sm:px-6 sm:py-6">
+          <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
+            <div className="flex min-w-0 items-start gap-3">
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-primary text-white shadow-lg shadow-blue-900/15">
+                <FileText className="h-6 w-6" />
+              </div>
+              <div className="min-w-0">
+                <p className="text-xs font-bold uppercase tracking-[0.18em] text-primary/70 dark:text-blue-300">
+                  Request center
+                </p>
+                <h1 className="mt-1 text-2xl font-black tracking-tight text-slate-950 dark:text-white sm:text-3xl">
+                  My Requests
+                </h1>
+                <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600 dark:text-slate-300">
+                  Track profile updates, field corrections, and unlock requests
+                  submitted for verification.
+                </p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:min-w-[440px]">
+              <div className="rounded-2xl bg-white/80 p-3 shadow-sm ring-1 ring-slate-200/70 backdrop-blur dark:bg-slate-900/70 dark:ring-slate-800">
+                <p className="text-[11px] font-bold uppercase text-slate-500 dark:text-slate-400">
+                  Total
+                </p>
+                <p className="mt-1 text-xl font-black text-slate-950 dark:text-white">
+                  {stats.total}
+                </p>
+              </div>
+              <div className="rounded-2xl bg-white/80 p-3 shadow-sm ring-1 ring-amber-100 backdrop-blur dark:bg-slate-900/70 dark:ring-amber-500/20">
+                <p className="text-[11px] font-bold uppercase text-amber-700 dark:text-amber-300">
+                  Pending
+                </p>
+                <p className="mt-1 text-xl font-black text-amber-700 dark:text-amber-300">
+                  {stats.pending}
+                </p>
+              </div>
+              <div className="rounded-2xl bg-white/80 p-3 shadow-sm ring-1 ring-emerald-100 backdrop-blur dark:bg-slate-900/70 dark:ring-emerald-500/20">
+                <p className="text-[11px] font-bold uppercase text-emerald-700 dark:text-emerald-300">
+                  Approved
+                </p>
+                <p className="mt-1 text-xl font-black text-emerald-700 dark:text-emerald-300">
+                  {stats.approved}
+                </p>
+              </div>
+              <div className="rounded-2xl bg-white/80 p-3 shadow-sm ring-1 ring-rose-100 backdrop-blur dark:bg-slate-900/70 dark:ring-rose-500/20">
+                <p className="text-[11px] font-bold uppercase text-rose-700 dark:text-rose-300">
+                  Rejected
+                </p>
+                <p className="mt-1 text-xl font-black text-rose-700 dark:text-rose-300">
+                  {stats.rejected}
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="px-4 py-4 sm:px-6 sm:py-6">
+          {loading ? (
+            <div className="flex min-h-56 items-center justify-center rounded-2xl bg-slate-50 text-sm font-semibold text-slate-500 dark:bg-slate-900/60 dark:text-slate-400">
+              Loading requests...
+            </div>
+          ) : requests.length === 0 ? (
+            <div className="flex min-h-72 flex-col items-center justify-center rounded-2xl bg-slate-50 px-4 text-center dark:bg-slate-900/60">
+              <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-white text-slate-300 shadow-sm dark:bg-slate-950 dark:text-slate-600">
+                <FileText className="h-7 w-7" />
+              </div>
+              <h2 className="text-lg font-black text-slate-900 dark:text-white">
+                No requests submitted yet
+              </h2>
+              <p className="mt-2 max-w-sm text-sm leading-6 text-slate-500 dark:text-slate-400">
+                Your submitted profile update and unlock requests will appear here.
+              </p>
+            </div>
+          ) : (
+            <>
+              <RequestHistoryTable requests={requests} onView={openRequest} />
+              <div className="grid gap-4 lg:hidden">
+                {requests.map((request, index) => (
+                  <RequestHistoryCard
+                    key={request._id || request.requestNo || index}
+                    request={request}
+                    onView={openRequest}
+                  />
+                ))}
+              </div>
+            </>
+          )}
+        </div>
+      </section>
+
+      {selectedRequest && (
+        <RequestDetailModal
+          request={selectedRequest}
+          isClosing={isModalClosing}
+          onClose={closeModal}
+        />
+      )}
+    </div>
+  );
 }
