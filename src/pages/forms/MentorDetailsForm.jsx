@@ -2,14 +2,17 @@ import React from "react";
 import { useStore } from "../../store";
 import FormWrapper, { FormSection, InputField } from "../../components/FormWrapper";
 import { UserCheck, ShieldCheck } from "lucide-react";
-
+import useHashFocus from '../../hooks/useHashFocus';
+import { useNavigate } from "react-router-dom";
 export default function MentorDetailsForm() {
+  useHashFocus();
   const isSubmitted = useStore((s) => s.isSubmitted);
   const mentor = useStore((state) => state.mentor);
   console.log("Mentor State:", mentor); // Debugging log
-  const handleSave = () => {
-    console.log("Saved Mentor Data:", mentor);
-  };
+  const navigate = useNavigate();
+const handleSave = async () => {
+  navigate("/forms/review");
+};
 
   return (
     <FormWrapper

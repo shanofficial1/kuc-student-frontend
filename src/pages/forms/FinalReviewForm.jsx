@@ -6,6 +6,7 @@ import {
   FileIcon, FileTextIcon, ImageIcon, Phone, GraduationCap, CheckCircle2, Eye
 } from "lucide-react";
 import { Link } from "react-router-dom";
+import { getChangedFields } from "../../lib/utils";
 
 // --- SMART UTILITIES ---
 const formatLabel = (key) => {
@@ -43,6 +44,25 @@ const isHiddenKey = (key) => {
     k === "membershipurl" ||
     k === "patenturl"
   );
+};
+
+const formatEmptyValue = () => (
+  <div className="rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-500">
+    Not provided
+  </div>
+);
+
+const renderValueBox = (content) => (
+  <div className="mt-2 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700 min-h-[50px]">
+    {content}
+  </div>
+);
+
+const getSectionSummary = (data) => {
+  const visibleEntries = Object.entries(data).filter(([key]) => !isHiddenKey(key));
+  const total = visibleEntries.length;
+  const filled = visibleEntries.filter(([, value]) => value !== null && value !== undefined && value !== "" && !(Array.isArray(value) && value.length === 0)).length;
+  return `${filled} of ${total} completed`;
 };
 
 // --- COMPONENTS ---
@@ -138,7 +158,7 @@ export default function FinalReviewForm() {
   const [agreed, setAgreed] = useState(false);
 
   const renderDataPoint = (key, value) => {
-    if (value === null || value === undefined || value === "") return <span className="text-slate-300 italic text-sm">Empty</span>;
+    if (value === null || value === undefined || value === "") return <span className="text-slate-400 italic text-sm">Not provided</span>;
 
     // 1. Intercept Nested Object Files First
    if (typeof value === "object" && !Array.isArray(value)) {
@@ -168,22 +188,22 @@ export default function FinalReviewForm() {
 
 
       const activeEntries = Object.entries(value).filter(([subKey]) => !isHiddenKey(subKey));
-      if (activeEntries.length === 0) return null;
+      if (activeEntries.length === 0) return <span className="text-slate-400 italic text-sm">Not provided</span>;
 
       // --- ROW-BASED CARDS FOR NESTED OBJECT GROUPS (Father, Mother, Address blocks, etc.) ---
       return (
-        <div className="p-4 rounded-xl border border-slate-100 bg-slate-50/30 flex flex-wrap gap-x-6 gap-y-4 shadow-sm w-full mt-1">
-          {activeEntries.map(([subKey, subVal]) => {
-            const isSubItemWide = isFileLink(subVal) || (subVal && typeof subVal === 'object') || subKey.toLowerCase().includes('title');
-            return (
-              <div key={subKey} className={`min-w-[140px] flex-1 ${isSubItemWide ? "w-full min-w-full" : ""}`}>
-                <p className="text-[9px] font-bold text-slate-400 uppercase tracking-tighter">{formatLabel(subKey)}</p>
-                <div className="text-sm text-slate-700 font-semibold w-full">
-                  {renderDataPoint(subKey, subVal)}
+        <div className="p-4 rounded-3xl bg-slate-50/70 w-full mt-1">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {activeEntries.map(([subKey, subVal]) => {
+              const isSubItemWide = isFileLink(subVal) || (subVal && typeof subVal === 'object') || subKey.toLowerCase().includes('title');
+              return (
+                <div key={subKey} className={`${isSubItemWide ? "md:col-span-2" : ""}`}>
+                  <p className="text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em] mb-2">{formatLabel(subKey)}</p>
+                  {renderValueBox(renderDataPoint(subKey, subVal))}
                 </div>
-              </div>
-            );
-          })}
+              );
+            })}
+          </div>
         </div>
       );
     }
@@ -205,7 +225,7 @@ export default function FinalReviewForm() {
     // 3. Handle Arrays
     if (Array.isArray(value)) {
       const filteredArray = value.filter(item => item && Object.keys(item).length > 0);
-      if (filteredArray.length === 0) return <span className="text-slate-300 italic text-sm">None</span>;
+      if (filteredArray.length === 0) return <span className="text-slate-500 italic">None</span>;
       
       if (typeof filteredArray[0] === 'string') {
         return <span className="text-sm text-slate-700 font-semibold">{filteredArray.join(", ")}</span>;
@@ -238,7 +258,7 @@ export default function FinalReviewForm() {
       return (
         <div className="space-y-3 w-full mt-2">
           {filteredArray.map((item, i) => (
-            <div key={i} className="p-4 rounded-xl border border-slate-100 bg-slate-50/30 flex flex-wrap gap-x-6 gap-y-4 shadow-sm w-full">
+            <div key={i} className="p-4 rounded-xl bg-slate-50/30 flex flex-wrap gap-x-6 gap-y-4 w-full">
                {Object.entries(item)
                  .filter(([k]) => !isHiddenKey(k)) 
                  .map(([k, v]) => {
@@ -260,11 +280,188 @@ export default function FinalReviewForm() {
     return <span className="text-sm text-slate-700 font-semibold">{typeof value === 'boolean' ? (value ? "Yes" : "No") : String(value)}</span>;
   };
 
-  const handleSubmit = () => {
-    if (!agreed) return;
-    store.setSubmitted(true);
-    window.scrollTo(0, 0);
-  };
+  const saveAndRefresh = useStore(
+  (s) => s.saveAndRefresh
+);
+
+
+ const handleSubmit = async () => {
+  if (!agreed) return;
+
+  const state = useStore.getState();
+  const snapshot = state.profileSnapshot || {};
+
+  const sections = [
+    "academic",
+    "personal",
+    "contact",
+    "family",
+    "education",
+    "financial",
+    "health",
+    "professional",
+    "residential",
+    "documents",
+    "mentor"
+  ];
+
+  let hasChanges = false;
+  const changedSections = {};
+
+  for (const section of sections) {
+    const original = snapshot[section] || {};
+    const current = state[section] || {};
+
+    const changes = getChangedFields(
+      original,
+      current
+    );
+
+    if (Object.keys(changes).length > 0) {
+      hasChanges = true;
+      changedSections[section] = changes;
+    }
+  }
+
+  console.log("Snapshot:", snapshot);
+  console.log("Changed Sections:", changedSections);
+
+  if (!hasChanges) {
+    alert("No changes detected.");
+    return;
+  }
+
+  const formData = new FormData();
+
+Object.entries(changedSections).forEach(
+  ([section, data]) => {
+    formData.append(
+      `${section}_details`,
+      JSON.stringify(data)
+    );
+  }
+);
+
+for (let pair of formData.entries()) {
+  console.log(pair[0], pair[1]);
+}
+
+const payload = {
+
+  requestType:
+    "full_unlock",
+
+  formData: {
+
+    academic:
+      state.academic,
+
+    personal:
+      state.personal,
+
+    contact:
+      state.contact,
+
+    family:
+      state.family,
+
+    education:
+      state.education,
+
+    financial:
+      state.financial,
+
+    health:
+      state.health,
+
+    professional:
+      state.professional,
+
+    residential:
+      state.residential,
+
+    documents:
+      state.documents
+
+  }
+
+};
+
+
+
+await store.submitUnlockRequest({
+
+  requestType:
+    "full_unlock",
+
+  formData:
+    changedSections
+
+});
+
+window.location.reload(); 
+
+alert(
+  "Application submitted for verification"
+);
+
+
+window.scrollTo({
+  top: 0,
+  behavior: "smooth",
+});
+
+
+
+  // ===================================
+  // BUILD FORMDATA HERE LATER
+  // ===================================
+
+  /*
+  const formData = new FormData();
+
+  Object.entries(changedSections).forEach(
+    ([section, data]) => {
+      formData.append(
+        section,
+        JSON.stringify(data)
+      );
+    }
+  );
+
+  await saveAndRefresh(formData, true);
+  */
+
+  store.setSubmitted(true);
+
+  window.scrollTo({
+    top: 0,
+    behavior: "smooth",
+  });
+
+  alert(
+    `Changes detected in ${Object.keys(changedSections).length} section(s).`
+  );
+};
+
+
+const snapshot = store.profileSnapshot || {};
+
+const changedDataBySection = {};
+
+Object.keys(SECTION_CONFIG).forEach((section) => {
+  const original = snapshot[section] || {};
+  const current = store[section] || {};
+
+  const changes = getChangedFields(
+    original,
+    current
+  );
+
+  if (Object.keys(changes).length > 0) {
+    changedDataBySection[section] = changes;
+  }
+});
 
   return (
     <div className="max-w-[1000px] mx-auto px-4 py-12 pb-32 bg-slate-50/30">
@@ -278,21 +475,24 @@ export default function FinalReviewForm() {
 
       <div className="grid grid-cols-1 gap-10">
         {Object.entries(SECTION_CONFIG).map(([sectionKey, config]) => {
-          const data = store[sectionKey];
+const data = changedDataBySection[sectionKey];
           if (!data || Object.keys(data).length === 0) return null;
 
           return (
-            <div key={sectionKey} className="group relative bg-white border border-slate-200 rounded-3xl overflow-hidden shadow-sm hover:shadow-md transition-all duration-300">
+            <div key={sectionKey} className="group relative bg-white rounded-3xl overflow-hidden transition-all duration-300">
               {/* Section Header */}
-              <div className="bg-slate-50/80 px-6 py-4 border-b border-slate-100 flex justify-between items-center">
+              <div className="bg-slate-50/80 px-6 py-4 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                 <div className="flex items-center gap-3">
-                  <div className="p-2 bg-white rounded-lg shadow-sm">
+                  <div className="p-3 bg-white rounded-2xl shadow-sm">
                     <config.icon className="w-5 h-5 text-primary" />
                   </div>
-                  <h2 className="text-lg font-bold text-slate-800 tracking-tight">{config.title}</h2>
+                  <div>
+                    <h2 className="text-lg font-bold text-slate-800 tracking-tight">{config.title}</h2>
+                    <p className="text-sm text-slate-500 mt-1">{getSectionSummary(data)}</p>
+                  </div>
                 </div>
                 {!isSubmitted && (
-                  <Link to={config.path} className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-white border border-slate-200 text-primary text-xs font-bold hover:bg-primary hover:text-white transition-all">
+                  <Link to={config.path} className="flex items-center gap-1.5 px-4 py-2 rounded-2xl bg-white border border-slate-200 text-primary text-xs font-bold hover:bg-primary hover:text-white transition-all">
                     <Edit3 className="w-3.5 h-3.5" /> Edit Section
                   </Link>
                 )}
@@ -302,14 +502,14 @@ export default function FinalReviewForm() {
               <div className="p-6 sm:p-8">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-x-10 gap-y-8">
                   {Object.entries(data)
-                    .filter(([key, val]) => !isHiddenKey(key) && val !== "")
+                    .filter(([key]) => !isHiddenKey(key))
                     .map(([key, value]) => {
                       const hasNestedFile = value && typeof value === 'object' && (value.document || value.url);
                       const isWide = Array.isArray(value) || typeof value === 'object' || isFileLink(value) || hasNestedFile;
                       return (
-                        <div key={key} className={`${isWide ? "md:col-span-2" : ""} space-y-1 w-full`}>
+                        <div key={key} className={`${isWide ? "md:col-span-2" : ""} rounded-3xl bg-white p-4 w-full`}> 
                           <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{formatLabel(key)}</label>
-                          <div className="block w-full">{renderDataPoint(key, value)}</div>
+                          {renderValueBox(renderDataPoint(key, value))}
                         </div>
                       );
                     })}

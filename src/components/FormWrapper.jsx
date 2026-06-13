@@ -2,7 +2,9 @@ import React from "react";
 import { cn } from "../lib/utils";
 import { Save,FileText } from "lucide-react";
 import { useStore } from "../store";
-
+import { compressImage } from "../lib/fileCompression";
+import { compressPdfApi } from "../api/file.api";
+import { useState } from "react";
 /* ================= MAIN WRAPPER ================= */
 
 export default function FormWrapper({
@@ -113,10 +115,10 @@ export function SelectField({
   disabled,
   value,
   onChange,
-  multiple = false,
+  multiple = false, 
 }) {
   const isSubmitted = useStore((s) => s.isSubmitted);
-  const isDisabled = disabled || isSubmitted;
+  const isDisabled = disabled ;
 
   const [search, setSearch] = React.useState("");
   const [open, setOpen] = React.useState(false);
@@ -269,7 +271,17 @@ export function SelectField({
 export function FileInput({ label, file, fileUrl, error, onChange, disabled, required }) {
   const isSubmitted = useStore((s) => s.isSubmitted);
   const isDisabled = disabled || isSubmitted;
+const [compressing,setCompressing] =useState(false);
+  const token = useStore((s) => s.token);
 
+const [compressionData,setCompressionData] = useState(null);
+
+
+
+
+const [showCompressionModal,
+  setShowCompressionModal] =
+  useState(false);
 
 const handlePreview = (e) => {
 
@@ -370,37 +382,54 @@ const formatFileName = (name) => {
 };
 
   // ✅ New internal validation handler
-  const onFileChange = (e) => {
-    const selectedFile = e.target.files?.[0];
-    if (!selectedFile) return;
+const onFileChange =
+async (e) => {
 
-    const limitBytes = 150 * 1024; // 150 KB
+const selectedFile =
+  e.target.files?.[0];
 
-    if (selectedFile.size > limitBytes) {
-      // Pass an error-state-like object to the parent's onChange
-      onChange({
-        target: {
-          name: selectedFile.name,
-          file: null,
-          error: "Max 150KB allowed"
-        }
-      });
-    } else {
-      // Pass the valid file to the parent
-      onChange({
-        target: {
-          name: selectedFile.name,
-          file: selectedFile,
-          error: ""
-        }
-      });
-    }
-  };
+if (!selectedFile) return;
+
+console.log(
+  "SELECTED SIZE",
+  selectedFile.size / 1024 / 1024
+);
+
+setCompressing(true);
+
+try {
+
+  const result =
+    await compressPdfApi(
+      selectedFile,
+      token
+    );
+
+  setCompressionData(result);
+
+  setShowCompressionModal(true);
+
+} catch (err) {
+
+  console.log(err);
+
+} finally {
+
+  setCompressing(false);
+
+}
+
+};
 
 
   console.log("FILE PROP =", file);
-  
+  console.log(
+  "MODAL",
+  showCompressionModal,
+  compressionData
+);
   return (
+    <>
     <div className="space-y-2">
       <label className="block text-sm font-medium text-slate-600">
         {label} 
@@ -426,13 +455,19 @@ const formatFileName = (name) => {
           </div>
 
           <span
-            className={cn(
-              "text-sm truncate",
-              error ? "text-red-600 font-medium" : file ? "text-green-700 font-medium" : "text-slate-400"
-            )}
-          >
-            {error || formatFileName(file)}
-          </span>
+  className={cn(
+    "text-sm truncate",
+    error
+      ? "text-red-600 font-medium"
+      : file
+      ? "text-green-700 font-medium"
+      : "text-slate-400"
+  )}
+>
+  {compressing
+    ? "Compressing PDF..."
+    : error || formatFileName(file)}
+</span>
         </div>
 
         <input
@@ -469,13 +504,179 @@ const formatFileName = (name) => {
 
 </div>
       </label>
-
+{
+compressing && (
+  <div
+   className="
+   text-blue-600
+   text-sm
+   font-medium"
+  >
+   Compressing PDF...
+  </div>
+)
+}
       <p className={cn(
         "text-[10px] font-bold  tracking-wider",
        "text-red-500" 
       )}>
-        {error ? error : "Upload file size: MAX 150 KB only."}
-      </p>
+{compressing
+  ? "Compressing PDF. Please wait..."
+  : error
+  ? error
+  : "Upload file size: MAX 150 KB only."}      </p>
     </div>
+    {
+showCompressionModal &&
+compressionData && (
+
+<div
+className="
+fixed inset-0
+bg-black/50
+flex
+items-center
+justify-center
+z-50"
+>
+
+<div
+className="
+bg-white
+rounded-xl
+p-6
+w-[500px]
+space-y-4"
+>
+
+<h3
+className="
+text-lg
+font-bold"
+>
+Compression Result
+</h3>
+
+<p>
+
+Original:
+
+<b>
+ {compressionData.originalSize}
+ KB
+</b>
+
+</p>
+
+<p>
+
+Compressed:
+
+<b>
+ {compressionData.compressedSize}
+ KB
+</b>
+
+</p>
+
+<div
+className="
+flex gap-3"
+>
+
+<button
+
+type="button"
+
+onClick={() => {
+
+const previewUrl =
+`${import.meta.env.VITE_SERVER}/${compressionData.file.path}`;
+
+window.open(
+ previewUrl,
+ "_blank"
+);
+
+}}
+
+className="
+px-4 py-2
+border rounded"
+>
+
+Preview
+
+</button>
+
+<button
+
+type="button"
+
+onClick={() => {
+
+onChange({
+
+target: {
+
+file:
+compressionData.file,
+
+error: ""
+
+}
+
+});
+
+setShowCompressionModal(
+false
+);
+
+}}
+
+className="
+px-4 py-2
+bg-green-600
+text-white
+rounded"
+>
+
+Use PDF
+
+</button>
+
+<button
+
+type="button"
+
+onClick={() => {
+
+setShowCompressionModal(
+false
+);
+
+}}
+
+className="
+px-4 py-2
+bg-red-600
+text-white
+rounded"
+>
+
+Cancel
+
+</button>
+
+</div>
+
+</div>
+
+</div>
+
+)
+}
+    </>
   );
 }
+

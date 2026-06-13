@@ -1,15 +1,19 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useStore } from '../../store';
 import FormWrapper, { FormSection, InputField } from '../../components/FormWrapper';
+import { getChangedFields, SECTION_API_KEYS } from '../../lib/utils';
 import { Users, Coins, UserPlus, Trash2, ChevronDown } from 'lucide-react';
-
+import useHashFocus from '../../hooks/useHashFocus';
+import { useNavigate } from "react-router-dom";
 export default function FamilyForm() {
+  useHashFocus();
   const isSubmitted = useStore((s) => s.isSubmitted);
   const family = useStore((state) => state.family);
   const updateSection = useStore((state) => state.updateSection);
   console.log('Family State:', family); // Debugging log
   const [openParentPhoneCode, setOpenParentPhoneCode] = useState(false);
   const phoneRef = useRef(null);
+  const navigate = useNavigate();
 
 
 
@@ -114,52 +118,34 @@ useEffect(() => {
     setOpenParentPhoneCode(false);
   };
 
+// const handleSave = async () => {
+//   const missingFields = [];
+//   if (!family?.father?.name?.trim()) missingFields.push('Father Name');
+//   if (!family?.mother?.name?.trim()) missingFields.push('Mother Name');
+
+//   if (missingFields.length > 0) {
+//     alert(`Please fill in the required field${missingFields.length > 1 ? 's' : ''}: ${missingFields.join(', ')}`);
+//     return;
+//   }
+
+//   const originalFamily = useStore.getState().profileSnapshot?.family || {};
+//   const changedFamily = getChangedFields(originalFamily, family);
+
+//   if (!Object.keys(changedFamily).length) {
+//     alert('No changes detected in family details.');
+//     return;
+//   }
+
+//   const payload = {
+//     family_details: changedFamily,
+//     updatedSections: [SECTION_API_KEYS.family],
+//   };
+
+//   await saveAndRefresh(payload);
+// };
 const handleSave = async () => {
-
-  const payload = {
-
-    family_details: {
-
-  father: family.father,
-
-  mother: family.mother,
-
-  annualFamilyIncome:
-    family.annualFamilyIncome,
-
-  parentEmail:
-    family.parentEmail || "",
-
-  guardianResidentialAddress:
-    family.guardianResidentialAddress || "",
-
-  guardianOfficeAddress:
-    family.guardianOfficeAddress || "",
-
-  siblings:
-    family.siblings || [],
-
-  parentContact: {
-    countryCode:
-      family.parentContact?.countryCode || "+91",
-
-    number:
-      family.parentContact?.number || ""
-  }
-
-}
-
-  };
-
-  console.log(
-    "FAMILY PAYLOAD",
-    payload
-  );
-
-  await saveAndRefresh(payload);
-
+  navigate("/forms/education");
 };
-
   return (
     <FormWrapper
       title="Family Details"
@@ -169,7 +155,9 @@ const handleSave = async () => {
       {/* Father Details */}
       <FormSection title="Father Details" icon={Users}>
         <InputField 
+          id="fatherName"
           label="Name" 
+          required
           value={family?.father?.name || ''} 
           onChange={(e) => handleNestedChange('father', 'name', e.target.value)} 
           disabled={isSubmitted} 
@@ -193,7 +181,9 @@ const handleSave = async () => {
       {/* Mother Details */}
       <FormSection title="Mother Details" icon={Users}>
         <InputField 
+          id="motherName"
           label="Name" 
+          required
           value={family?.mother?.name || ''} 
           onChange={(e) => handleNestedChange('mother', 'name', e.target.value)} 
           disabled={isSubmitted} 

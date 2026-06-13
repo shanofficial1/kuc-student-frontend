@@ -7,15 +7,19 @@ import FormWrapper, {
   SelectField,
 } from "../../components/FormWrapper";
 import { Wallet, Landmark, ShieldCheck } from "lucide-react";
-
+import useHashFocus from '../../hooks/useHashFocus';
+import { useNavigate } from "react-router-dom";
 export default function FinancialForm() {
+  useHashFocus();
   const isSubmitted = useStore((s) => s.isSubmitted);
   const financial = useStore((state) => state.financial);
   const updateSection = useStore((state) => state.updateSection);
+  const navigate = useNavigate();
 
 
   const saveAndRefresh =
   useStore((s) => s.saveAndRefresh);
+  const fetchCanEdit = useStore((s) => s.fetchCanEdit);
 
   // Helper for Nested Updates (educationLoan and bankAccount)
   const handleNestedChange = (parent, child, value) => {
@@ -32,115 +36,129 @@ export default function FinancialForm() {
     updateSection("financial", { [id]: value });
   };
 
+// const handleSave = async () => {
+
+//   const formData =
+//     new FormData();
+
+//   // Scholarship
+
+//   formData.append(
+//     "financial_details[schType]",
+//     financial.schType || ""
+//   );
+
+//   formData.append(
+//     "financial_details[schId]",
+//     financial.schId || ""
+//   );
+
+//   formData.append(
+//     "financial_details[schOther]",
+//     financial.schOther || ""
+//   );
+
+//   // Fee Waiver File
+
+//   if (
+//     financial.feeWaiveUrl?.document
+//       instanceof File
+//   ) {
+
+//     formData.append(
+//       "feeWaiveDocument",
+//       financial.feeWaiveUrl.document
+//     );
+
+//   }
+
+//   // Education Loan
+
+//   formData.append(
+//     "financial_details[educationLoan][bankName]",
+//     financial.educationLoan?.bankName || ""
+//   );
+
+
+//   formData.append(
+//     "financial_details[educationLoan][amount]",
+//     financial.educationLoan?.amount || ""
+//   );
+
+//   // Bank Account
+
+//   formData.append(
+//     "financial_details[bankAccount][accountHolderName]",
+//     financial.bankAccount?.accountHolderName || ""
+//   );
+
+//   formData.append(
+//     "financial_details[bankAccount][accountNumber]",
+//     financial.bankAccount?.accountNumber || ""
+//   );
+
+//   formData.append(
+//     "financial_details[bankAccount][bankName]",
+//     financial.bankAccount?.bankName || ""
+//   );
+
+//   formData.append(
+//     "financial_details[bankAccount][branchName]",
+//     financial.bankAccount?.branchName || ""
+//   );
+
+//   formData.append(
+//     "financial_details[bankAccount][ifscCode]",
+//     financial.bankAccount?.ifscCode || ""
+//   );
+
+//   // Grants
+//   formData.append(
+//     "financial_details[grantType]",
+//     financial.grantType || ""
+//   );
+//   formData.append(
+//     "financial_details[grantOther]",
+//     financial.grantOther || ""
+//   );
+//   formData.append(
+//     "financial_details[grantId]",
+//     financial.grantId || ""
+//   );
+//   if (financial.grantWaiveUrl?.document instanceof File) {
+//     formData.append(
+//       "grantWaiveDocument",
+//       financial.grantWaiveUrl.document
+//     );
+//   }
+
+//   // PAN
+//   formData.append(
+//     "financial_details[pan]",
+//     financial.pan || ""
+//   );
+
+//   // Debug
+//   for (const [key, value] of formData.entries()) {
+//     console.log(key, value);
+//   }
+
+//   console.log(
+//     "PAN VALUE =",
+//     financial.pan
+//   );
+
+//   await saveAndRefresh(
+//     formData,
+//     true
+//   );
+//   await fetchCanEdit();
+
+// };
 const handleSave = async () => {
-
-  const formData =
-    new FormData();
-
-  // Scholarship
-
-  formData.append(
-    "financial_details[schType]",
-    financial.schType || ""
-  );
-
-  formData.append(
-    "financial_details[schId]",
-    financial.schId || ""
-  );
-
-  // Fee Waiver File
-
-  if (
-    financial.feeWaiveUrl?.document
-      instanceof File
-  ) {
-
-    formData.append(
-      "feeWaiveDocument",
-      financial.feeWaiveUrl.document
-    );
-
-  }
-
-  // Education Loan
-
-  formData.append(
-    "financial_details[educationLoan][bankName]",
-    financial.educationLoan?.bankName || ""
-  );
-
-  formData.append(
-    "financial_details[educationLoan][branch]",
-    financial.educationLoan?.branch || ""
-  );
-
-  formData.append(
-    "financial_details[educationLoan][amount]",
-    financial.educationLoan?.amount || ""
-  );
-
-  // Bank Account
-
-  formData.append(
-    "financial_details[bankAccount][accountHolderName]",
-    financial.bankAccount?.accountHolderName || ""
-  );
-
-  formData.append(
-    "financial_details[bankAccount][accountNumber]",
-    financial.bankAccount?.accountNumber || ""
-  );
-
-  formData.append(
-    "financial_details[bankAccount][bankName]",
-    financial.bankAccount?.bankName || ""
-  );
-
-  formData.append(
-    "financial_details[bankAccount][branchName]",
-    financial.bankAccount?.branchName || ""
-  );
-
-  formData.append(
-    "financial_details[bankAccount][ifscCode]",
-    financial.bankAccount?.ifscCode || ""
-  );
-
-  // PAN
-
-  formData.append(
-    "financial_details[pan]",
-    financial.pan || ""
-  );
-
-  // Debug
-
-  for (
-    const [key, value]
-    of formData.entries()
-  ) {
-
-    console.log(
-      key,
-      value
-    );
-
-  }
-
-  console.log(
-  "PAN VALUE =",
-  financial.pan
-);
-
-  await saveAndRefresh(
-    formData,
-    true
-  );
-  await fetchCanEdit();
-
-};
-  return (
+  navigate("/forms/professional");
+};  
+return (
     <FormWrapper
       title="Financial Details"
       description="Provide your scholarship, loan, and bank details for processing."
@@ -158,8 +176,18 @@ const handleSave = async () => {
             if (val === "none") {
               updateSection("financial", {
                 schType: val,
+                schOther: "",
                 schId: "",
                 feeWaiveUrl: { document: "" },
+                feeDocError: "",
+              });
+            } else if (val === "others") {
+              updateSection("financial", {
+                schType: val,
+                schOther: "",
+                schId: "",
+                feeWaiveUrl: { document: "" },
+                feeDocError: "",
               });
             } else {
               handleChange(e);
@@ -172,13 +200,26 @@ const handleSave = async () => {
             { value: "Institutional", label: "Institutional" },
             { value: "JRF", label: "JRF" },
             { value: "e-Grant", label: "e-Grant" },
+            { value: "others", label: "Others" },
           ]}
         />
+
+        {financial.schType === "others" && (
+          <InputField
+            label="Specify Scholarship Category"
+            id="schOther"
+            placeholder="Enter scholarship type"
+            required
+            value={financial.schOther || ""}
+            onChange={handleChange}
+            disabled={isSubmitted}
+          />
+        )}
 
         {financial.schType && financial.schType !== "none" && (
           <>
             <InputField
-              label={`${financial.schType.toUpperCase()} Unique ID`}
+              label={`${financial.schType === "others" ? "Scholarship" : financial.schType.toUpperCase()} Unique ID`}
               id="schId" // Matches backend "schId"
               placeholder="Enter your registration ID"
               required
@@ -186,32 +227,112 @@ const handleSave = async () => {
               onChange={handleChange}
               disabled={isSubmitted}
             />
-<FileInput
-  label="Fee Waiver Document"
-  file={
-    financial.feeWaiveUrl?.document?.name ||
-    financial.feeWaiveUrl?.document
-  }
-  fileUrl={
-    financial.feeWaiveUrl?.document?.url
-  }
-  error={financial.feeDocError}
-  disabled={isSubmitted}
-  onChange={(e) => {
+            <FileInput
+              label="Fee Waiver Document"
+              file={
+                financial.feeWaiveUrl?.document?.name ||
+                financial.feeWaiveUrl?.document
+              }
+              fileUrl={
+                financial.feeWaiveUrl?.document?.url
+              }
+              error={financial.feeDocError}
+              disabled={isSubmitted}
+              onChange={(e) => {
+                updateSection("financial", {
+                  feeWaiveUrl: {
+                    document: e.target.file,
+                  },
+                  feeDocError: e.target.error,
+                });
+              }}
+            />
+          </>
+        )}
+      </FormSection>
 
-    updateSection("financial", {
+      <FormSection title="Grants" icon={ShieldCheck}>
+        <SelectField
+          label="Grant Category"
+          id="grantType"
+          required
+          value={financial.grantType || "none"}
+          onChange={(e) => {
+            const val = e.target.value;
+            if (val === "none") {
+              updateSection("financial", {
+                grantType: val,
+                grantOther: "",
+                grantId: "",
+                grantWaiveUrl: { document: "" },
+                grantDocError: "",
+              });
+            } else if (val === "others") {
+              updateSection("financial", {
+                grantType: val,
+                grantOther: "",
+                grantId: "",
+                grantWaiveUrl: { document: "" },
+                grantDocError: "",
+              });
+            } else {
+              handleChange(e);
+            }
+          }}
+          disabled={isSubmitted}
+          options={[
+            { value: "none", label: "None" },
+            { value: "Government", label: "Government" },
+            { value: "Institutional", label: "Institutional" },
+            { value: "JRF", label: "JRF" },
+            { value: "e-Grant", label: "e-Grant" },
+            { value: "others", label: "Others" },
+          ]}
+        />
 
-      feeWaiveUrl: {
-        document: e.target.file
-      },
+        {financial.grantType === "others" && (
+          <InputField
+            label="Specify Grant Category"
+            id="grantOther"
+            placeholder="Enter grant type"
+            required
+            value={financial.grantOther || ""}
+            onChange={handleChange}
+            disabled={isSubmitted}
+          />
+        )}
 
-      feeDocError:
-        e.target.error,
-
-    });
-
-  }}
-/>
+        {financial.grantType && financial.grantType !== "none" && (
+          <>
+            <InputField
+              label={`${financial.grantType === "others" ? "Grant" : financial.grantType.toUpperCase()} Unique ID`}
+              id="grantId"
+              placeholder="Enter your numeric ID"
+              required
+              value={financial.grantId || ""}
+              onChange={handleChange}
+              disabled={isSubmitted}
+            />
+            <FileInput
+              label="Grant Waiver Document"
+              file={
+                financial.grantWaiveUrl?.document?.name ||
+                financial.grantWaiveUrl?.document
+              }
+              fileUrl={
+                financial.grantWaiveUrl?.document?.url
+              }
+              error={financial.grantDocError}
+              disabled={isSubmitted}
+              onChange={(e) => {
+                updateSection("financial", {
+                  grantWaiveUrl: {
+                    document: e.target.file,
+                  },
+                  grantDocError: e.target.error,
+                });
+              }}
+            />
           </>
         )}
       </FormSection>
@@ -231,12 +352,7 @@ const handleSave = async () => {
           ]}
         />
 
-        <InputField
-          label="Branch Name"
-          value={financial.educationLoan?.branch || ""}
-          onChange={(e) => handleNestedChange("educationLoan", "branch", e.target.value)}
-          disabled={isSubmitted}
-        />
+      
 
         <InputField
           label="Loan Amount"

@@ -102,9 +102,11 @@
 
 
 import React, { useState } from "react";
+import { useStore } from "../store";
 import { Lock, ShieldCheck, AlertCircle, Save } from "lucide-react";
 
 export default function ChangePassword() {
+  const token = useStore((s) => s.token);
   const [passwords, setPasswords] = useState({
     current: "",
     new: "",
@@ -112,22 +114,74 @@ export default function ChangePassword() {
   });
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
+  const [payload, setPayload] = useState(null);
+  const [loading, setLoading] = useState(false);
 
   const handleChange = (e) => {
     const { id, value } = e.target;
     setPasswords((prev) => ({ ...prev, [id]: value }));
     if (error) setError("");
+    if (success) setSuccess(false);
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    if (passwords.new !== passwords.confirm) {
-      setError("New passwords do not match.");
+
+    const passwordPattern = /^(?=.*[A-Za-z])(?=.*\d).{8,}$/;
+    const isNewValid = passwordPattern.test(passwords.new);
+    const isConfirmValid = passwordPattern.test(passwords.confirm);
+
+    if (!isNewValid) {
+      setError("New password must be at least 8 characters long and include both letters and numbers.");
+      setSuccess(false);
       return;
     }
-    setSuccess(true);
+
+    if (!isConfirmValid) {
+      setError("Confirm password must also be at least 8 characters long and include both letters and numbers.");
+      setSuccess(false);
+      return;
+    }
+
+    if (passwords.new !== passwords.confirm) {
+      setError("New password and confirm password do not match.");
+      setSuccess(false);
+      return;
+    }
+
+    const jsonPayload = {
+      currentPassword: passwords.current,
+      newPassword: passwords.new,
+      token: token || "",
+    };
+
+    setPayload(jsonPayload);
+    setLoading(true);
     setError("");
-    console.log("Password updated");
+
+    try {
+      const SERVER = import.meta.env.VITE_SERVER;
+      const res = await fetch(`${SERVER}/api/auth/change-password`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(jsonPayload),
+      });
+
+      const data = await res.json();
+
+      if (data.success) {
+        setSuccess(true);
+      } else {
+        setError(data.message || "Failed to update password.");
+      }
+    } catch (err) {
+      console.error(err);
+      setError("Server error. Please try again.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -209,10 +263,11 @@ export default function ChangePassword() {
           <div className="pt-4">
             <button
               type="submit"
-              className="bg-primary text-white px-8 py-3 rounded-xl font-bold hover:opacity-90 transition-opacity flex items-center gap-2"
+              disabled={loading}
+              className="bg-primary text-white px-8 py-3 rounded-xl font-bold hover:opacity-90 transition-opacity flex items-center gap-2 disabled:opacity-50"
             >
               <Save size={18} />
-              Update Password
+              {loading ? "Updating password..." : "Update Password"}
             </button>
           </div>
         </form>

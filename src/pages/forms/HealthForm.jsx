@@ -1,144 +1,80 @@
 import React from 'react';
 import { useStore } from '../../store';
 import FormWrapper, { FormSection, InputField, SelectField, FileInput } from '../../components/FormWrapper';
+import { getChangedFields, SECTION_API_KEYS } from '../../lib/utils';
 import { HeartPulse, Accessibility, ShieldCheck, Syringe } from 'lucide-react';
-
+import useHashFocus from '../../hooks/useHashFocus';
+import { useNavigate } from "react-router-dom";
 export default function HealthForm() {
+  useHashFocus();
   const isSubmitted = useStore((s) => s.isSubmitted);
   const health = useStore((state) => state.health);
   const updateSection = useStore((state) => state.updateSection);
 
 
+  const navigate = useNavigate();
 
-  const saveAndRefresh =
-  useStore((s) => s.saveAndRefresh);
+const saveAndRefresh = useStore((s) => s.saveAndRefresh);
+  const fetchCanEdit = useStore((s) => s.fetchCanEdit);
 
+// const handleSave = async () => {
+//   const originalHealth = useStore.getState().profileSnapshot?.health || {};
+//   const changedHealth = getChangedFields(originalHealth, health);
+
+//   if (!Object.keys(changedHealth).length) {
+//     alert("No changes detected in health details.");
+//     return;
+//   }
+
+//   const formData = new FormData();
+//   const sectionKey = SECTION_API_KEYS.health;
+
+//   if (health.disabilityFile instanceof File && changedHealth.disabilityFile) {
+//     formData.append("disabilityCertificate", health.disabilityFile);
+//   }
+//   if (health.vaccinationFile instanceof File && changedHealth.vaccinationFile) {
+//     formData.append("vaccinationDoc", health.vaccinationFile);
+//   }
+//   if ("bloodGroup" in changedHealth) {
+//     formData.append("health_details[bloodGroup]", health.bloodGroup || "");
+//   }
+//   if (changedHealth.physicalDimensions) {
+//     formData.append("health_details[physicalDimensions][height]", health.physicalDimensions?.height || "");
+//     formData.append("health_details[physicalDimensions][weight]", health.physicalDimensions?.weight || "");
+//   }
+//   if ("disabilityStatus" in changedHealth) {
+//     formData.append("health_details[disabilityStatus]", health.disabilityStatus || "");
+//   }
+//   if ("disabilityType" in changedHealth || "disabilityPercentage" in changedHealth) {
+//     formData.append("health_details[disabilityDetails][disabilityType]", health.disabilityType || "");
+//     formData.append("health_details[disabilityDetails][percentage]", health.disabilityPercentage || "");
+//   }
+//   if ("chronicConditions" in changedHealth) {
+//     formData.append("health_details[chronicConditions]", health.chronicConditions || "");
+//   }
+//   if ("regularMedications" in changedHealth) {
+//     formData.append("health_details[regularMedications]", health.regularMedications || "");
+//   }
+//   if (changedHealth.insurance) {
+//     formData.append("health_details[insurance][provider]", health.insurance?.provider || "");
+//     formData.append("health_details[insurance][policyNumber]", health.insurance?.policyNumber || "");
+//   }
+//   if ("vaccinationStatus" in changedHealth) {
+//     formData.append("health_details[vaccinationStatus]", health.vaccinationStatus || "");
+//   }
+
+//   formData.append("updatedSections[]", sectionKey);
+
+//   await saveAndRefresh(
+//     formData,
+//     true
+//   );
+//   await fetchCanEdit();
+
+// };
 const handleSave = async () => {
-
-
- 
-  console.log(
-  "HEALTH STATE",
-  health
-);
-
-console.log(
-  "VACCINATION DOC",
-  health.vaccinationDoc
-);
-
-console.log(
-  "VACCINATION FILE",
-  health.vaccinationFile
-);
-
-
-
-  const formData = new FormData();
-
-  
-if (health.disabilityFile instanceof File) {
-
-  formData.append(
-    "disabilityCertificate",
-    health.disabilityFile
-  );
-
-}
-
-if (health.vaccinationFile instanceof File) {
-
-  formData.append(
-    "vaccinationDoc",
-    health.vaccinationFile
-  );
-
-}
-
-  formData.append(
-    "health_details[bloodGroup]",
-    health.bloodGroup || ""
-  );
-
-  formData.append(
-    "health_details[physicalDimensions][height]",
-    health.physicalDimensions?.height || ""
-  );
-
-  formData.append(
-    "health_details[physicalDimensions][weight]",
-    health.physicalDimensions?.weight || ""
-  );
-
-  formData.append(
-    "health_details[disabilityStatus]",
-    health.disabilityStatus
-  );
-
-  formData.append(
-    "health_details[disabilityDetails][disabilityType]",
-    health.disabilityType || ""
-  );
-
-  formData.append(
-    "health_details[disabilityDetails][percentage]",
-    health.disabilityPercentage || ""
-  );
-
- 
-
-  formData.append(
-    "health_details[chronicConditions]",
-    health.chronicConditions || ""
-  );
-
-  formData.append(
-    "health_details[regularMedications]",
-    health.regularMedications || ""
-  );
-
-  formData.append(
-    "health_details[insurance][provider]",
-    health.insurance?.provider || ""
-  );
-
-  formData.append(
-    "health_details[insurance][policyNumber]",
-    health.insurance?.policyNumber || ""
-  );
-
-  formData.append(
-    "health_details[vaccinationStatus]",
-    health.vaccinationStatus || ""
-  );
-
-
-
-
-
-console.log(
-  "DISABILITY FILE",
-  health.disabilityFile
-);
-
-console.log(
-  "VACCINATION FILE",
-  health.vaccinationFile
-);
-
-for (const [key, value] of formData.entries()) {
-  console.log(key, value);
-}
-
-
-  await saveAndRefresh(
-    formData,
-    true
-  );
-  await fetchCanEdit();
-
+  navigate("/forms/family");
 };
-
   /**
    * Helper for updating nested objects (physicalDimensions & insurance)
    */
@@ -266,8 +202,14 @@ for (const [key, value] of formData.entries()) {
               value={
   health.disabilityDetails?.disabilityType || ""
 }
-              onChange={handleChange} 
-              placeholder="e.g. Locomotor" 
+onChange={(e) =>
+  updateSection("health", {
+    disabilityDetails: {
+      ...health.disabilityDetails,
+      disabilityType: e.target.value,
+    },
+  })
+}              placeholder="e.g. Locomotor" 
               disabled={isSubmitted}
             />
           )}
@@ -280,8 +222,15 @@ for (const [key, value] of formData.entries()) {
                 type="number" 
 value={
   health.disabilityDetails?.percentage || ""
-}                onChange={handleChange} 
-                placeholder="Min 40%" 
+}               
+onChange={(e) =>
+  updateSection("health", {
+    disabilityDetails: {
+      ...health.disabilityDetails,
+      percentage: e.target.value,
+    },
+  })
+}                placeholder="Min 40%" 
                 disabled={isSubmitted}
               />
               

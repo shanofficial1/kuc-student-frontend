@@ -5,82 +5,89 @@ import FormWrapper, {
   InputField,
   SelectField,
 } from "../../components/FormWrapper";
+import { getChangedFields, SECTION_API_KEYS } from "../../lib/utils";
 import { Home, Bus, Utensils, Bike } from "lucide-react";
-
+import useHashFocus from '../../hooks/useHashFocus';
+import { useNavigate } from "react-router-dom";
 export default function ResidentialForm() {
+  useHashFocus();
   const isSubmitted = useStore((s) => s.isSubmitted);
-  // Using the key "residential_details" to match your structure
-  const residential = useStore((state) => state.residential_details) || {};
+  // Use `residential` key from store (backend: residential_details)
+  const residential = useStore((state) => state.residential) || {};
   const updateSection = useStore((state) => state.updateSection);
-console.log("Residential State:", residential); // Debugging log
- const saveAndRefresh =
-  useStore((s) => s.saveAndRefresh);
+  const saveAndRefresh = useStore((s) => s.saveAndRefresh);
+  const navigate = useNavigate();
+
+  // Show hostel fields when user is hosteller (case-insensitive)
+  const isHosteller =
+    String(residential.resType || "").toLowerCase() === "hosteller" ||
+    Boolean(residential.hostel && (residential.hostel.roomNo || residential.hostel.bedType));
 
   
+// const handleSave = async () => {
+//   const originalResidential = useStore.getState().profileSnapshot?.residential || {};
+//   const changedResidential = getChangedFields(originalResidential, residential);
+
+//   if (!Object.keys(changedResidential).length) {
+//     alert("No changes detected in residential details.");
+//     return;
+//   }
+
+//   const formData = new FormData();
+//   const sectionKey = SECTION_API_KEYS.residential;
+
+//   if ("resType" in changedResidential) {
+//     formData.append("residential_details[resType]", residential.resType || "");
+//   }
+//   if ("mess" in changedResidential) {
+//     formData.append("residential_details[mess]", residential.mess || "");
+//   }
+//   if ("vehicleReg" in changedResidential) {
+//     formData.append("residential_details[vehicleReg]", residential.vehicleReg || "");
+//   }
+//   if (changedResidential.hostel) {
+//     if (residential.hostel.roomNo) {
+//       formData.append("residential_details[hostel][roomNo]", residential.hostel.roomNo);
+//     }
+//     if (residential.hostel.block) {
+//       formData.append("residential_details[hostel][block]", residential.hostel.block);
+//     }
+//     if (residential.hostel.bedType) {
+//       formData.append("residential_details[hostel][bedType]", residential.hostel.bedType);
+//     }
+//   }
+//   if (changedResidential.transport) {
+//     if (typeof residential.transport?.opted === "boolean") {
+//       formData.append("residential_details[transport][opted]", residential.transport.opted);
+//     }
+//     if (residential.transport?.routeNumber) {
+//       formData.append("residential_details[transport][routeNumber]", residential.transport.routeNumber);
+//     }
+//     if (residential.transport?.boardingPoint) {
+//       formData.append("residential_details[transport][boardingPoint]", residential.transport.boardingPoint);
+//     }
+//   }
+
+//   formData.append("updatedSections[]", sectionKey);
+
+//   await saveAndRefresh(
+//     formData,
+//     true
+//   );
+
+// };
+  
 const handleSave = async () => {
-
-  const formData =
-    new FormData();
-
-  formData.append(
-    "residential_details[resType]",
-    residential.resType || ""
-  );
-
-  formData.append(
-    "residential_details[mess]",
-    residential.mess || ""
-  );
-
-  formData.append(
-    "residential_details[vehicleReg]",
-    residential.vehicleReg || ""
-  );
-
-  formData.append(
-    "residential_details[hostel][roomNo]",
-    residential.hostel?.roomNo || ""
-  );
-
-  formData.append(
-    "residential_details[hostel][block]",
-    residential.hostel?.block || ""
-  );
-
-  formData.append(
-    "residential_details[hostel][bedType]",
-    residential.hostel?.bedType || ""
-  );
-
-  formData.append(
-    "residential_details[transport][opted]",
-    residential.transport?.opted || false
-  );
-
-  formData.append(
-    "residential_details[transport][routeNumber]",
-    residential.transport?.routeNumber || ""
-  );
-
-  formData.append(
-    "residential_details[transport][boardingPoint]",
-    residential.transport?.boardingPoint || ""
-  );
-
-  await saveAndRefresh(
-    formData,
-    true
-  );
-
+  navigate("/forms/documents");
 };
-  /**
+/**
    * Helper to handle nested state updates
    * @param {string} parent - 'hostel' or 'transport'
    * @param {string} id - the field key
    * @param {any} value - the new value
    */
   const handleNestedChange = (parent, id, value) => {
-    updateSection("residential_details", {
+    updateSection("residential", {
       ...residential,
       [parent]: {
         ...(residential[parent] || {}),
@@ -90,7 +97,7 @@ const handleSave = async () => {
   };
 
   const handleTopLevelChange = (id, value) => {
-    updateSection("residential_details", {
+    updateSection("residential", {
       ...residential,
       [id]: value,
     });
@@ -117,7 +124,7 @@ const handleSave = async () => {
         />
 
         {/* HOSTELLER FIELDS */}
-        {residential.resType === "Hosteller" && (
+        {isHosteller && (
           <>
             <InputField
               label="Room Number"

@@ -3,11 +3,16 @@ import { useStore } from "../store";
 import { Send, ArrowLeft, Plus, Trash2, LockOpen, Info } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { SelectField } from "../components/FormWrapper";
-
+import {
+  useEffect
+} from "react";
 export default function RequestUnlockPage() {
   const store = useStore();
   const navigate = useNavigate();
-  
+  const [
+  eligibility,
+  setEligibility
+] = useState(null);
   const [requestType, setRequestType] = useState("specific");
   const [corrections, setCorrections] = useState([{ id: Date.now(), section: "", field: "", newValue: "" }]);
   const [isSending, setIsSending] = useState(false);
@@ -18,6 +23,33 @@ export default function RequestUnlockPage() {
     const result = text.replace(/([A-Z])/g, " $1");
     return result.charAt(0).toUpperCase() + result.slice(1);
   };
+
+
+  useEffect(() => {
+
+  loadEligibility();
+
+
+}, []);
+
+const loadEligibility =
+async () => {
+
+  try {
+
+    const result =
+      await store
+      .getRequestEligibility();
+
+    setEligibility(result);
+
+  } catch (err) {
+
+    console.log(err);
+
+  }
+
+};
 
   // COMPLETE FORM STRUCTURE MAPPING
   const formMap = {
@@ -55,6 +87,7 @@ export default function RequestUnlockPage() {
     label: formMap[key].label,
     value: key
   }));
+  console.log("SECTION OPTIONS", sectionOptions);
 
   const addCorrection = () => {
     if (corrections.length < 5) {
@@ -66,25 +99,129 @@ export default function RequestUnlockPage() {
     setCorrections(corrections.filter(c => c.id !== id));
   };
 
-  const updateCorrection = (id, key, value) => {
-    setCorrections(corrections.map(c => 
-      c.id === id ? { 
-        ...c, 
-        [key]: value, 
-        // Reset field/value if the section itself changes
-        ...(key === 'section' ? { field: '', newValue: '' } : {}) 
-      } : c
-    ));
-  };
+const updateCorrection = (id, key, value) => {
 
-  const handleRequestSubmit = async (e) => {
-    e.preventDefault();
+  console.log(
+    "UPDATE CORRECTION",
+    id,
+    key,
+    value
+  );
+
+  setCorrections(prev =>
+    prev.map(c =>
+      c.id === id
+        ? {
+            ...c,
+            [key]: value,
+            ...(key === "section"
+              ? {
+                  field: "",
+                  newValue: ""
+                }
+              : {})
+          }
+        : c
+    )
+  );
+};
+
+
+
+
+const handleRequestSubmit =
+async (e) => {
+
+  e.preventDefault();
+
+  try {
+
     setIsSending(true);
-    // Logic to send 'corrections' array to admin goes here
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    setStatus("success");
+
+    if (
+      requestType ===
+      "specific"
+    ) {
+
+      const payload = {
+
+        requestType:
+          "field_correction",
+
+        correctionFields:
+          corrections.map(
+            item => ({
+
+              section:
+                item.section,
+
+              field:
+                item.field,
+
+              currentValue:
+                store[
+                  item.section
+                ]?.[
+                  item.field
+                ],
+
+              requestedValue:
+                item.newValue
+
+            })
+          )
+
+      };
+
+      await store
+      .submitUnlockRequest(
+        payload
+      );
+
+    }
+    else {
+
+      const payload = {
+
+        requestType:
+          "full_unlock",
+
+        reason:
+          "Student requested full unlock"
+
+      };
+
+      await store
+      .submitUnlockRequest(
+        payload
+      );
+
+    }
+
+    setStatus(
+      "success"
+    );
+
+  } catch (err) {
+
+    console.log(err);
+
+    alert(
+      err.message
+    );
+
+  } finally {
+
     setIsSending(false);
-  };
+
+  }
+
+};
+const totalFieldsUsed =
+  eligibility?.totalFieldsUsed || 0;
+
+const remainingFields =
+  eligibility?.remainingFields || 0;
 
   return (
     <div className="max-w-[900px] mx-auto px-4 md:px-6 py-10">
@@ -112,22 +249,62 @@ export default function RequestUnlockPage() {
           <form onSubmit={handleRequestSubmit} className="space-y-12">
             
             {/* SWITCHER */}
-            <div className="flex p-1.5 bg-slate-100 rounded-2xl">
-              <button 
-                type="button"
-                onClick={() => setRequestType("specific")}
-                className={`flex-1 py-3.5 rounded-xl text-xs md:text-sm font-black uppercase tracking-wider transition-all ${requestType === 'specific' ? 'bg-white shadow-md text-[#003e7a]' : 'text-slate-400'}`}
-              >
-                Specific Fields
-              </button>
-              <button 
-                type="button"
-                onClick={() => setRequestType("full")}
-                className={`flex-1 py-3.5 rounded-xl text-xs md:text-sm font-black uppercase tracking-wider transition-all ${requestType === 'full' ? 'bg-white shadow-md text-[#003e7a]' : 'text-slate-400'}`}
-              >
-                Unlock Entire Form
-              </button>
-            </div>
+          <div className="grid grid-cols-2 bg-slate-100 p-1.5 rounded-2xl">
+
+  <button
+    type="button"
+    onClick={() =>
+      setRequestType("specific")
+    }
+    className={`
+      py-4
+      rounded-xl
+      font-bold
+      transition-all
+      duration-200
+
+      ${
+        requestType === "specific"
+          ? "bg-white text-[#003e7a] shadow-md"
+          : "text-slate-500 hover:text-slate-700"
+      }
+    `}
+  >
+    Specific Fields
+  </button>
+
+  <button
+    type="button"
+    disabled={
+      !eligibility?.canRequestFullUnlock
+    }
+    onClick={() =>
+      setRequestType("full")
+    }
+    className={`
+      py-4
+      rounded-xl
+      font-bold
+      transition-all
+      duration-200
+
+      ${
+        requestType === "full"
+          ? "bg-white text-[#003e7a] shadow-md"
+          : "text-slate-500 hover:text-slate-700"
+      }
+
+      ${
+        !eligibility?.canRequestFullUnlock
+          ? "opacity-50 cursor-not-allowed"
+          : ""
+      }
+    `}
+  >
+    Unlock Entire Form
+  </button>
+
+</div>
 
             {requestType === "specific" ? (
               <div className="space-y-6">
@@ -135,7 +312,8 @@ export default function RequestUnlockPage() {
                   const availableFields = corr.section ? formMap[corr.section].fields : [];
                   // FETCHING DIRECTLY FROM ZUSTAND STORE
                   const currentValue = corr.field ? store[corr.section]?.[corr.field] : null;
-
+console.log("corr.section =", corr.section);
+console.log("disabled =", !corr.section);
                   return (
                     <div key={corr.id} className="group p-6 md:p-8 bg-slate-50/50 border border-slate-200 rounded-[1.5rem] relative transition-all hover:bg-white hover:shadow-xl hover:shadow-slate-200/50">
                       {corrections.length > 1 && (
@@ -197,10 +375,19 @@ export default function RequestUnlockPage() {
                 })}
 
                 {corrections.length < 5 && (
-                  <button 
-                    type="button" 
-                    onClick={addCorrection}
-                    className="w-full py-6 border-2 border-dashed border-slate-200 rounded-[1.5rem] text-slate-400 text-sm font-black uppercase tracking-widest hover:border-[#003e7a] hover:text-[#003e7a] transition-all flex items-center justify-center gap-3"
+                 <button
+  type="button"
+  onClick={addCorrection}
+ disabled={
+  totalFieldsUsed >= 5
+}
+                    className={`w-full py-6 border-2 border-dashed border-slate-200 rounded-[1.5rem] text-slate-400 text-sm font-black uppercase tracking-widest hover:border-[#003e7a] hover:text-[#003e7a] transition-all flex items-center justify-center gap-3 ${
+  !eligibility
+    ?.canCreateCorrection
+    ? "opacity-50 cursor-not-allowed"
+    : ""
+}`}
+                    
                   >
                     <Plus className="w-5 h-5" /> Add Another Field
                   </button>
@@ -223,14 +410,72 @@ export default function RequestUnlockPage() {
                 <Info className="w-5 h-5" />
                 <span className="text-[11px] font-bold uppercase tracking-widest leading-none">Logged via Student ID: {store.user?.id || "KU-STUDENT"}</span>
               </div>
-              
-              <button
-                type="submit"
-                disabled={isSending}
-                className="w-full md:w-auto bg-[#003e7a] text-white px-12 py-5 rounded-2xl font-black uppercase tracking-widest text-sm hover:bg-blue-900 transition-all shadow-xl shadow-blue-900/20 active:scale-[0.98] disabled:opacity-50"
-              >
-                {isSending ? <div className="w-6 h-6 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : "Submit Request"}
-              </button>
+  {requestType === "specific" ? (
+
+  <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 text-sm">
+
+    <p className="font-semibold text-blue-700">
+    Fields Used:
+{totalFieldsUsed}/5
+    </p>
+
+    <p className="text-blue-600 mt-1">
+Remaining Fields:
+{remainingFields}
+    </p>
+
+  </div>
+
+) : (
+
+  <div className="bg-indigo-50 border border-indigo-200 rounded-xl p-4 text-sm">
+
+    <p className="font-semibold text-indigo-700">
+      Full Unlock Request
+    </p>
+
+    <p className="text-indigo-600 mt-1">
+      Unlock the entire profile for editing.
+    </p>
+
+  </div>
+
+)}
+
+{eligibility?.pendingUnlock && (
+
+  <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-4 text-sm text-yellow-700">
+
+    You already have a pending full unlock request.
+
+  </div>
+
+)}
+             <button
+  type="submit"
+  disabled={
+
+    isSending ||
+
+    (
+      requestType === "specific" &&
+      totalFieldsUsed >= 5
+    ) ||
+
+    (
+      requestType === "full" &&
+      !eligibility?.canRequestFullUnlock
+    )
+
+  }
+  className="w-full md:w-auto bg-[#003e7a] text-white px-12 py-5 rounded-2xl font-black uppercase tracking-widest text-sm hover:bg-blue-900 transition-all shadow-xl shadow-blue-900/20 active:scale-[0.98] disabled:opacity-50"
+>
+  {isSending ? (
+    <div className="w-6 h-6 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+  ) : (
+    "Submit Request"
+  )}
+</button>
             </div>
           </form>
         )}

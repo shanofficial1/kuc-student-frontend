@@ -101,55 +101,111 @@ const initialState = {
   },
 
   /* HEALTH */
-  health: {
-    bloodGroup: "",
+ health: {
+  bloodGroup: "",
 
+  physicalDimensions: {
     height: "",
     weight: "",
-
-    isDisabled: false,
-
-    disabilityType: "",
-    disabilityPercentage: "",
-
-    chronicConditions: "",
-    medications: "",
-
-    insuranceProvider: "",
-    policyNo: "",
-
-    vaccinationStatus: "",
   },
+
+  disabilityStatus: false,
+
+  disabilityDetails: {
+    disabilityType: "",
+    percentage: "",
+  },
+
+  disabilityCertificate: {
+    name: "",
+    url: "",
+  },
+
+  chronicConditions: "",
+
+  regularMedications: "",
+
+  insurance: {
+    provider: "",
+    policyNumber: "",
+  },
+
+  vaccinationStatus: "",
+
+  vaccinationDoc: {
+    name: "",
+    url: "",
+  },
+
+  disabilityFile: null,
+  vaccinationFile: null,
+
+  uploadError: "",
+  vaccinationUploadError: "",
+},
 
   /* FAMILY */
   family: {
-    fatherName: "",
-    fatherQualification: "",
-    fatherOccupation: "",
-
-    motherName: "",
-    motherQualification: "",
-    motherOccupation: "",
-
-    annualIncome: "",
-
-    parentPhone: "",
-    parentEmail: "",
-
-    siblings: [],
+  father: {
+    name: "",
+    qualification: "",
+    occupation: "",
   },
+
+  mother: {
+    name: "",
+    qualification: "",
+    occupation: "",
+  },
+
+  annualFamilyIncome: "",
+
+  siblings: [],
+
+  parentContact: {
+    countryCode: "+91",
+    number: "",
+  },
+
+  parentEmail: "",
+
+  guardian: {
+    name: "",
+    relation: "",
+
+    contact: {
+      countryCode: "+91",
+      number: "",
+    },
+
+    address: {
+      addressLine: "",
+      city: "",
+      district: "",
+      state: "",
+      pinCode: "",
+    },
+  },
+
+  guardianResidentialAddress: "",
+  guardianOfficeAddress: "",
+},
 
   /* EDUCATION */
-  education: {
-    academicRecords: [],
-    competitiveExams: [],
+ education: {
+  education: [],
 
-    migrationCertificateUploaded: false,
+  competitiveExams: [],
 
-    migrationDocName: "",
-    migrationDocUrl: "",
-    migrationError: "",
+  migrationUrl: {
+    name: "",
+    url: "",
   },
+
+  migrationFile: null,
+
+  migrationError: "",
+},
 
   /* FINANCIAL */
   financial: {
@@ -258,6 +314,8 @@ const initialState = {
 
   /* MARKS */
   marksData: {},
+
+  profileSnapshot: {},
 };
 
 /* ================= HELPERS ================= */
@@ -295,6 +353,188 @@ const formatDate = (date) => {
 
   return `${day}-${month}-${year}`;
 
+};
+
+const createProfileState = (data = {}) => {
+  const academicData = data.academic_details || {};
+  const personalData = clean(data.personal_details);
+  const visa = personalData?.visaDetails || {};
+  const formattedAadhaar = personalData?.aadhaarNumber
+    ? personalData.aadhaarNumber
+        .replace(/\D/g, "")
+        .replace(/(\d{4})(?=\d)/g, "$1 ")
+    : "";
+
+  const profile = {
+    academic: {
+      ...clean(academicData),
+      fellowshipLetter: academicData.fellowshipLetter || {},
+    },
+    personal: {
+      ...personalData,
+      aadhaarNo: formattedAadhaar,
+      dob: formatDate(personalData?.dob),
+      passportExpiry: formatDate(personalData?.passportExpiry),
+      passportCountry: visa?.issuingCountry || "",
+      passportDoc: personalData?.passportDoc || "",
+      visaType: visa?.visaType || "",
+      visaNo: visa?.visaNumber || "",
+      visaCountry: visa?.issuingCountry || "",
+      visaIssueDate: formatDate(visa?.issueDate),
+      visaExpiryDate: formatDate(visa?.expiryDate),
+      visaStatus: visa?.status || "",
+      visaDoc: personalData?.visaDoc || "",
+      birthCertificateDoc: personalData?.birthCertificateDoc || "",
+isInternational:
+  personalData?.isInternational ||
+  (visa?.visaType ? "yes" : "no"),    },
+    contact: clean(data.contact_details),
+   health: {
+  bloodGroup:
+    data.health_details?.bloodGroup || "",
+
+  physicalDimensions:
+    data.health_details?.physicalDimensions || {
+      height: "",
+      weight: "",
+    },
+
+  disabilityStatus:
+    data.health_details?.disabilityStatus || false,
+
+  disabilityDetails:
+    data.health_details?.disabilityDetails || {
+      disabilityType: "",
+      percentage: "",
+    },
+
+  disabilityCertificate:
+    data.health_details?.disabilityCertificate || {
+      name: "",
+      url: "",
+    },
+
+  chronicConditions:
+    data.health_details?.chronicConditions || "",
+
+  regularMedications:
+    data.health_details?.regularMedications || "",
+
+  insurance:
+    data.health_details?.insurance || {
+      provider: "",
+      policyNumber: "",
+    },
+
+  vaccinationStatus:
+    data.health_details?.vaccinationStatus || "",
+
+  vaccinationDoc:
+    data.health_details?.vaccinationDoc || {
+      name: "",
+      url: "",
+    },
+
+  disabilityFile: null,
+  vaccinationFile: null,
+
+  uploadError: "",
+  vaccinationUploadError: "",
+},
+family: {
+  father:
+    data.family_details?.father || {
+      name: "",
+      qualification: "",
+      occupation: "",
+    },
+
+  mother:
+    data.family_details?.mother || {
+      name: "",
+      qualification: "",
+      occupation: "",
+    },
+
+  annualFamilyIncome:
+    data.family_details?.annualFamilyIncome || "",
+
+  siblings:
+    data.family_details?.siblings || [],
+
+  parentContact:
+    data.family_details?.parentContact || {
+      countryCode: "+91",
+      number: "",
+    },
+
+  parentEmail:
+    data.family_details?.parentEmail || "",
+
+  guardian:
+    data.family_details?.guardian || {
+      name: "",
+      relation: "",
+
+      contact: {
+        countryCode: "+91",
+        number: "",
+      },
+
+      address: {
+        addressLine: "",
+        city: "",
+        district: "",
+        state: "",
+        pinCode: "",
+      },
+    },
+
+  guardianResidentialAddress:
+    data.family_details?.guardianResidentialAddress || "",
+
+  guardianOfficeAddress:
+    data.family_details?.guardianOfficeAddress || "",
+},
+education: {
+  education:
+    data.education_details?.education || [],
+
+  competitiveExams:
+    data.education_details?.competitiveExams || [],
+
+  migrationUrl:
+    data.education_details?.migrationUrl || {
+      name: "",
+      url: "",
+    },
+
+  migrationFile: null,
+
+  migrationError: "",
+},    financial: clean(data.financial_details),
+    professional: clean(data.professional_details),
+    residential: clean(data.residential_details),
+    mentor: clean(data.mentor_details),
+    documents: clean(data.documents),
+  };
+
+  return {
+    ...profile,
+    profileSnapshot: {
+      academic: profile.academic,
+      personal: profile.personal,
+      contact: profile.contact,
+      health: profile.health,
+      family: profile.family,
+      education: profile.education,
+      financial: profile.financial,
+      professional: profile.professional,
+      residential: profile.residential,
+      mentor: profile.mentor,
+      documents: profile.documents,
+    },
+  };
 };
 
 export const useStore = create(
@@ -370,7 +610,13 @@ saveAndRefresh: async (
 
       }
     );
+if (res.status === 401) {
+  get().logout();
 
+  window.location.href = "/login";
+
+  return;
+}
     const result =
       await res.json();
 
@@ -409,6 +655,137 @@ await get().fetchCanEdit();
 
 },
 
+submitUnlockRequest: async (
+  payload
+) => {
+
+  try {
+
+    const token =
+      get().token;
+
+    const res =
+      await fetch(
+
+        `${import.meta.env.VITE_SERVER}/api/unlock-request`,
+
+        {
+
+          method: "POST",
+
+          headers: {
+
+            "Content-Type":
+              "application/json",
+
+            Authorization:
+              `Bearer ${token}`
+
+          },
+
+          body:
+            JSON.stringify(
+              payload
+            )
+
+        }
+
+      );
+
+    const result =
+      await res.json();
+
+    if (!res.ok) {
+
+      throw new Error(
+
+        result.message ||
+
+        "Request failed"
+
+      );
+
+    }
+
+    return result;
+
+  } catch (err) {
+
+    console.log(err);
+
+    throw err;
+
+  }
+
+},
+
+getMyUnlockRequests:
+async () => {
+
+  const SERVER =
+    import.meta.env.VITE_SERVER;
+
+  const token =
+    get().token;
+
+  const res = await fetch(
+    `${SERVER}/api/unlock-request/my`,
+    {
+      headers: {
+        Authorization:
+          `Bearer ${token}`
+      }
+    }
+  );
+
+  return await res.json();
+
+},
+getMyProfileRequests: async () => {
+
+  const SERVER =
+    import.meta.env.VITE_SERVER;
+
+  const token =
+    get().token;
+
+  const res = await fetch(
+    `${SERVER}/api/student/my-requests`,
+    {
+      headers: {
+        Authorization:
+          `Bearer ${token}`
+      }
+    }
+  );
+
+  return await res.json();
+
+},
+
+getMyUnlockRequests: async () => {
+
+  const SERVER =
+    import.meta.env.VITE_SERVER;
+
+  const token =
+    get().token;
+
+  const res = await fetch(
+    `${SERVER}/api/unlock-request/my`,
+    {
+      headers: {
+        Authorization:
+          `Bearer ${token}`
+      }
+    }
+  );
+
+  return await res.json();
+
+},
+
+
       toggleSubmitted: () =>
         set((state) => ({
           isSubmitted: !state.isSubmitted,
@@ -430,98 +807,50 @@ await get().fetchCanEdit();
         })),
 
          setProfileData: (data) => {
-
-    set({
-
-      academic: data.academic_details || {},
-      personal: data.personal_details || {},
-      contact: data.contact_details || {},
-      health: data.health_details || {},
-      family: data.family_details || {},
-      education: data.education_details || {},
-      financial: data.financial_details || {},
-      professional: data.professional_details || {},
-      residential: data.residential_details || {},
-      documents: data.documents || {},
-      mentor: data.mentor_details || {},
-
-    isSubmitted: !get().user?.canEdit,
-    });
-
+    set(createProfileState(data));
+    set({ isSubmitted: !get().user?.canEdit });
   },
 
-  fetchCanEdit: async () => {
-
-
-   
-   
-
+fetchCanEdit: async () => {
   try {
+    const token = get().token;
 
-    const token =
-      get().token;
+    const email = get().user?.email;
 
- const user =
-  get().user;
-
-const email =
-  get().user?.email;
-
-if (!email) {
-
-  console.log(
-    "Email missing"
-  );
-
-  return;
-
-}
-
-const response =
-  await fetch(
-
-    `http://localhost:3002/api/user/${email}/can-edit`,
-
-    {
-      headers: {
-        Authorization:
-          `Bearer ${token}`
-      }
+    if (!email) {
+      console.log("Email missing");
+      return;
     }
 
-  );
+    const response = await fetch(
+  `${import.meta.env.VITE_SERVER}/api/user/can-edit`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
 
-    const data =
-      await response.json();
+    if (response.status === 401) {
+      console.log("Token expired. Logging out...");
 
-console.log("API RESPONSE", data);
+      get().logout();
 
-set({
-  isSubmitted: !data.canEdit
-});
+      window.location.href = "/login";
 
-console.log(
-  "AFTER SET",
-  get().isSubmitted
-);
+      return;
+    }
+
+    const data = await response.json();
+
+    console.log("API RESPONSE", data);
 
     set({
-
-      isSubmitted:
-        !data.canEdit
-
+      isSubmitted: !data.canEdit,
     });
-    console.log(
-  "isSubmitted",
-  get().isSubmitted
-);
-
   } catch (error) {
-
     console.log(error);
-
   }
-
 },
 
 
@@ -546,13 +875,14 @@ console.log(
 
       /* FETCH STUDENT */
 fetchStudent: async () => {
-
   try {
-
     const token = get().token;
 
-    if (!token) return;
-    console.log("TOKEN", token);
+    if (!token) {
+      get().logout();
+      window.location.href = "/login";
+      return;
+    }
 
     const res = await fetch(
       `${import.meta.env.VITE_SERVER}/api/student/profile`,
@@ -563,162 +893,35 @@ fetchStudent: async () => {
       }
     );
 
-    const result = await res.json();
+    // Token expired or invalid
+    if (res.status === 401) {
+      console.log("Token expired. Logging out...");
 
+      get().logout();
+
+      window.location.href = "/login";
+
+      return;
+    }
+
+    const result = await res.json();
+console.log(result);  
     console.log("STUDENT DATA", result);
 
     if (!result.success) {
-
       throw new Error(
         result.message || "Fetch failed"
       );
-
     }
 
     const data = result.data || {};
 
     console.log(
-  "CONFERENCES FROM DB",
-  data.professional_details?.conferences
-);
+      "CONFERENCES FROM DB",
+      data.professional_details?.conferences
+    );
 
-    // =========================
-    // PERSONAL DATA
-    // =========================
-
-    const personalData =
-      clean(data.personal_details);
-
-    const visa =
-      personalData?.visaDetails || {};
-
-    // =========================
-    // FORMAT AADHAAR
-    // =========================
-
-    const formattedAadhaar =
-      personalData?.aadhaarNumber
-        ? personalData.aadhaarNumber
-            .replace(/\D/g, "")
-            .replace(
-              /(\d{4})(?=\d)/g,
-              "$1 "
-            )
-        : "";
-
- 
-
-   
-    set({
-
-      academic: {
-        ...clean(data.academic_details),
-        fellowshipLetter: data.academic_details ?.fellowshipLetter || {},
-      },
-      personal: {
-
-  ...personalData,
-
-  // AADHAAR
-  aadhaarNo:
-    formattedAadhaar,
-
-  // DOB
-  dob:
-    formatDate(
-      personalData?.dob
-    ),
-
-  // PASSPORT
-  passportExpiry:
-    formatDate(
-      personalData?.passportExpiry
-    ),
-
-  passportCountry:
-    visa?.issuingCountry || "",
-
-  passportDoc:
-    personalData?.passportDoc || "",
-
-  // VISA
-  visaType:
-    visa?.visaType || "",
-
-  visaNo:
-    visa?.visaNumber || "",
-
-  visaCountry:
-    visa?.issuingCountry || "",
-
-  visaIssueDate:
-    formatDate(
-      visa?.issueDate
-    ),
-
-  visaExpiryDate:
-    formatDate(
-      visa?.expiryDate
-    ),
-
-  visaStatus:
-    visa?.status || "",
-
-  visaDoc:
-    personalData?.visaDoc || "",
-
-  // DOB FILE
-  birthCertificateDoc:
-    personalData?.birthCertificateDoc || "",
-
-  // YES / NO
-  isInternational:
-    visa?.visaType
-      ? "yes"
-      : "no",
-
-},
-
-      contact:
-        clean(data.contact_details),
-
-      health: {
-  ...clean(data.health_details),
- vaccinationDoc:
-    data.health_details?.vaccinationDoc || {},
-
-  disabilityCertificate:
-    data.health_details?.disabilityCertificate || {},
-  disabilityType:
-    data.health_details?.disabilityDetails?.disabilityType || "",
-
-  disabilityPercentage:
-    data.health_details?.disabilityDetails?.percentage || "",
-
-},
-
-      family:
-        clean(data.family_details),
-
-      education:
-        clean(data.education_details),
-
-      financial:
-        clean(data.financial_details),
-
-      professional:
-        clean(data.professional_details),
-
-      residential:
-        clean(data.residential_details),
-
-      mentor:
-        clean(data.mentor_details),
-
-      documents:
-  clean(data.documents),
-
-    });
+    set(createProfileState(data));
 
     console.log(
       "FETCHED LATEST PROFILE FROM DB"
@@ -726,26 +929,53 @@ fetchStudent: async () => {
 
   } catch (err) {
 
-  console.error(
-    "Fetch error:",
-    err
-  );
+    console.error(
+      "Fetch error:",
+      err
+    );
 
-  set({
+    get().logout();
 
-    ...initialState,
+    window.location.href = "/login";
+  }
 
-    token: get().token,
-    user: get().user,
-    isLoggedIn: true,
-
-  });
-
-}
-
-await get().fetchCanEdit();
+  try {
+    await get().fetchCanEdit();
+  } catch (error) {
+    console.error(error);
+  }
 },
 
+getRequestEligibility:
+async () => {
+
+  const SERVER =
+    import.meta.env.VITE_SERVER;
+
+  const token =
+    get().token;
+
+  const res =
+    await fetch(
+
+      `${SERVER}/api/unlock-request/eligibility`,
+
+      {
+
+        headers: {
+
+          Authorization:
+            `Bearer ${token}`
+
+        }
+
+      }
+
+    );
+
+  return await res.json();
+
+},
       /* RESET */
       resetStore: () =>
         set({

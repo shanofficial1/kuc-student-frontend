@@ -15,8 +15,12 @@ import {
   Lightbulb,
   X,
 } from "lucide-react";
-
+import useHashFocus from '../../hooks/useHashFocus';
+import { useNavigate } from "react-router-dom";
 export default function ProfessionalForm() {
+    const navigate = useNavigate();
+
+  useHashFocus();
   const isSubmitted = useStore((s) => s.isSubmitted);
   const professional = useStore((s) => s.professional) || {};
   const updateSection = useStore((s) => s.updateSection);
@@ -57,205 +61,357 @@ export default function ProfessionalForm() {
     (s) => s.saveAndRefresh
   );
 
+// const handleSave = async () => {
+
+//   const formData =
+//     new FormData();
+
+//   // Membership name/url entries
+//   professional.membershipUrl?.forEach((mem, index) => {
+
+//     formData.append(
+//       `professional_details[membershipUrl][${index}][organizationName]`,
+//       mem.organizationName || mem.name || ""
+//     );
+
+//     formData.append(
+//       `professional_details[membershipUrl][${index}][membershipType]`,
+//       mem.membershipType || ""
+//     );
+
+//     formData.append(
+//       `professional_details[membershipUrl][${index}][membershipId]`,
+//       mem.membershipId || ""
+//     );
+
+//     formData.append(
+//       `professional_details[membershipUrl][${index}][joiningYear]`,
+//       mem.joiningYear || ""
+//     );
+
+//     formData.append(
+//       `professional_details[membershipUrl][${index}][document][name]`,
+//       mem.document?.name || (mem.name || "")
+//     );
+
+//     formData.append(
+//       `professional_details[membershipUrl][${index}][document][url]`,
+//       mem.document?.url || (mem.url || "")
+//     );
+
+//   });
+
+
+//   professional.publications?.forEach(
+//     (pub, index) => {
+
+//       formData.append(
+//         `professional_details[publications][${index}][journal]`,
+//         pub.journal || ""
+//       );
+
+//       formData.append(
+//         `professional_details[publications][${index}][issn]`,
+//         pub.issn || ""
+//       );
+
+//       formData.append(
+//         `professional_details[publications][${index}][date]`,
+//         pub.date || ""
+//       );
+
+//           formData.append(
+//             `professional_details[publications][${index}][country]`,
+//             pub.country || ""
+//           );
+
+      
+
+//       formData.append(
+//         `professional_details[publications][${index}][paperTitle]`,
+//         pub.paperTitle || ""
+//       );
+
+//       formData.append(
+//         `professional_details[publications][${index}][indexedIn]`,
+//         pub.indexedIn || ""
+//       );
+
+//       formData.append(
+//         `professional_details[publications][${index}][volume]`,
+//         pub.volume || ""
+//       );
+
+//       formData.append(
+//         `professional_details[publications][${index}][issue]`,
+//         pub.issue || ""
+//       );
+
+//       formData.append(
+//         `professional_details[publications][${index}][pages]`,
+//         pub.pages || ""
+//       );
+
+//       formData.append(
+//         `professional_details[publications][${index}][impactFactor]`,
+//         pub.impactFactor || ""
+//       );
+
+//       formData.append(
+//         `professional_details[publications][${index}][coAuthors]`,
+//         pub.coAuthors || ""
+//       );
+
+//       formData.append(
+//         `professional_details[publications][${index}][doi]`,
+//         pub.doi || ""
+//       );
+
+//       if (
+//         pub.docFile
+//           instanceof File
+//       ) {
+
+//         formData.append(
+//           "publicationDocs",
+//           pub.docFile
+//         );
+
+//       }
+
+//     }
+//   );
+
+//   // Conferences
+
+
+//   professional.membershipUrl?.forEach(
+//   (mem) => {
+
+//     if (
+//       mem.docFile instanceof File
+//     ) {
+
+//       formData.append(
+//         "membershipDocs",
+//         mem.docFile
+//       );
+
+//     }
+
+//   }
+// );
+
+//   professional.conferences?.forEach(
+//     (conf, index) => {
+
+//       formData.append(
+//         `professional_details[conferences][${index}][title]`,
+//         conf.title || ""
+//       );
+
+//       formData.append(
+//         `professional_details[conferences][${index}][name]`,
+//         conf.name || ""
+//       );
+
+//       // New conference fields
+//       formData.append(
+//         `professional_details[conferences][${index}][presentationType]`,
+//         conf.presentationType || ""
+//       );
+
+//       formData.append(
+//         `professional_details[conferences][${index}][paperTitle]`,
+//         conf.paperTitle || conf.title || ""
+//       );
+
+//       formData.append(
+//         `professional_details[conferences][${index}][conferenceName]`,
+//         conf.conferenceName || conf.name || ""
+//       );
+
+//       formData.append(
+//         `professional_details[conferences][${index}][conferenceType]`,
+//         conf.conferenceType || ""
+//       );
+
+//       formData.append(
+//         `professional_details[conferences][${index}][organizer]`,
+//         conf.organizer || ""
+//       );
+
+//       formData.append(
+//         `professional_details[conferences][${index}][venue]`,
+//         conf.venue || ""
+//       );
+
+//       formData.append(
+//         `professional_details[conferences][${index}][date]`,
+//         conf.date || ""
+//       );
+
+//       formData.append(
+//         `professional_details[conferences][${index}][isbnIssn]`,
+//         conf.isbnIssn || ""
+//       );
+
+//       formData.append(
+//         `professional_details[conferences][${index}][doiLink]`,
+//         conf.doiLink || ""
+//       );
+
+//       formData.append(
+//         `professional_details[conferences][${index}][certificateUrl]`,
+//         conf.certificateUrl || (conf.url && conf.url.url) || ""
+//       );
+
+//       if (
+//         conf.docFile
+//           instanceof File
+//       ) {
+
+//         formData.append(
+//           "conferenceDocs",
+//           conf.docFile
+//         );
+
+//       }
+
+//     }
+//   );
+
+//   // Experience
+
+//   professional.experience?.forEach(
+//     (exp, index) => {
+
+//       formData.append(
+//         `professional_details[experience][${index}][company]`,
+//         exp.company || ""
+//       );
+
+//       formData.append(
+//         `professional_details[experience][${index}][designation]`,
+//         exp.designation || ""
+//       );
+
+//       formData.append(
+//         `professional_details[experience][${index}][years]`,
+//         exp.years || ""
+//       );
+
+//       if (
+//         exp.docFile
+//           instanceof File
+//       ) {
+
+//         formData.append(
+//           "experienceDocs",
+//           exp.docFile
+//         );
+
+//       }
+
+//     }
+//   );
+
+//   // Patents
+
+//   professional.patents?.forEach(
+//     (pat, index) => {
+
+//       formData.append(
+//         `professional_details[patents][${index}][title]`,
+//         pat.title || ""
+//       );
+
+//       formData.append(
+//         `professional_details[patents][${index}][status]`,
+//         pat.status || ""
+//       );
+
+//           formData.append(
+//             `professional_details[patents][${index}][publicationType]`,
+//             pat.publicationType || ""
+//           );
+
+//           formData.append(
+//             `professional_details[patents][${index}][paperTitle]`,
+//             pat.paperTitle || ""
+//           );
+
+//           formData.append(
+//             `professional_details[patents][${index}][indexedIn]`,
+//             pat.indexedIn || ""
+//           );
+
+//           formData.append(
+//             `professional_details[patents][${index}][volume]`,
+//             pat.volume || ""
+//           );
+
+//           formData.append(
+//             `professional_details[patents][${index}][issue]`,
+//             pat.issue || ""
+//           );
+
+//           formData.append(
+//             `professional_details[patents][${index}][pages]`,
+//             pat.pages || ""
+//           );
+
+//           formData.append(
+//             `professional_details[patents][${index}][impactFactor]`,
+//             pat.impactFactor || ""
+//           );
+
+//           formData.append(
+//             `professional_details[patents][${index}][coAuthors]`,
+//             pat.coAuthors || ""
+//           );
+
+//           formData.append(
+//             `professional_details[patents][${index}][doi]`,
+//             pat.doi || ""
+//           );
+
+//           formData.append(
+//             `professional_details[patents][${index}][country]`,
+//             pat.country || ""
+//           );
+
+//       if (
+//         pat.docFile
+//           instanceof File
+//       ) {
+
+//         formData.append(
+//           "patentDocs",
+//           pat.docFile
+//         );
+
+//       }
+
+//     }
+//   );
+
+//   // Skills
+
+//   formData.append(
+//     "professional_details[skills]",
+//     professional.skills || ""
+//   );
+
+//   await saveAndRefresh(
+//     formData,
+//     true
+//   );
+
+// };
 const handleSave = async () => {
-
-  const formData =
-    new FormData();
-
-  // Publications
-
-professional.membershipUrl?.forEach((mem) => {
-
-  if (mem.docFile instanceof File) {
-
-    formData.append(
-      "membershipDocs",
-      mem.docFile
-    );
-
-  }
-
-});
-console.log(
-  "MEMBERSHIP URL",
-  professional.membershipUrl
-);
-
-professional.membershipUrl?.forEach((mem, index) => {
-
-  formData.append(
-    `professional_details[membershipUrl][${index}][name]`,
-    mem.name || ""
-  );
-
-  formData.append(
-    `professional_details[membershipUrl][${index}][url]`,
-    mem.url || ""
-  );
-
-});
-
-
-  professional.publications?.forEach(
-    (pub, index) => {
-
-      formData.append(
-        `professional_details[publications][${index}][journal]`,
-        pub.journal || ""
-      );
-
-      formData.append(
-        `professional_details[publications][${index}][issn]`,
-        pub.issn || ""
-      );
-
-      formData.append(
-        `professional_details[publications][${index}][date]`,
-        pub.date || ""
-      );
-
-      if (
-        pub.docFile
-          instanceof File
-      ) {
-
-        formData.append(
-          "publicationDocs",
-          pub.docFile
-        );
-
-      }
-
-    }
-  );
-
-  // Conferences
-
-
-  professional.membershipUrl?.forEach(
-  (mem) => {
-
-    if (
-      mem.docFile instanceof File
-    ) {
-
-      formData.append(
-        "membershipDocs",
-        mem.docFile
-      );
-
-    }
-
-  }
-);
-
-  professional.conferences?.forEach(
-    (conf, index) => {
-
-      formData.append(
-        `professional_details[conferences][${index}][title]`,
-        conf.title || ""
-      );
-
-      formData.append(
-        `professional_details[conferences][${index}][name]`,
-        conf.name || ""
-      );
-
-      if (
-        conf.docFile
-          instanceof File
-      ) {
-
-        formData.append(
-          "conferenceDocs",
-          conf.docFile
-        );
-
-      }
-
-    }
-  );
-
-  // Experience
-
-  professional.experience?.forEach(
-    (exp, index) => {
-
-      formData.append(
-        `professional_details[experience][${index}][company]`,
-        exp.company || ""
-      );
-
-      formData.append(
-        `professional_details[experience][${index}][designation]`,
-        exp.designation || ""
-      );
-
-      formData.append(
-        `professional_details[experience][${index}][years]`,
-        exp.years || ""
-      );
-
-      if (
-        exp.docFile
-          instanceof File
-      ) {
-
-        formData.append(
-          "experienceDocs",
-          exp.docFile
-        );
-
-      }
-
-    }
-  );
-
-  // Patents
-
-  professional.patents?.forEach(
-    (pat, index) => {
-
-      formData.append(
-        `professional_details[patents][${index}][title]`,
-        pat.title || ""
-      );
-
-      formData.append(
-        `professional_details[patents][${index}][status]`,
-        pat.status || ""
-      );
-
-      if (
-        pat.docFile
-          instanceof File
-      ) {
-
-        formData.append(
-          "patentDocs",
-          pat.docFile
-        );
-
-      }
-
-    }
-  );
-
-  // Skills
-
-  formData.append(
-    "professional_details[skills]",
-    professional.skills || ""
-  );
-
-  await saveAndRefresh(
-    formData,
-    true
-  );
-
+  navigate("/forms/residential");
 };
-
 
   return (
     <FormWrapper
@@ -275,47 +431,69 @@ onSave={handleSave}
               >
                 <Trash2 size={16} />
               </button>
+              
+
+              <InputField label="Title of Paper" value={pub.paperTitle || ""} onChange={(e) => handleArrayUpdate("publications", index, "paperTitle", e.target.value)} />
+
               <InputField label="Journal Name" value={pub.journal || ""} onChange={(e) => handleArrayUpdate("publications", index, "journal", e.target.value)} />
-              <InputField label="ISSN" value={pub.issn || ""} onChange={(e) => handleArrayUpdate("publications", index, "issn", e.target.value)} />
-              <InputField label="Year" value={pub.date ? pub.date.split("-")[0] : ""} onChange={(e) => handleArrayUpdate("publications", index, "date", e.target.value)} />
-             <FileInput
-  label="Upload Publication"
-  file={
-    pub.url?.name ||
-    pub.docName
-  }
-  fileUrl={
-    pub.url?.url
-  }
-  onChange={(e) => {
 
-    const arr =
-      [...professional.publications];
+              <InputField label="ISSN Number" value={pub.issn || ""} onChange={(e) => handleArrayUpdate("publications", index, "issn", e.target.value)} />
 
-    arr[index] = {
+              <InputField label="Year of Publication" value={pub.date ? pub.date.split("-")[0] : ""} onChange={(e) => handleArrayUpdate("publications", index, "date", e.target.value)} />
 
-      ...arr[index],
+              <SelectField
+                label="Indexed In"
+                value={pub.indexedIn || ""}
+                disabled={isSubmitted}
+                onChange={(e) => handleArrayUpdate("publications", index, "indexedIn", e.target.value)}
+                options={[
+                  { value: "", label: "Select..." },
+                  { value: "Scopus", label: "Scopus" },
+                  { value: "Web of Science", label: "Web of Science" },
+                  { value: "Others", label: "Others" },
+                ]}
+              />
 
-      docFile:
-        e.target.file,
+              <InputField label="Volume" value={pub.volume || ""} onChange={(e) => handleArrayUpdate("publications", index, "volume", e.target.value)} />
 
-      url:
-        e.target.file
+              <InputField label="Issue" value={pub.issue || ""} onChange={(e) => handleArrayUpdate("publications", index, "issue", e.target.value)} />
 
-    };
+              <InputField label="Pages" value={pub.pages || ""} onChange={(e) => handleArrayUpdate("publications", index, "pages", e.target.value)} />
 
-    updateSection(
-      "professional",
-      {
-        publications: arr
-      }
-    );
+              <InputField label="Impact Factor" value={pub.impactFactor || ""} onChange={(e) => handleArrayUpdate("publications", index, "impactFactor", e.target.value)} />
 
-  }}
-/>
+              <InputField label="Co-authors" value={pub.coAuthors || ""} onChange={(e) => handleArrayUpdate("publications", index, "coAuthors", e.target.value)} />
+
+              <InputField label="DOI / Link" value={pub.doi || ""} onChange={(e) => handleArrayUpdate("publications", index, "doi", e.target.value)} />
+
+              <InputField label="Country" value={pub.country || ""} onChange={(e) => handleArrayUpdate("publications", index, "country", e.target.value)} />
+            <FileInput
+              label="Upload Publication"
+              file={pub.url?.name || pub.url}
+              fileUrl={pub.url?.url}
+              error={pub.fileError}
+              disabled={isSubmitted}
+              onChange={(e) => {
+                const { file, error } = e.target;
+
+                const arr = [...(professional.publications || [])];
+
+                arr[index] = {
+                  ...arr[index],
+                  docFile: file,
+                  url: {
+                    name: file?.name,
+                    url: ""
+                  },
+                  fileError: error,
+                };
+
+                updateSection("professional", { publications: arr });
+              }}
+            />
             </div>
           ))}
-          <button type="button" onClick={() => updateSection("professional", { publications: [...(professional.publications || []), {}] })} className="flex items-center gap-2 text-primary font-medium">
+          <button disabled={isSubmitted} type="button" onClick={() => updateSection("professional", { publications: [...(professional.publications || []), {}] })} className="flex items-center gap-2 text-primary font-medium">
             <Plus size={16} /> Add Journal
           </button>
         </div>
@@ -329,51 +507,72 @@ onSave={handleSave}
               <button type="button" onClick={() => updateSection("professional", { conferences: professional.conferences.filter((_, i) => i !== index) })} className="absolute right-0 top-0 text-red-500 p-4">
                 <Trash2 size={16} />
               </button>
-              <InputField label="Conference Name" value={conf.name || ""} onChange={(e) => handleArrayUpdate("conferences", index, "name", e.target.value)} />
-              <InputField label="Paper Title" value={conf.title || ""} onChange={(e) => handleArrayUpdate("conferences", index, "title", e.target.value)} />
-             <FileInput
-  label="Upload Presentation Proof"
-  file={
-    conf.url?.name ||
-    conf.docName
-  }
-  fileUrl={
-    conf.url?.url
-  }
-  error={conf.fileError}
-  disabled={isSubmitted}
-  onChange={(e) => {
+              <SelectField
+                label="Presentation Type"
+                disabled={isSubmitted}
+                value={conf.presentationType || "Conference Presentation"}
+                onChange={(e) => handleArrayUpdate("conferences", index, "presentationType", e.target.value)}
+                options={[
+                  { value: "Conference Presentation", label: "Conference Presentation" },
+                  { value: "Poster", label: "Poster" },
+                  { value: "Workshop", label: "Workshop" },
+                ]}
+              />
 
-    const arr =
-      [...professional.conferences];
+              <InputField label="Paper Title" value={conf.paperTitle || conf.title || ""} onChange={(e) => handleArrayUpdate("conferences", index, "paperTitle", e.target.value)} />
 
-    arr[index] = {
+              <InputField label="Conference Name" value={conf.conferenceName || conf.name || ""} onChange={(e) => handleArrayUpdate("conferences", index, "conferenceName", e.target.value)} />
 
-      ...arr[index],
+              <SelectField
+                label="Conference Type"
+                disabled={isSubmitted}
+                value={conf.conferenceType || ""}
+                onChange={(e) => handleArrayUpdate("conferences", index, "conferenceType", e.target.value)}
+                options={[
+                  { value: "", label: "Select..." },
+                  { value: "National", label: "National" },
+                  { value: "International", label: "International" },
+                ]}
+              />
 
-      docFile:
-        e.target.file,
+              <InputField label="Organizer" value={conf.organizer || ""} onChange={(e) => handleArrayUpdate("conferences", index, "organizer", e.target.value)} />
 
-      url:
-        e.target.file,
+              <InputField label="Venue" value={conf.venue || ""} onChange={(e) => handleArrayUpdate("conferences", index, "venue", e.target.value)} />
 
-      fileError:
-        e.target.error
+              <InputField label="Date" type="date" value={conf.date || ""} onChange={(e) => handleArrayUpdate("conferences", index, "date", e.target.value)} />
 
-    };
+              <InputField label="ISBN / ISSN" value={conf.isbnIssn || ""} onChange={(e) => handleArrayUpdate("conferences", index, "isbnIssn", e.target.value)} />
 
-    updateSection(
-      "professional",
-      {
-        conferences: arr
-      }
-    );
+              <InputField label="DOI / Link" value={conf.doiLink || ""} onChange={(e) => handleArrayUpdate("conferences", index, "doiLink", e.target.value)} />
 
-  }}
-/>
+              <FileInput
+                label="Certificate / Proof / Link"
+                file={conf.url?.name || conf.certificateUrl || conf.url}
+                fileUrl={conf.url?.url || conf.certificateUrl}
+                error={conf.fileError}
+                disabled={isSubmitted}
+                onChange={(e) => {
+                  const { file, error } = e.target;
+
+                  const arr = [...(professional.conferences || [])];
+
+                  arr[index] = {
+                    ...arr[index],
+                    docFile: file,
+                    certificateUrl: file ? "" : (arr[index]?.certificateUrl || (arr[index]?.url && arr[index].url.url) || ""),
+                    url: {
+                      name: file?.name,
+                      url: ""
+                    },
+                    fileError: error,
+                  };
+
+                  updateSection("professional", { conferences: arr });
+                }}
+              />
             </div>
           ))}
-          <button type="button" onClick={() => updateSection("professional", { conferences: [...(professional.conferences || []), {}] })} className="flex gap-2 text-primary font-medium">
+          <button disabled={isSubmitted} type="button" onClick={() => updateSection("professional", { conferences: [...(professional.conferences || []), {}] })} className="flex gap-2 text-primary font-medium">
             <Plus size={16} /> Add Conference
           </button>
         </div>
@@ -390,49 +589,33 @@ onSave={handleSave}
               <InputField label="Company" value={exp.company || ""} onChange={(e) => handleArrayUpdate("experience", index, "company", e.target.value)} />
               <InputField label="Designation" value={exp.designation || ""} onChange={(e) => handleArrayUpdate("experience", index, "designation", e.target.value)} />
               <InputField label="Year of Experience" value={exp.years || ""} onChange={(e) => handleArrayUpdate("experience", index, "years", e.target.value)} />
-            <FileInput
-  label="Experience Certificate"
-  file={
-    exp.url?.name ||
-    exp.docName
-  }
-  fileUrl={
-    exp.url?.url
-  }
-  error={exp.fileError}
-  disabled={isSubmitted}
-  onChange={(e) => {
+              <FileInput
+                label="Experience Certificate"
+                file={exp.url?.name || exp.url}
+                fileUrl={exp.url?.url}
+                error={exp.fileError}
+                disabled={isSubmitted}
+                onChange={(e) => {
+                  const { file, error } = e.target;
 
-    const arr =
-      [...professional.experience];
+                  const arr = [...(professional.experience || [])];
 
-    arr[index] = {
+                  arr[index] = {
+                    ...arr[index],
+                    docFile: file,
+                    url: {
+                      name: file?.name,
+                      url: ""
+                    },
+                    fileError: error,
+                  };
 
-      ...arr[index],
-
-      docFile:
-        e.target.file,
-
-      url:
-        e.target.file,
-
-      fileError:
-        e.target.error
-
-    };
-
-    updateSection(
-      "professional",
-      {
-        experience: arr
-      }
-    );
-
-  }}
-/>
+                  updateSection("professional", { experience: arr });
+                }}
+              />
             </div>
           ))}
-          <button type="button" onClick={() => updateSection("professional", { experience: [...(professional.experience || []), {}] })} className="flex gap-2 text-primary font-medium">
+          <button disabled={isSubmitted} type="button" onClick={() => updateSection("professional", { experience: [...(professional.experience || []), {}] })} className="flex gap-2 text-primary font-medium">
             <Plus size={16} /> Add Experience
           </button>
         </div>
@@ -449,6 +632,7 @@ onSave={handleSave}
               <InputField label="Patent Title" value={pat.title || ""} onChange={(e) => handleArrayUpdate("patents", index, "title", e.target.value)} />
               <SelectField 
                 label="Status" 
+                disabled={isSubmitted}
                 value={pat.status || ""} 
                 onChange={(e) => handleArrayUpdate("patents", index, "status", e.target.value)}
                 options={[
@@ -457,171 +641,210 @@ onSave={handleSave}
                     { value: "Granted", label: "Granted" }
                 ]}
               />
+              <SelectField
+                label="Publication Type"
+                disabled={isSubmitted}
+                value={pat.publicationType || "Patent"}
+                onChange={(e) => handleArrayUpdate("patents", index, "publicationType", e.target.value)}
+                options={[
+                  { value: "Patent", label: "Patent" },
+                  { value: "Design", label: "Design" },
+                  { value: "Other", label: "Other" },
+                ]}
+              />
+
+              <InputField label="Patent Number / Title" value={pat.paperTitle || pat.title || ""} onChange={(e) => handleArrayUpdate("patents", index, "paperTitle", e.target.value)} />
+
+              <SelectField
+                label="Indexed In"
+                disabled={isSubmitted}
+                value={pat.indexedIn || ""}
+                onChange={(e) => handleArrayUpdate("patents", index, "indexedIn", e.target.value)}
+                options={[
+                  { value: "", label: "Select..." },
+                  { value: "Local", label: "Local" },
+                  { value: "International", label: "International" },
+                ]}
+              />
+
+              <InputField label="Volume" value={pat.volume || ""} onChange={(e) => handleArrayUpdate("patents", index, "volume", e.target.value)} />
+
+              <InputField label="Issue" value={pat.issue || ""} onChange={(e) => handleArrayUpdate("patents", index, "issue", e.target.value)} />
+
+              <InputField label="Pages" value={pat.pages || ""} onChange={(e) => handleArrayUpdate("patents", index, "pages", e.target.value)} />
+
+              <InputField label="Impact Factor" value={pat.impactFactor || ""} onChange={(e) => handleArrayUpdate("patents", index, "impactFactor", e.target.value)} />
+
+              <InputField label="Co-authors" value={pat.coAuthors || ""} onChange={(e) => handleArrayUpdate("patents", index, "coAuthors", e.target.value)} />
+
+              <InputField label="DOI / Link" value={pat.doi || ""} onChange={(e) => handleArrayUpdate("patents", index, "doi", e.target.value)} />
+
+              <InputField label="Country" value={pat.country || ""} onChange={(e) => handleArrayUpdate("patents", index, "country", e.target.value)} />
               <FileInput
-  label="Upload Patent Document"
-  className="md:col-span-2"
-  file={
-    pat.document?.name ||
-    pat.document
-  }
-  fileUrl={
-    pat.document?.url
-  }
-  error={pat.fileError}
-  disabled={isSubmitted}
-  onChange={(e) => {
+                label="Upload Patent Document"
+                className="md:col-span-2"
+                file={pat.document?.name || pat.document}
+                fileUrl={pat.document?.url}
+                error={pat.fileError}
+                disabled={isSubmitted}
+                onChange={(e) => {
+                  const { file, error } = e.target;
 
-    const arr =
-      [...professional.patents];
+                  const arr = [...(professional.patents || [])];
 
-    arr[index] = {
+                  arr[index] = {
+                    ...arr[index],
+                    docFile: file,
+                    document: {
+                      name: file?.name,
+                      url: ""
+                    },
+                    fileError: error,
+                  };
 
-      ...arr[index],
-
-      docFile:
-        e.target.file,
-
-      document:
-        e.target.file,
-
-      fileError:
-        e.target.error
-
-    };
-
-    updateSection(
-      "professional",
-      {
-        patents: arr
-      }
-    );
-
-  }}
-/>
+                  updateSection("professional", { patents: arr });
+                }}
+              />
             </div>
           ))}
-          <button type="button" onClick={() => updateSection("professional", { patents: [...(professional.patents || []), {}] })} className="flex gap-2 text-primary font-medium">
+          <button  type="button" disabled={isSubmitted} onClick={() => updateSection("professional", { patents: [...(professional.patents || []), {}] })} className="flex gap-2 text-primary font-medium">
             <Plus size={16} /> Add Patent
           </button>
         </div>
       </FormSection>
 
       {/* ================= MEMBERSHIP ================= */}
-     {/* ================= MEMBERSHIP PROOF (Multiple Files) ================= */}
-<FormSection title="Membership Proof" icon={Users}>
-  <div className="md:col-span-2 space-y-4">
+      <FormSection title="Memberships" icon={Users}>
+        <div className="md:col-span-2 space-y-4">
 
-    {(professional.membershipUrl || []).map((mem, index) => (
+          {(professional.membershipUrl || []).map((mem, index) => (
+            <div
+              key={index}
+              className="p-4 rounded-xl border border-slate-100 bg-slate-50 relative"
+            >
+              {!isSubmitted && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    const updated = professional.membershipUrl.filter((_, i) => i !== index);
+                    updateSection("professional", { membershipUrl: updated });
+                  }}
+                  className="absolute right-4 top-4 text-red-500 rounded-full p-2 hover:bg-red-50"
+                >
+                  <Trash2 size={18} />
+                </button>
+              )}
 
-      <div
-        key={index}
-        className="flex items-start gap-4 bg-slate-50 p-4 rounded-xl border border-slate-100 relative"
-      >
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                <InputField
+                  label="Organization Name"
+                  value={mem.organizationName || mem.name || ""}
+                  onChange={(e) => {
+                    const arr = [...(professional.membershipUrl || [])];
+                    arr[index] = { ...arr[index], organizationName: e.target.value };
+                    updateSection("professional", { membershipUrl: arr });
+                  }}
+                  disabled={isSubmitted}
+                  className="lg:col-span-2"
+                />
 
-        <div className="flex-1">
+                <InputField
+                  label="Year of Joining"
+                  value={mem.joiningYear || ""}
+                  onChange={(e) => {
+                    const arr = [...(professional.membershipUrl || [])];
+                    arr[index] = { ...arr[index], joiningYear: e.target.value };
+                    updateSection("professional", { membershipUrl: arr });
+                  }}
+                  disabled={isSubmitted}
+                />
 
-          <FileInput
-            label={`Membership Document ${index + 1}`}
-            file={mem.name}
-            fileUrl={mem.url}
-            error={mem.fileError}
-            disabled={isSubmitted}
-            onChange={(e) => {
+                <SelectField
+                  label="Membership Type"
+                  value={mem.membershipType || ""}
+                  onChange={(e) => {
+                    const arr = [...(professional.membershipUrl || [])];
+                    arr[index] = { ...arr[index], membershipType: e.target.value };
+                    updateSection("professional", { membershipUrl: arr });
+                  }}
+                  options={[
+                    { value: "", label: "— Select —" },
+                    { value: "Student", label: "Student" },
+                    { value: "Faculty", label: "Faculty" },
+                    { value: "Professional", label: "Professional" },
+                    { value: "Other", label: "Other" },
+                  ]}
+                  disabled={isSubmitted}
+                />
 
-              const updated =
-                [...(professional.membershipUrl || [])];
+                <InputField
+                  label="Membership ID"
+                  value={mem.membershipId || ""}
+                  onChange={(e) => {
+                    const arr = [...(professional.membershipUrl || [])];
+                    arr[index] = { ...arr[index], membershipId: e.target.value };
+                    updateSection("professional", { membershipUrl: arr });
+                  }}
+                  disabled={isSubmitted}
+                />
 
-              updated[index] = {
+                <div className="lg:col-span-3">
+                  <FileInput
+                    label="Certificate / Proof"
+                    file={mem.document?.name || mem.name || mem.document}
+                    fileUrl={mem.document?.url || mem.url}
+                    error={mem.fileError}
+                    disabled={isSubmitted}
+                    className="w-full"
+                    onChange={(e) => {
+                      const { file, error } = e.target;
+                      const arr = [...(professional.membershipUrl || [])];
+                      arr[index] = {
+                        ...arr[index],
+                        docFile: file,
+                        document: file
+                          ? { name: file?.name, url: "" }
+                          : arr[index]?.document || { name: arr[index]?.name || "", url: arr[index]?.url || "" },
+                        fileError: error,
+                      };
+                      updateSection("professional", { membershipUrl: arr });
+                    }}
+                  />
+                </div>
+              </div>
+            </div>
+          ))}
 
-                ...updated[index],
-
-                docFile:
-                  e.target.file,
-
-                name:
-                  e.target.file?.name,
-
-                url:
-                  "",
-
-                fileError:
-                  e.target.error
-
-              };
-
-              updateSection(
-                "professional",
-                {
-                  membershipUrl:
-                    updated
-                }
-              );
-
-            }}
-          />
+          { !isSubmitted && (
+            <button
+              type="button"
+              disabled={isSubmitted}
+              onClick={() => {
+                const current = professional.membershipUrl || [];
+                updateSection("professional", {
+                  membershipUrl: [
+                    ...current,
+                    {
+                      organizationName: "",
+                      membershipType: "",
+                      membershipId: "",
+                      joiningYear: "",
+                      document: { name: "", url: "" },
+                      docFile: null,
+                      fileError: "",
+                    },
+                  ],
+                });
+              }}
+              className="flex items-center gap-2 text-sm font-semibold text-primary"
+            >
+              <Plus size={16} />
+              Add Another Membership
+            </button>
+          ) }
 
         </div>
-
-        {!isSubmitted && (
-          <button
-            type="button"
-            onClick={() => {
-
-              const updated =
-                professional.membershipUrl.filter(
-                  (_, i) => i !== index
-                );
-
-              updateSection(
-                "professional",
-                {
-                  membershipUrl:
-                    updated
-                }
-              );
-
-            }}
-            className="mt-8 p-2 text-red-500 hover:bg-red-50 rounded-full"
-          >
-            <Trash2 size={18} />
-          </button>
-        )}
-
-      </div>
-
-    ))}
-
-    {!isSubmitted && (
-      <button
-        type="button"
-        onClick={() => {
-
-          const current =
-            professional.membershipUrl || [];
-
-          updateSection(
-            "professional",
-            {
-              membershipUrl: [
-                ...current,
-                {
-                  name: "",
-                  url: ""
-                }
-              ]
-            }
-          );
-
-        }}
-        className="flex items-center gap-2 text-sm font-semibold text-primary"
-      >
-        <Plus size={16} />
-        Add Another Membership Proof
-      </button>
-    )}
-
-  </div>
-</FormSection>
+      </FormSection>
 
       {/* ================= SKILLS ================= */}
       <FormSection title="Skills & Software" icon={Lightbulb}>

@@ -35,6 +35,7 @@ import DemoToggleButton from "./components/DemoToggleButton";
 import ChangePassword from "./pages/ChangePassword";
 import RequestUnlockPage from "./pages/RequestUnlockPage";
 import MarkRequestPage from "./pages/MarkRequestPage";
+import RequestHistory from "./pages/RequestHistory";
 
 function Layout() {
   const isSubmitted = useStore((s) => s.isSubmitted);
@@ -140,7 +141,7 @@ useEffect(() => {
               <Route path="/change-password" element={isLoggedIn ? <ChangePassword /> : <Navigate to="/login" />} />
               <Route path="/request" element={isLoggedIn ? <RequestUnlockPage /> : <Navigate to="/login" />} />
               <Route path="/mark-request" element={isLoggedIn ? <MarkRequestPage/> : <Navigate to="/login"/>} />
-
+              <Route path="/request-history" element={isLoggedIn ? <RequestHistory /> : <Navigate to="/login" />} />
               {/* FALLBACK */}
               <Route path="*" element={<Navigate to="/" />} />
 

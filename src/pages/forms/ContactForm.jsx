@@ -5,141 +5,78 @@ import FormWrapper, {
   SelectField,
   InputField,
 } from "../../components/FormWrapper";
+import { getChangedFields, SECTION_API_KEYS } from "../../lib/utils";
 import { Phone, MapPin, Mail, Siren } from "lucide-react";
-
+import useHashFocus from '../../hooks/useHashFocus';
+import { useNavigate } from "react-router-dom";
 export default function ContactForm() {
+  useHashFocus();
   const isSubmitted = useStore((s) => s.isSubmitted);
   const contact = useStore((state) => state.contact);
   const updateSection = useStore((state) => state.updateSection);
 
+  const navigate = useNavigate();
 
-  const saveAndRefresh =
-  useStore((s) => s.saveAndRefresh);
+  const saveAndRefresh = useStore((s) => s.saveAndRefresh);
+  const fetchCanEdit = useStore((s) => s.fetchCanEdit);
 
+  // const handleSave = async () => {
+  //   const contact = useStore.getState().contact;
+  //   const originalContact = useStore.getState().profileSnapshot?.contact || {};
+  //   const changedContact = getChangedFields(originalContact, contact);
+
+  //   if (!Object.keys(changedContact).length) {
+  //     alert("No changes detected in contact details.");
+  //     return;
+  //   }
+
+  //   const formData = new FormData();
+  //   const sectionKey = SECTION_API_KEYS.contact;
+
+  //   if ("personalEmail" in changedContact) {
+  //     formData.append("contact_details[personalEmail]", contact.personalEmail || "");
+  //   }
+  //   if ("institutionalEmail" in changedContact) {
+  //     formData.append("contact_details[institutionalEmail]", contact.institutionalEmail || "");
+  //   }
+  //   if (changedContact.personalMobile) {
+  //     formData.append("contact_details[personalMobile][countryCode]", contact.personalMobile?.countryCode || "+91");
+  //     formData.append("contact_details[personalMobile][number]", contact.personalMobile?.number || "");
+  //   }
+  //   if (changedContact.whatsappNumber) {
+  //     formData.append("contact_details[whatsappNumber][countryCode]", contact.whatsappNumber?.countryCode || "+91");
+  //     formData.append("contact_details[whatsappNumber][number]", contact.whatsappNumber?.number || "");
+  //   }
+  //   if ("isSameAddress" in changedContact) {
+  //     formData.append("contact_details[isSameAddress]", contact.isSameAddress);
+  //   }
+  //   if ("isSameAsMobile" in changedContact) {
+  //     formData.append("contact_details[isSameAsMobile]", contact.isSameAsMobile);
+  //   }
+  //   if (changedContact.emergencyContact) {
+  //     formData.append("contact_details[emergencyContact][name]", contact.emergencyContact?.name || "");
+  //     formData.append("contact_details[emergencyContact][relation]", contact.emergencyContact?.relation || "");
+  //     formData.append("contact_details[emergencyContact][number][countryCode]", contact.emergencyContact?.number?.countryCode || "+91");
+  //     formData.append("contact_details[emergencyContact][number][number]", contact.emergencyContact?.number?.number || "");
+  //   }
+  //   if ("permanentAddress" in changedContact) {
+  //     formData.append("contact_details[permanentAddress]", contact.permanentAddress || "");
+  //   }
+  //   if ("correspondenceAddress" in changedContact) {
+  //     formData.append("contact_details[correspondenceAddress]", contact.correspondenceAddress || "");
+  //   }
+  //   if ("distanceToCampus" in changedContact) {
+  //     formData.append("contact_details[distanceToCampus]", contact.distanceToCampus || "");
+  //   }
+
+  //   formData.append("updatedSections[]", sectionKey);
+
+  //   await saveAndRefresh(formData, true);
+  //   await fetchCanEdit();
+  // };
 const handleSave = async () => {
-
-  const contact =
-    useStore.getState().contact;
-
-  const payload = {
-
-    personalEmail:
-      contact.personalEmail,
-
-    institutionalEmail:
-      contact.institutionalEmail,
-
-    personalMobile: {
-    countryCode:
-      contact.personalMobile?.countryCode || "+91",
-    number:
-      contact.personalMobile?.number || "",
-  },
-
-
-     whatsappNumber: {
-    countryCode:
-      contact.whatsappNumber?.countryCode || "+91",
-    number:
-      contact.whatsappNumber?.number || "",
-  },
-
-  isSameAddress: contact.isSameAddress,
-  isSameAsMobile: contact.isSameAsMobile,
-
-      emergencyContact: {
-    ...contact.emergencyContact,
-
-    number: {
-      countryCode:
-        contact.emergencyContact?.number
-          ?.countryCode || "+91",
-
-      number:
-        contact.emergencyContact?.number
-          ?.number || "",
-    },
-  },
-
-    permanentAddress:
-      contact.permanentAddress,
-
-    correspondenceAddress:
-      contact.correspondenceAddress,
-
-    distanceToCampus:
-      contact.distanceToCampus
-
-  };
-
-  const formData =
-    new FormData();
-
-  Object.entries(payload).forEach(
-    ([key, value]) => {
-
-      if (
-        typeof value === "object" &&
-        value !== null
-      ) {
-
-        const appendNested = (
-          obj,
-          prefix
-        ) => {
-
-          Object.entries(obj).forEach(
-            ([k, v]) => {
-
-              if (
-                typeof v === "object" &&
-                v !== null
-              ) {
-
-                appendNested(
-                  v,
-                  `${prefix}[${k}]`
-                );
-
-              } else {
-
-                formData.append(
-                  `${prefix}[${k}]`,
-                  v
-                );
-
-              }
-
-            }
-          );
-
-        };
-
-        appendNested(
-          value,
-          `contact_details[${key}]`
-        );
-
-      } else {
-
-        formData.append(
-          `contact_details[${key}]`,
-          value
-        );
-
-      }
-
-    }
-  );
-
-  await saveAndRefresh(
-    formData,
-    true
-  );
-
-  await fetchCanEdit();
+  navigate("/forms/health");
 };
-
   /**
    * Helper for updating nested objects in Zustand
    * parent: 'personalMobile', 'permanentAddress', etc.
@@ -357,6 +294,8 @@ checked={contact.isSameAsMobile || false}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <SelectField 
               label="State" 
+                disabled={isSubmitted}
+
               value={contact.permanentAddress?.state || ""} 
               onChange={(e) => handleNestedChange("permanentAddress", "state", e.target.value)}
               options={STATE_LIST.map(s => ({ value: s, label: s }))}
@@ -365,12 +304,16 @@ checked={contact.isSameAsMobile || false}
               label="District" 
               value={contact.permanentAddress?.district || ""} 
               onChange={(e) => handleNestedChange("permanentAddress", "district", e.target.value)}
+                disabled={isSubmitted}
+
               options={(LOCATION_DATA[contact.permanentAddress?.state]?.districts ? Object.keys(LOCATION_DATA[contact.permanentAddress.state].districts) : []).map(d => ({ value: d, label: d }))}
             />
             <SelectField 
               label="City/Town" 
               value={contact.permanentAddress?.city || ""} 
               onChange={(e) => handleNestedChange("permanentAddress", "city", e.target.value)}
+                disabled={isSubmitted}
+
               options={(LOCATION_DATA[contact.permanentAddress?.state]?.districts[contact.permanentAddress?.district] || []).map(c => ({ value: c, label: c }))}
             />
             <InputField 
@@ -387,7 +330,7 @@ checked={contact.isSameAsMobile || false}
             <Mail size={18} className="text-blue-600" /> Correspondence Address
           </h3>
           <label className="flex items-center gap-2 cursor-pointer">
-            <input type="checkbox" checked={contact.isSameAddress || false} onChange={handleAddressToggle} className="w-4 h-4 rounded border-slate-300" />
+            <input type="checkbox" checked={contact.isSameAddress || isSubmitted} onChange={handleAddressToggle} className="w-4 h-4 rounded border-slate-300" />
             <span className="text-sm text-slate-500">Same as Permanent</span>
           </label>
         </div>
@@ -401,16 +344,16 @@ checked={contact.isSameAsMobile || false}
             onChange={(e) => handleNestedChange("correspondenceAddress", "addressLine", e.target.value)}
           />
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <SelectField disabled={contact.isSameAddress} label="State" value={contact.correspondenceAddress?.state || ""} onChange={(e) => handleNestedChange("correspondenceAddress", "state", e.target.value)} options={STATE_LIST.map(s => ({ value: s, label: s }))} />
+            <SelectField disabled={contact.isSameAddress || isSubmitted} label="State" value={contact.correspondenceAddress?.state || ""} onChange={(e) => handleNestedChange("correspondenceAddress", "state", e.target.value)} options={STATE_LIST.map(s => ({ value: s, label: s }))} />
             <SelectField 
-              disabled={contact.isSameAddress} 
+              disabled={contact.isSameAddress || isSubmitted} 
               label="District" 
               value={contact.correspondenceAddress?.district || ""} 
               onChange={(e) => handleNestedChange("correspondenceAddress", "district", e.target.value)}
               options={(LOCATION_DATA[contact.correspondenceAddress?.state]?.districts ? Object.keys(LOCATION_DATA[contact.correspondenceAddress.state].districts) : []).map(d => ({ value: d, label: d }))}
             />
             <SelectField 
-              disabled={contact.isSameAddress} 
+              disabled={contact.isSameAddress || isSubmitted} 
               label="City/Town" 
               value={contact.correspondenceAddress?.city || ""} 
               onChange={(e) => handleNestedChange("correspondenceAddress", "city", e.target.value)}

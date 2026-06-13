@@ -1,6 +1,7 @@
 import React from 'react';
 import { useStore } from '../../store';
-
+import { getChangedFields, SECTION_API_KEYS } from '../../lib/utils';
+import useHashFocus from '../../hooks/useHashFocus';
 import FormWrapper, {
   FormSection,
   InputField,
@@ -16,7 +17,7 @@ import {
   Crown,
   Search
 } from 'lucide-react';
-
+import { useNavigate } from "react-router-dom";
 import GlobalLoader from '@/src/components/GlobalLoader';
 
 export const FACULTY_OPTIONS = [
@@ -263,9 +264,11 @@ export const DEGREE_OPTIONS = [
 ];
 
 export default function AcademicForm() {
-
+  useHashFocus();
   const isSubmitted = useStore((s) => s.isSubmitted);
 const store = useStore();
+  const navigate = useNavigate();
+
 
   
 
@@ -287,144 +290,82 @@ const store = useStore();
 const saveAndRefresh = useStore(
   (s) => s.saveAndRefresh
 );
+const fetchCanEdit = useStore((s) => s.fetchCanEdit);
 
+// const handleSave = async () => {
+//   const academic = useStore.getState().academic;
+//   const originalAcademic = useStore.getState().profileSnapshot?.academic || {};
+//   const changedAcademic = getChangedFields(originalAcademic, academic);
+
+//   if (!Object.keys(changedAcademic).length) {
+//     alert("No changes detected in academic details.");
+//     return;
+//   }
+
+//   const formData = new FormData();
+//   const sectionKey = SECTION_API_KEYS.academic;
+
+//   if ("programLevel" in changedAcademic) {
+//     formData.append("academic_details[programLevel]", academic.programLevel || "");
+//   }
+//   if ("admissionCategory" in changedAcademic) {
+//     formData.append("academic_details[admissionCategory]", academic.admissionCategory || "");
+//   }
+//   if ("modeOfStudy" in changedAcademic) {
+//     formData.append("academic_details[modeOfStudy]", academic.modeOfStudy || "");
+//   }
+//   if ("admissionApplicationNumber" in changedAcademic) {
+//     formData.append("academic_details[admissionApplicationNumber]", academic.admissionApplicationNumber || "");
+//   }
+//   if ("universityEnrollmentNumber" in changedAcademic) {
+//     formData.append("academic_details[universityEnrollmentNumber]", academic.universityEnrollmentNumber || "");
+//   }
+//   if ("rollNumber" in changedAcademic) {
+//     formData.append("academic_details[rollNumber]", academic.rollNumber || "");
+//   }
+//   if ("faculty" in changedAcademic) {
+//     formData.append("academic_details[faculty]", academic.faculty || "");
+//   }
+//   if ("department" in changedAcademic) {
+//     formData.append("academic_details[department]", academic.department || "");
+//   }
+//   if ("degreeName" in changedAcademic) {
+//     formData.append("academic_details[degreeName]", academic.degreeName || "");
+//   }
+//   if ("specialization" in changedAcademic) {
+//     formData.append("academic_details[specialization]", academic.specialization || "");
+//   }
+//   if ("academicCycle" in changedAcademic) {
+//     formData.append("academic_details[academicCycle]", academic.academicCycle || "");
+//   }
+//   if ("admissionBatch" in changedAcademic) {
+//     formData.append("academic_details[admissionBatch]", academic.admissionBatch || "");
+//   }
+//   if ("currentSemester" in changedAcademic) {
+//     formData.append("academic_details[currentSemester]", academic.currentSemester || "");
+//   }
+//   if ("currentYear" in changedAcademic) {
+//     formData.append("academic_details[currentYear]", academic.currentYear || "");
+//   }
+//   if ("fellowshipLetterNumber" in changedAcademic) {
+//     formData.append("academic_details[fellowshipLetterNumber]", academic.fellowshipLetterNumber || "");
+//   }
+//   if (academic.fellowshipLetter instanceof File && changedAcademic.fellowshipLetter) {
+//     formData.append("fellowshipLetter", academic.fellowshipLetter);
+//   }
+
+//   formData.append("updatedSections[]", sectionKey);
+
+//   await saveAndRefresh(
+//     formData,
+//     true
+//   );
+
+//   await fetchCanEdit();
+// };
 const handleSave = async () => {
-
-  const academic =
-    useStore.getState().academic;
-console.log("ACADEMIC", academic);
-
-  const formData =
-    new FormData();
-
-
-    for (const pair of formData.entries()) {
-  console.log(pair[0], pair[1]);
-}
-  if (academic.programLevel) {
-  formData.append(
-    "academic_details[programLevel]",
-    academic.programLevel
-  );
-}
-
-if (academic.admissionCategory) {
-  formData.append(
-    "academic_details[admissionCategory]",
-    academic.admissionCategory
-  );
-}
-
-if (academic.modeOfStudy) {
-  formData.append(
-    "academic_details[modeOfStudy]",
-    academic.modeOfStudy
-  );
-}
-
-  // NORMAL DATA
-formData.append(
-  "academic_details[admissionApplicationNumber]",
-  academic.admissionApplicationNumber || ""
-);
-
-formData.append(
-  "academic_details[universityEnrollmentNumber]",
-  academic.universityEnrollmentNumber || ""
-);
-
-formData.append(
-  "academic_details[rollNumber]",
-  academic.rollNumber || ""
-);
-
-formData.append(
-  "academic_details[faculty]",
-  academic.faculty || ""
-);
-
-formData.append(
-  "academic_details[department]",
-  academic.department || ""
-);
-
-formData.append(
-  "academic_details[degreeName]",
-  academic.degreeName || ""
-);
-
-
-formData.append(
-  "academic_details[specialization]",
-  academic.specialization || ""
-);
-
-formData.append(
-  "academic_details[academicCycle]",
-  academic.academicCycle || ""
-);
-
-formData.append(
-  "academic_details[admissionBatch]",
-  academic.admissionBatch || ""
-);
-
-
-formData.append(
-  "academic_details[currentSemester]",
-  academic.currentSemester || ""
-);
-
-formData.append(
-  "academic_details[currentYear]",
-  academic.currentYear || ""
-);
-
-formData.append(
-  "academic_details[fellowshipLetterNumber]",
-  academic.fellowshipLetterNumber || ""
-);
-
-
-
-
-  console.log(
-  "fellowshipLetter =",
-  academic.fellowshipLetter
-);
-
-console.log(
-  "instanceof File =",
-  academic.fellowshipLetter instanceof File
-);
-
-  // FILE
-  if (
-    academic.fellowshipLetter
-      instanceof File
-  ) {
-
-    console.log(
-      "FILE SENDING =",
-      academic.fellowshipLetter
-    );
-
-    formData.append(
-      "fellowshipLetter",
-      academic.fellowshipLetter
-    );
-
-  }
-
-  await saveAndRefresh(
-    formData,
-    true
-  );
-
-  await fetchCanEdit();
-
+  navigate("/forms/personal");
 };
-
   const handleChange = (e) => {
 
     const { id, value } = e.target;
@@ -434,7 +375,10 @@ console.log(
     });
   };
 
-
+console.log(
+  "fellowshipLetter",
+  academic.fellowshipLetter
+);
   return (
     <>
 
@@ -497,12 +441,15 @@ console.log(
   value={academic.faculty || ""}
   onChange={handleChange}
   options={FACULTY_OPTIONS}
+  disabled={isSubmitted}
 /><SelectField
   label="Department"
   id="department"
   value={academic.department || ""}
   onChange={handleChange}
   options={DEPARTMENT_OPTIONS}
+    disabled={isSubmitted}
+
 />
 
           <SelectField
@@ -510,6 +457,8 @@ console.log(
             id="programLevel"
             value={academic.programLevel || ""}
             onChange={handleChange}
+              disabled={isSubmitted}
+
             options={[
               {
                 value: "",
@@ -536,6 +485,8 @@ console.log(
          <SelectField
   label="Degree Name"
   id="degreeName"
+    disabled={isSubmitted}
+
   value={academic.degreeName || ""}
   onChange={handleChange}
   options={DEGREE_OPTIONS}
@@ -737,13 +688,16 @@ console.log(
             onChange={handleChange}
             placeholder="F-882/2024/KU"
           />
+          
 <FileInput
   label="Fellowship Document"
   required
   file={
-    academic.fellowshipLetter?.name ||
-    academic.fellowshipLetter
-  }
+  typeof academic.fellowshipLetter ===
+  "object"
+    ? academic.fellowshipLetter?.name || ""
+    : academic.fellowshipLetter || ""
+}
   fileUrl={
     academic.fellowshipLetter?.url
   }
