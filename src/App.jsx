@@ -24,7 +24,6 @@ import ResidentialForm from "./pages/forms/ResidentialForm";
 import DocumentsForm from "./pages/forms/DocumentsForm";
 import MentorDetailsForm from "./pages/forms/MentorDetailsForm";
 import FinalReviewForm from "./pages/forms/FinalReviewForm";
-
 import ForgotPasswordPage from "./pages/ForgotPasswordPage";
 import GradeCardPage from "./pages/GradeCardPage";
 
@@ -46,6 +45,9 @@ function Layout() {
 
   const isFormPage = location.pathname.startsWith("/forms");
 
+const fetchDropdowns = useStore(
+  s => s.fetchDropdowns
+);
 
 
   const fetchStudent =
@@ -53,6 +55,8 @@ function Layout() {
     s => s.fetchStudent
   );
 
+
+  
 const fetchCanEdit =
   useStore(
     s => s.fetchCanEdit
@@ -75,6 +79,7 @@ useEffect(() => {
       await fetchStudent();
 
       await fetchCanEdit();
+      await fetchDropdowns();
 
     }
 

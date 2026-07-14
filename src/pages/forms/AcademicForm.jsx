@@ -268,9 +268,11 @@ export default function AcademicForm() {
   const isSubmitted = useStore((s) => s.isSubmitted);
 const store = useStore();
   const navigate = useNavigate();
+const {faculty,departments,degreeNames,programLevels,admissionCategories,studyModes,currentSemesters,currentYears,specializations
+} = useStore();
 
 
-  
+  const currentYear = new Date().getFullYear()-1;
 
   const academic = useStore((state) => state.academic);
 
@@ -366,19 +368,42 @@ const fetchCanEdit = useStore((s) => s.fetchCanEdit);
 const handleSave = async () => {
   navigate("/forms/personal");
 };
-  const handleChange = (e) => {
+const handleChange = (e) => {
 
-    const { id, value } = e.target;
+  const { id, value } = e.target;
+
+  // If user changes specialization from "Other" to a normal option,
+  // clear the custom value.
+  if (id === "specialization" && value !== "__OTHER__") {
 
     updateSection("academic", {
-      [id]: value,
+      specialization: value,
+      specializationCustom: "",
     });
-  };
 
+    return;
+  }
+
+  updateSection("academic", {
+    [id]: value,
+  });
+
+};
 console.log(
   "fellowshipLetter",
   academic.fellowshipLetter
 );
+
+
+
+const specializationOptions = [
+  ...specializations,
+  {
+    value: "__OTHER__",
+    label: "Other",
+  },
+];
+
   return (
     <>
 
@@ -440,14 +465,14 @@ console.log(
   id="faculty"
   value={academic.faculty || ""}
   onChange={handleChange}
-  options={FACULTY_OPTIONS}
+  options={faculty}
   disabled={isSubmitted}
 /><SelectField
   label="Department"
-  id="department"
+  id="departments"
   value={academic.department || ""}
   onChange={handleChange}
-  options={DEPARTMENT_OPTIONS}
+  options={departments}
     disabled={isSubmitted}
 
 />
@@ -459,27 +484,7 @@ console.log(
             onChange={handleChange}
               disabled={isSubmitted}
 
-            options={[
-              {
-                value: "",
-                label: "Select Level"
-              },
-
-              {
-                value: "UG",
-                label: "UG"
-              },
-
-              {
-                value: "PG",
-                label: "PG"
-              },
-
-              {
-                value: "PhD",
-                label: "PhD"
-              },
-            ]}
+           options={programLevels}
           />
 
          <SelectField
@@ -489,68 +494,57 @@ console.log(
 
   value={academic.degreeName || ""}
   onChange={handleChange}
-  options={DEGREE_OPTIONS}
+  options={degreeNames}
 />
 
         </FormSection>
 
         {/* Research */}
 
-        <FormSection
-          title="Research & Specialization"
-          icon={Search}
-        >
+       <FormSection
+  title="Research & Specialization"
+  icon={Search}
+>
+<SelectField
+  label="Specialization / Research Area"
+  id="specialization"
+  value={academic.specialization || ""}
+  onChange={handleChange}
+  options={specializationOptions}
+  disabled={isSubmitted}
+/>
+{academic.specialization === "__OTHER__" && (
+  <InputField
+    label="Enter New Specialization"
+    id="specializationCustom"
+    value={academic.specializationCustom || ""}
+    onChange={handleChange}
+    placeholder="Enter new specialization"
+    disabled={isSubmitted}
+  />
+)}
+  {academic.programLevel === "PhD" && (
+    <>
+      <InputField
+        label="Thesis / Dissertation Topic"
+        id="thesisTopic"
+        value={academic.thesisTopic || ""}
+        onChange={handleChange}
+        placeholder="Research Topic"
+        disabled={isSubmitted}
+      />
 
-          <div className="md:col-span-2">
-
-            <InputField
-              label="Specialization / Research Area"
-              id="specialization"
-              value={academic.specialization || ""}
-              onChange={handleChange}
-              placeholder="Machine Learning"
-              disabled={isSubmitted}
-            />
-
-          </div>
-
-          {academic.programLevel === "PhD" && (
-
-            <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
-
-              <div className="md:col-span-2">
-
-                <InputField
-                  label="Thesis / Dissertation Topic"
-                  id="thesisTopic"
-                  value={academic.thesisTopic || ""}
-                  onChange={handleChange}
-                  placeholder="Research Topic"
-                  disabled={isSubmitted}
-                />
-
-              </div>
-
-              <div className="md:col-span-2">
-
-                <InputField
-                  label="Research Supervisor"
-                  id="researchSupervisor"
-                  value={
-                    academic.researchSupervisor || ""
-                  }
-                  onChange={handleChange}
-                  placeholder="Dr. Name"
-                  disabled={isSubmitted}
-                />
-
-              </div>
-
-            </div>
-          )}
-
-        </FormSection>
-
+      <InputField
+        label="Research Supervisor"
+        id="researchSupervisor"
+        value={academic.researchSupervisor || ""}
+        onChange={handleChange}
+        placeholder="Dr. Name"
+        disabled={isSubmitted}
+      />
+    </>
+  )}
+</FormSection>
         {/* Timeline */}
 
         <FormSection
@@ -563,7 +557,7 @@ console.log(
             id="admissionBatch"
             value={academic.admissionBatch || ""}
             onChange={handleChange}
-            placeholder="2021-2025"
+  placeholder={String(currentYear)}
           />
 
           <InputField
@@ -571,7 +565,7 @@ console.log(
             id="academicCycle"
             value={academic.academicCycle || ""}
             onChange={handleChange}
-            placeholder="2024-2025"
+  placeholder={`${currentYear}-${currentYear + 2}`}
           />
 
           <SelectField
@@ -580,12 +574,7 @@ console.log(
             id="currentYear"
             value={academic.currentYear || ""}
             onChange={handleChange}
-            options={[
-              { value: '1', label: 'Year 1' },
-              { value: '2', label: 'Year 2' },
-              { value: '3', label: 'Year 3' },
-              { value: '4', label: 'Year 4' },
-            ]}
+            options={currentYears}
           />
 
           <SelectField
@@ -596,16 +585,7 @@ console.log(
               academic.currentSemester || ""
             )}
             onChange={handleChange}
-            options={[
-              { value: '1', label: 'Sem 1' },
-              { value: '2', label: 'Sem 2' },
-              { value: '3', label: 'Sem 3' },
-              { value: '4', label: 'Sem 4' },
-              { value: '5', label: 'Sem 5' },
-              { value: '6', label: 'Sem 6' },
-              { value: '7', label: 'Sem 7' },
-              { value: '8', label: 'Sem 8' },
-            ]}
+            options={currentSemesters}
           />
 
         </FormSection>
@@ -623,22 +603,7 @@ console.log(
             id="modeOfStudy"
             value={academic.modeOfStudy || ""}
             onChange={handleChange}
-            options={[
-              {
-                value: "Full-Time",
-                label: "Full-Time"
-              },
-
-              {
-                value: "Part-Time",
-                label: "Part-Time"
-              },
-
-              {
-                value: "Distance",
-                label: "Distance"
-              },
-            ]}
+            options={studyModes}
           />
 
           <SelectField
@@ -647,27 +612,7 @@ console.log(
             id="admissionCategory"
             value={academic.admissionCategory || ""}
             onChange={handleChange}
-            options={[
-              {
-                value: "Merit",
-                label: "Merit"
-              },
-
-              {
-                value: "Entrance",
-                label: "Entrance"
-              },
-
-              {
-                value: "Management",
-                label: "Management"
-              },
-
-              {
-                value: "Sports",
-                label: "Sports"
-              },
-            ]}
+            options={admissionCategories}
           />
 
         </FormSection>

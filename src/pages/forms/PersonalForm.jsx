@@ -201,7 +201,7 @@
     const updateSection = useStore((state) => state.updateSection);
       const navigate = useNavigate();
 
-
+const {castes,socialCategories,states,countries,nationalities,genders,religions,languages,motherTongues,visaStatuses,visaTypes} = useStore();
     const [errors, setErrors] = useState({});
     const [showKeyboard, setShowKeyboard] = useState(false);
 
@@ -733,12 +733,7 @@
               id="gender"
               value={personal.gender || ""}
               onChange={handleChange}
-              options={[
-                { value: "", label: "Select Gender" },
-                { value: "Male", label: "Male" },
-                { value: "Female", label: "Female" },
-                { value: "Other", label: "Other/Transgender" },
-              ]}
+              options={genders}
             />
           </FormSection>
 
@@ -749,7 +744,7 @@
               id="nationality"
               value={personal.nationality || ""}
               onChange={handleChange}
-              options={NATIONALITIES.map((nat) => ({ value: nat, label: nat }))}
+              options={nationalities}
             />
             <SelectField
               disabled={isSubmitted}
@@ -757,11 +752,7 @@
               id="domicileState"
               value={personal.domicileState || ""}
               onChange={handleChange}
-              options={[
-                { value: "Kerala", label: "Kerala" },
-                { value: "Tamil Nadu", label: "Tamil Nadu" },
-                { value: "Karnataka", label: "Karnataka" },
-              ]}
+              options={Object.keys(states)}
             />
             <SelectField
               disabled={isSubmitted}
@@ -769,12 +760,7 @@
               id="religion"
               value={personal.religion || ""}
               onChange={handleChange}
-              options={[
-                { value: "Hindu", label: "Hindu" },
-                { value: "Muslim", label: "Muslim" },
-                { value: "Christian", label: "Christian" },
-                { value: "Other", label: "Other" },
-              ]}
+              options={religions}
             />
             <SelectField
               disabled={isSubmitted}
@@ -782,12 +768,7 @@
               id="socialCategory" // Updated ID to match backend key
               value={personal.socialCategory || ""} // Changed from .category to .socialCategory
               onChange={handleChange}
-              options={[
-                { value: "General", label: "General" },
-                { value: "OBC", label: "OBC" },
-                { value: "SC", label: "SC" },
-                { value: "ST", label: "ST" },
-              ]}
+              options={socialCategories}
             />{" "}
             <SelectField
               disabled={isSubmitted}
@@ -795,7 +776,7 @@
               id="caste"
               value={personal.caste}
               onChange={handleChange}
-              options={CASTES.map((caste) => ({ value: caste, label: caste }))}
+              options={castes}
             />
             <SelectField
               disabled={isSubmitted}
@@ -841,7 +822,7 @@
               disabled={isSubmitted}
               value={personal.passportCountry || ""}
               onChange={handleChange}
-              options={countryOptions}
+              options={countries}
             />
             <InputField
               label="Passport Expiry Date"
@@ -910,7 +891,7 @@
                     value={personal.visaType || ""}
                     onChange={handleChange}
                     disabled={isSubmitted}
-                    options={VISA_TYPES.map((v) => ({ value: v, label: v }))}
+                    options={visaTypes}
                     className="animate-in fade-in slide-in-from-left-2 duration-300"
                   />
                 )}
@@ -933,7 +914,7 @@
                     value={personal.visaCountry || ""}
                     onChange={handleChange}
                     disabled={isSubmitted}
-                    options={countryOptions}
+                    options={countries}
                   />
 
                   {/* Row 3: Dates */}
@@ -967,9 +948,7 @@
                     value={personal.visaStatus || ""}
                     onChange={handleChange}
                     disabled={isSubmitted}
-                    options={[
-                      { value: "Active", label: "Active" }, { value: "Expired", label: "Expired" }, { value: "Pending", label: "Pending" }
-                    ]}
+                    options={visaStatuses}
                   />
   <FileInput
     label="Visa / Permit Document"
@@ -1009,11 +988,7 @@
               value={personal.motherTongue}
               onChange={handleChange}
               required
-              options={[
-                { value: "", label: "Select Mother Tongue" },
-                { value: "Malayalam", label: "Malayalam" },
-                { value: "English", label: "English" },
-              ]}
+              options={motherTongues}
             />
             <SelectField
               label="Languages Known"
@@ -1026,11 +1001,7 @@
                 // For multiple select, e.target.value is usually the updated array
                 updateSection("personal", { languagesKnown: e.target.value });
               }}
-              options={[
-                { value: "Malayalam", label: "Malayalam" },
-                { value: "English", label: "English" },
-                { value: "Hindi", label: "Hindi" },
-              ]}
+              options={languages}
               multiple
             />{" "}
           </FormSection>

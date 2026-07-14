@@ -9,7 +9,42 @@ const initialState = {
   isSubmitted: false,
   isLoading: false,
   isDemoLocked: false,
-
+notifications: [],
+notificationLoading: false,
+faculty: [],
+programLevels: [],
+departments: [],
+degreeNames: [],
+specializations: [],
+currentYears: [],
+currentSemesters: [],
+studyModes: [],
+admissionCategories: [],
+genders: [],
+nationalities: [],
+countries: [],
+states: {},
+socialCategories: [],
+castes: [],
+visaTypes: [],
+visaStatuses: [],
+motherTongues: [],
+languages: [],
+relations: [],
+bloodGroups: [],
+vaccinationStatuses: [],
+qualifications: [],
+qualificationLevels: [],
+qualificationModes: [],
+examNames: [],
+scholarshipCategories: [],
+grantCategories: [],
+bankNames: [],
+indexingServices: [],
+presentationTypes: [],
+conferenceTypes: [],
+patentStatuses: [],
+membershipTypes: [],
   user: null,
   token: null,
 
@@ -23,7 +58,7 @@ const initialState = {
     department: "",
     programLevel: "",
     degreeName: "",
-
+    specializationCustom: "",
 
     specialization: "",
 
@@ -206,6 +241,7 @@ const initialState = {
 
   migrationError: "",
 },
+
 
   /* FINANCIAL */
   financial: {
@@ -571,7 +607,42 @@ export const useStore = create(
         set({
           isSubmitted: status,
         }),
+deleteProfileRecord: async (section, recordId) => {
+  try {
+    const token = get().token;
 
+    const response = await fetch(`${import.meta.env.VITE_SERVER}/api/student/record/${section}/${recordId}`,{
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      }
+    );
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      return {
+        success: false,
+        message: data.message || "Failed to delete record.",
+      };
+    }
+
+    return {
+      success: true,
+      data,
+    };
+
+  } catch (error) {
+
+    return {
+      success: false,
+      message: error.message,
+    };
+
+  }
+},
 saveAndRefresh: async (
   payload,
   isFormData = false
@@ -654,64 +725,200 @@ if (res.status === 401) {
 await get().fetchCanEdit();
 
 },
-
-submitUnlockRequest: async (
-  payload
-) => {
+submitUnlockRequest: async (payload) => {
 
   try {
 
-    const token =
-      get().token;
+    const token = get().token;
 
-    const res =
-      await fetch(
+    const res = await fetch(
+      `${import.meta.env.VITE_SERVER}/api/unlock-request`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(payload),
+      }
+    );
 
-        `${import.meta.env.VITE_SERVER}/api/unlock-request`,
-
-        {
-
-          method: "POST",
-
-          headers: {
-
-            "Content-Type":
-              "application/json",
-
-            Authorization:
-              `Bearer ${token}`
-
-          },
-
-          body:
-            JSON.stringify(
-              payload
-            )
-
-        }
-
-      );
-
-    const result =
-      await res.json();
+    const result = await res.json();
 
     if (!res.ok) {
-
       throw new Error(
-
-        result.message ||
-
-        "Request failed"
-
+        result.message || "Unlock request failed"
       );
-
     }
 
     return result;
 
   } catch (err) {
 
-    console.log(err);
+    console.error(err);
+
+    throw err;
+
+  }
+
+},
+submitProfileUpdateRequest: async (payload) => {
+
+  try {
+
+    const token = get().token;
+
+    const res = await fetch(
+      `${import.meta.env.VITE_SERVER}/api/`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(payload),
+      }
+    );
+
+    const result = await res.json();
+
+    if (!res.ok) {
+      throw new Error(
+        result.message || "Profile update request failed"
+      );
+    }
+
+    return result;
+
+  } catch (err) {
+
+    console.error(err);
+
+    throw err;
+
+  }
+
+},
+submitFieldCorrectionRequest: async (corrections, remarks = "") => {
+  try {
+    const token = get().token;
+
+    const payload = {
+      updateType: "field_correction",
+      changes: corrections,
+      remarks,
+    };
+
+    const res = await fetch(
+      `${import.meta.env.VITE_SERVER}/api/profile-update-request`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(payload),
+      }
+    );
+
+    const result = await res.json();
+
+    if (!res.ok) {
+      throw new Error(
+        result.message || "Field correction request failed"
+      );
+    }
+
+    return result;
+
+  } catch (err) {
+    console.error(err);
+    throw err;
+  }
+},
+fetchNotifications: async () => {
+
+  try {
+
+    const token = get().token;
+
+    set({
+      notificationLoading: true,
+    });
+
+    const res = await fetch(
+      `${import.meta.env.VITE_SERVER}/api/notifications`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+
+    const result = await res.json();
+
+    if (!res.ok) {
+      throw new Error(
+        result.message || "Failed to fetch notifications."
+      );
+    }
+
+    set({
+
+      notifications: result.notifications || [],
+
+      notificationLoading: false,
+
+    });
+
+    return result;
+
+  } catch (err) {
+
+    set({
+      notificationLoading: false,
+    });
+
+    console.error(err);
+
+    throw err;
+
+  }
+
+},
+deleteMyNotifications: async () => {
+
+  try {
+
+    const token = get().token;
+
+    const res = await fetch(
+      `${import.meta.env.VITE_SERVER}/api/notifications`,
+      {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+
+    const result = await res.json();
+
+    if (!res.ok) {
+      throw new Error(
+        result.message || "Failed to delete notifications."
+      );
+    }
+
+    set({
+      notifications: [],
+    });
+
+    return result;
+
+  } catch (err) {
+
+    console.error(err);
 
     throw err;
 
@@ -785,7 +992,74 @@ getMyUnlockRequests: async () => {
 
 },
 
+fetchDropdowns: async () => {
+  try {
+    const SERVER = import.meta.env.VITE_SERVER;
 
+    const res = await fetch(
+      `${SERVER}/api/dropdowns`
+    );
+
+    const result = await res.json();
+
+    if (!result.success) {
+      return result;
+    }
+
+    const data = result.data;
+
+    set({
+      faculty: data.faculty || [],
+      programLevels: data.programLevels || [],
+      departments: data.departments || [],
+      degreeNames: data.degreeNames || [],
+      specializations: data.specializations || [],
+      currentYears: data.currentYears || [],
+      currentSemesters: data.currentSemesters || [],
+      studyModes: data.studyModes || [],
+      admissionCategories: data.admissionCategories || [],
+      genders: data.genders || [],
+      nationalities: data.nationalities || [],
+      religions: data.religions ||[],
+      countries: data.countries || [],
+      states: data.states || {},
+      socialCategories: data.socialCategories || [],
+      castes: data.castes || [],
+      visaTypes: data.visaTypes || [],
+      visaStatuses: data.visaStatuses || [],
+      motherTongues: data.motherTongues || [],
+      languages: data.languages || [],
+      relations: data.relations || [],
+      bloodGroups: data.bloodGroups || [],
+      vaccinationStatuses: data.vaccinationStatuses || [],
+      qualifications: data.qualifications || [],
+      qualificationLevels: data.qualificationLevels || [],
+      qualificationModes: data.qualificationModes || [],
+      examNames: data.examNames || [],
+      scholarshipCategories: data.scholarshipCategories || [],
+      grantCategories: data.grantCategories || [],
+      bankNames: data.bankNames || [],
+      indexingServices: data.indexingServices || [],
+      presentationTypes: data.presentationTypes || [],
+      conferenceTypes: data.conferenceTypes || [],
+      patentStatuses: data.patentStatuses || [],
+      membershipTypes: data.membershipTypes || [],
+      publicationTypes: data.publicationTypes || [],
+publicationIndexedIn: data.publicationIndexedIn || [],
+publicationStatuses: data.publicationStatuses || []
+    });
+
+    return result;
+
+  } catch (error) {
+    console.error(error);
+
+    return {
+      success: false,
+      message: error.message
+    };
+  }
+},
       toggleSubmitted: () =>
         set((state) => ({
           isSubmitted: !state.isSubmitted,

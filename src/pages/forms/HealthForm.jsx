@@ -13,7 +13,7 @@ export default function HealthForm() {
 
 
   const navigate = useNavigate();
-
+const {vaccinationStatuses,bloodGroups} = useStore();
 const saveAndRefresh = useStore((s) => s.saveAndRefresh);
   const fetchCanEdit = useStore((s) => s.fetchCanEdit);
 
@@ -139,30 +139,20 @@ const handleSave = async () => {
           id="bloodGroup"
           value={health.bloodGroup || ""}
           onChange={handleChange}
-          options={[
-            { value: '', label: 'Select' },
-            { value: 'A+', label: 'A+' },
-            { value: 'A-', label: 'A-' },
-            { value: 'B+', label: 'B+' },
-            { value: 'B-', label: 'B-' },
-            { value: 'O+', label: 'O+' },
-            { value: 'O-', label: 'O-' },
-            { value: 'AB+', label: 'AB+' },
-            { value: 'AB-', label: 'AB-' },
-          ]}
+          options={bloodGroups}
         />
         <InputField 
           label="Height (cm)" 
           value={health.physicalDimensions?.height || ""} 
           onChange={(e) => handleNestedChange('physicalDimensions', 'height', e.target.value)} 
-          placeholder="e.g. 175cm"
+          placeholder="e.g. 175"
           disabled={isSubmitted} 
         />
         <InputField 
           label="Weight (kg)" 
           value={health.physicalDimensions?.weight || ""} 
           onChange={(e) => handleNestedChange('physicalDimensions', 'weight', e.target.value)} 
-          placeholder="e.g. 70kg"
+          placeholder="e.g. 70"
           disabled={isSubmitted} 
         />
       </FormSection>
@@ -317,12 +307,7 @@ onChange={(e) =>
           id="vaccinationStatus"
           value={health.vaccinationStatus || ""}
           onChange={handleChange}
-          options={[
-            { value: '', label: 'Select' },
-            { value: 'Completed', label: 'Fully Vaccinated' },
-            { value: 'Partially', label: 'Partially Vaccinated' },
-            { value: 'None', label: 'Not Vaccinated' },
-          ]}
+          options={vaccinationStatuses}
         />
 
         {(health.vaccinationStatus === 'Completed' || health.vaccinationStatus === 'Partially') && (

@@ -18,8 +18,9 @@ import {
 import useHashFocus from '../../hooks/useHashFocus';
 import { useNavigate } from "react-router-dom";
 export default function ProfessionalForm() {
+  const {deleteProfileRecord}=useStore();
     const navigate = useNavigate();
-
+  const {membershipTypes,patentStatuses,conferenceTypes,presentationTypes,indexingServices,publicationStatuses,publicationIndexedIn,publicationTypes} =useStore();
   useHashFocus();
   const isSubmitted = useStore((s) => s.isSubmitted);
   const professional = useStore((s) => s.professional) || {};
@@ -413,6 +414,139 @@ const handleSave = async () => {
   navigate("/forms/residential");
 };
 
+const handleDeletePublication = async (index) => {
+
+  const publication = professional.publications[index];
+
+  if (!publication) return;
+
+  if (!publication._id) {
+    updateSection("professional", {
+      publications: professional.publications.filter((_, i) => i !== index),
+    });
+    return;
+  }
+
+  const result = await deleteProfileRecord(
+    "publications",
+    publication._id
+  );
+
+  if (result.success) {
+    updateSection("professional", {
+      publications: professional.publications.filter((_, i) => i !== index),
+    });
+  } else {
+    alert(result.message);
+  }
+};
+const handleDeleteConference = async (index) => {
+
+  const conference = professional.conferences[index];
+
+  if (!conference) return;
+
+  if (!conference._id) {
+    updateSection("professional", {
+      conferences: professional.conferences.filter((_, i) => i !== index),
+    });
+    return;
+  }
+
+  const result = await deleteProfileRecord(
+    "conferences",
+    conference._id
+  );
+
+  if (result.success) {
+    updateSection("professional", {
+      conferences: professional.conferences.filter((_, i) => i !== index),
+    });
+  } else {
+    alert(result.message);
+  }
+};
+const handleDeleteExperience = async (index) => {
+
+  const experience = professional.experience[index];
+
+  if (!experience) return;
+
+  if (!experience._id) {
+    updateSection("professional", {
+      experience: professional.experience.filter((_, i) => i !== index),
+    });
+    return;
+  }
+
+  const result = await deleteProfileRecord(
+    "experience",
+    experience._id
+  );
+
+  if (result.success) {
+    updateSection("professional", {
+      experience: professional.experience.filter((_, i) => i !== index),
+    });
+  } else {
+    alert(result.message);
+  }
+};
+
+const handleDeletePatent = async (index) => {
+
+  const patent = professional.patents[index];
+
+  if (!patent) return;
+
+  if (!patent._id) {
+    updateSection("professional", {
+      patents: professional.patents.filter((_, i) => i !== index),
+    });
+    return;
+  }
+
+  const result = await deleteProfileRecord(
+    "patents",
+    patent._id
+  );
+
+  if (result.success) {
+    updateSection("professional", {
+      patents: professional.patents.filter((_, i) => i !== index),
+    });
+  } else {
+    alert(result.message);
+  }
+};
+
+const handleDeleteMembership = async (index) => {
+
+  const membership = professional.membershipUrl[index];
+
+  if (!membership) return;
+
+  if (!membership._id) {
+    updateSection("professional", {
+      membershipUrl: professional.membershipUrl.filter((_, i) => i !== index),
+    });
+    return;
+  }
+
+  const result = await deleteProfileRecord(
+    "membershipUrl",
+    membership._id
+  );
+
+  if (result.success) {
+    updateSection("professional", {
+      membershipUrl: professional.membershipUrl.filter((_, i) => i !== index),
+    });
+  } else {
+    alert(result.message);
+  }
+};
+
   return (
     <FormWrapper
       title="Professional & Research"
@@ -426,7 +560,7 @@ onSave={handleSave}
             <div key={index} className="p-4 border border-slate-200 rounded-xl grid md:grid-cols-2 gap-4 relative bg-slate-50">
               <button
                 type="button"
-                onClick={() => updateSection("professional", { publications: professional.publications.filter((_, i) => i !== index) })}
+onClick={() => handleDeletePublication(index)}
                 className="absolute right-0 top-0 text-red-500 p-4"
               >
                 <Trash2 size={16} />
@@ -446,12 +580,7 @@ onSave={handleSave}
                 value={pub.indexedIn || ""}
                 disabled={isSubmitted}
                 onChange={(e) => handleArrayUpdate("publications", index, "indexedIn", e.target.value)}
-                options={[
-                  { value: "", label: "Select..." },
-                  { value: "Scopus", label: "Scopus" },
-                  { value: "Web of Science", label: "Web of Science" },
-                  { value: "Others", label: "Others" },
-                ]}
+                options={indexingServices}
               />
 
               <InputField label="Volume" value={pub.volume || ""} onChange={(e) => handleArrayUpdate("publications", index, "volume", e.target.value)} />
@@ -504,7 +633,7 @@ onSave={handleSave}
         <div className="md:col-span-2 space-y-6">
           {(professional.conferences || []).map((conf, index) => (
             <div key={index} className="p-4 border border-slate-200 rounded-xl grid md:grid-cols-2 gap-4 relative bg-slate-50">
-              <button type="button" onClick={() => updateSection("professional", { conferences: professional.conferences.filter((_, i) => i !== index) })} className="absolute right-0 top-0 text-red-500 p-4">
+              <button type="button" onClick={() => handleDeleteConference(index)} className="absolute right-0 top-0 text-red-500 p-4">
                 <Trash2 size={16} />
               </button>
               <SelectField
@@ -512,11 +641,7 @@ onSave={handleSave}
                 disabled={isSubmitted}
                 value={conf.presentationType || "Conference Presentation"}
                 onChange={(e) => handleArrayUpdate("conferences", index, "presentationType", e.target.value)}
-                options={[
-                  { value: "Conference Presentation", label: "Conference Presentation" },
-                  { value: "Poster", label: "Poster" },
-                  { value: "Workshop", label: "Workshop" },
-                ]}
+                options={presentationTypes}
               />
 
               <InputField label="Paper Title" value={conf.paperTitle || conf.title || ""} onChange={(e) => handleArrayUpdate("conferences", index, "paperTitle", e.target.value)} />
@@ -528,11 +653,7 @@ onSave={handleSave}
                 disabled={isSubmitted}
                 value={conf.conferenceType || ""}
                 onChange={(e) => handleArrayUpdate("conferences", index, "conferenceType", e.target.value)}
-                options={[
-                  { value: "", label: "Select..." },
-                  { value: "National", label: "National" },
-                  { value: "International", label: "International" },
-                ]}
+                options={conferenceTypes}
               />
 
               <InputField label="Organizer" value={conf.organizer || ""} onChange={(e) => handleArrayUpdate("conferences", index, "organizer", e.target.value)} />
@@ -583,7 +704,7 @@ onSave={handleSave}
         <div className="md:col-span-2 space-y-6">
           {(professional.experience || []).map((exp, index) => (
             <div key={index} className="p-4 border border-slate-200 rounded-xl grid md:grid-cols-2 gap-4 relative bg-slate-50">
-              <button type="button" onClick={() => updateSection("professional", { experience: professional.experience.filter((_, i) => i !== index) })} className="absolute right-0 top-0 text-red-500 p-4">
+              <button type="button" onClick={() => handleDeleteExperience(index)} className="absolute right-0 top-0 text-red-500 p-4">
                 <Trash2 size={16} />
               </button>
               <InputField label="Company" value={exp.company || ""} onChange={(e) => handleArrayUpdate("experience", index, "company", e.target.value)} />
@@ -626,7 +747,7 @@ onSave={handleSave}
         <div className="md:col-span-2 space-y-6">
           {(professional.patents || []).map((pat, index) => (
             <div key={index} className="p-4 border border-slate-200 rounded-xl grid md:grid-cols-2 gap-4 relative bg-slate-50">
-              <button type="button" onClick={() => updateSection("professional", { patents: professional.patents.filter((_, i) => i !== index) })} className="absolute right-0 top-0 text-red-500 p-4">
+              <button type="button" onClick={() => handleDeletePatent(index)} className="absolute right-0 top-0 text-red-500 p-4">
                 <Trash2 size={16} />
               </button>
               <InputField label="Patent Title" value={pat.title || ""} onChange={(e) => handleArrayUpdate("patents", index, "title", e.target.value)} />
@@ -635,22 +756,14 @@ onSave={handleSave}
                 disabled={isSubmitted}
                 value={pat.status || ""} 
                 onChange={(e) => handleArrayUpdate("patents", index, "status", e.target.value)}
-                options={[
-                    { value: "Filed", label: "Filed" },
-                    { value: "Published", label: "Published" },
-                    { value: "Granted", label: "Granted" }
-                ]}
+                options={patentStatuses}
               />
               <SelectField
                 label="Publication Type"
                 disabled={isSubmitted}
                 value={pat.publicationType || "Patent"}
                 onChange={(e) => handleArrayUpdate("patents", index, "publicationType", e.target.value)}
-                options={[
-                  { value: "Patent", label: "Patent" },
-                  { value: "Design", label: "Design" },
-                  { value: "Other", label: "Other" },
-                ]}
+                options={publicationTypes}
               />
 
               <InputField label="Patent Number / Title" value={pat.paperTitle || pat.title || ""} onChange={(e) => handleArrayUpdate("patents", index, "paperTitle", e.target.value)} />
@@ -660,11 +773,7 @@ onSave={handleSave}
                 disabled={isSubmitted}
                 value={pat.indexedIn || ""}
                 onChange={(e) => handleArrayUpdate("patents", index, "indexedIn", e.target.value)}
-                options={[
-                  { value: "", label: "Select..." },
-                  { value: "Local", label: "Local" },
-                  { value: "International", label: "International" },
-                ]}
+                options={publicationIndexedIn}
               />
 
               <InputField label="Volume" value={pat.volume || ""} onChange={(e) => handleArrayUpdate("patents", index, "volume", e.target.value)} />
@@ -725,10 +834,7 @@ onSave={handleSave}
               {!isSubmitted && (
                 <button
                   type="button"
-                  onClick={() => {
-                    const updated = professional.membershipUrl.filter((_, i) => i !== index);
-                    updateSection("professional", { membershipUrl: updated });
-                  }}
+                 onClick={() => handleDeleteMembership(index)}
                   className="absolute right-4 top-4 text-red-500 rounded-full p-2 hover:bg-red-50"
                 >
                   <Trash2 size={18} />
@@ -767,13 +873,7 @@ onSave={handleSave}
                     arr[index] = { ...arr[index], membershipType: e.target.value };
                     updateSection("professional", { membershipUrl: arr });
                   }}
-                  options={[
-                    { value: "", label: "— Select —" },
-                    { value: "Student", label: "Student" },
-                    { value: "Faculty", label: "Faculty" },
-                    { value: "Professional", label: "Professional" },
-                    { value: "Other", label: "Other" },
-                  ]}
+                  options={membershipTypes}
                   disabled={isSubmitted}
                 />
 

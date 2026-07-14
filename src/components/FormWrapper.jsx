@@ -77,7 +77,7 @@ export function FormSection({ title, icon: Icon, children, className }) {
 
 /* ================= INPUT FIELD ================= */
 
-export function InputField({ label, id, required, disabled, ...props }) {
+export function InputField({ label, id, required, disabled,  alwaysEnabled = false, ...props }) {
   const isSubmitted = useStore((s) => s.isSubmitted);
 
   return (
@@ -88,14 +88,15 @@ export function InputField({ label, id, required, disabled, ...props }) {
 
       <input
         id={id}
-        disabled={disabled || isSubmitted}
+disabled={alwaysEnabled ? false : (disabled || isSubmitted)}
         className={cn(
           "w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-lg outline-none transition-all placeholder:text-slate-400",
 
-          !isSubmitted &&
-            "focus:ring-2 focus:ring-primary focus:border-primary",
+         !(isSubmitted && !alwaysEnabled) &&
+  "focus:ring-2 focus:ring-primary focus:border-primary",
 
-          isSubmitted && "bg-gray-100 cursor-not-allowed opacity-70",
+(isSubmitted && !alwaysEnabled) &&
+  "bg-gray-100 cursor-not-allowed opacity-70",
 
           props.className
         )}
@@ -130,13 +131,26 @@ export function SelectField({
     ? [value]
     : [];
 
-  const filteredOptions = options.filter((opt) =>
-    opt.label.toLowerCase().includes(search.toLowerCase())
+const normalizedOptions = (options || [])
+  .map((opt) =>
+    typeof opt === "string"
+      ? { value: opt, label: opt }
+      : opt
+  )
+  .sort((a, b) =>
+    a.label.localeCompare(b.label, undefined, {
+      numeric: true,
+      sensitivity: "base",
+    })
   );
 
-  const showSearch = options.length > 10;
+const filteredOptions = normalizedOptions.filter((opt) =>
+  opt.label.toLowerCase().includes(search.toLowerCase())
+);
 
-  const selectedLabels = options
+const showSearch = normalizedOptions.length > 10;
+
+const selectedLabels = normalizedOptions
     .filter((o) => selectedValues.includes(o.value))
     .map((o) => o.label);
 
@@ -212,7 +226,11 @@ export function SelectField({
             {/* Options */}
             <div className="max-h-60 overflow-y-auto no-scrollbar">
               {filteredOptions.length > 0 ? (
-                filteredOptions.map((opt) => {
+               normalizedOptions
+  .filter((opt) =>
+    opt.label.toLowerCase().includes(search.toLowerCase())
+  )
+  .map((opt) => {
                   const isActive = selectedValues.includes(opt.value);
 
                   return (

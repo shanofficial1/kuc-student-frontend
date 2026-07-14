@@ -14,7 +14,7 @@ export default function ContactForm() {
   const isSubmitted = useStore((s) => s.isSubmitted);
   const contact = useStore((state) => state.contact);
   const updateSection = useStore((state) => state.updateSection);
-
+const {relations,states} = useStore();
   const navigate = useNavigate();
 
   const saveAndRefresh = useStore((s) => s.saveAndRefresh);
@@ -248,11 +248,7 @@ checked={contact.isSameAsMobile || false}
           disabled={isSubmitted}
           value={contact.emergencyContact?.relation || ""}
           onChange={(e) => handleNestedChange("emergencyContact", "relation", e.target.value)}
-          options={[
-            { value: "Father", label: "Father" },
-            { value: "Mother", label: "Mother" },
-            { value: "Guardian", label: "Other/Guardian" },
-          ]}
+          options={relations}
         />
         <div className="space-y-2">
           <label className="block text-sm font-medium text-slate-600">Emergency Phone Number</label>
@@ -298,7 +294,7 @@ checked={contact.isSameAsMobile || false}
 
               value={contact.permanentAddress?.state || ""} 
               onChange={(e) => handleNestedChange("permanentAddress", "state", e.target.value)}
-              options={STATE_LIST.map(s => ({ value: s, label: s }))}
+              options={Object.keys(states)}
             />
             <SelectField 
               label="District" 
@@ -306,16 +302,23 @@ checked={contact.isSameAsMobile || false}
               onChange={(e) => handleNestedChange("permanentAddress", "district", e.target.value)}
                 disabled={isSubmitted}
 
-              options={(LOCATION_DATA[contact.permanentAddress?.state]?.districts ? Object.keys(LOCATION_DATA[contact.permanentAddress.state].districts) : []).map(d => ({ value: d, label: d }))}
-            />
-            <SelectField 
-              label="City/Town" 
-              value={contact.permanentAddress?.city || ""} 
-              onChange={(e) => handleNestedChange("permanentAddress", "city", e.target.value)}
-                disabled={isSubmitted}
-
-              options={(LOCATION_DATA[contact.permanentAddress?.state]?.districts[contact.permanentAddress?.district] || []).map(c => ({ value: c, label: c }))}
-            />
+options={
+    states?.[contact.permanentAddress?.state] || []
+  }            />
+           <InputField
+  label="City/Town"
+  id="city"
+  value={contact.permanentAddress?.city || ""}
+  onChange={(e) =>
+    handleNestedChange(
+      "permanentAddress",
+      "city",
+      e.target.value
+    )
+  }
+  placeholder="Enter City/Town"
+  disabled={isSubmitted}
+/>
             <InputField 
               label="PIN Code" 
               value={contact.permanentAddress?.pinCode || ""} 
@@ -352,20 +355,35 @@ checked={contact.isSameAsMobile || false}
               onChange={(e) => handleNestedChange("correspondenceAddress", "district", e.target.value)}
               options={(LOCATION_DATA[contact.correspondenceAddress?.state]?.districts ? Object.keys(LOCATION_DATA[contact.correspondenceAddress.state].districts) : []).map(d => ({ value: d, label: d }))}
             />
-            <SelectField 
-              disabled={contact.isSameAddress || isSubmitted} 
-              label="City/Town" 
-              value={contact.correspondenceAddress?.city || ""} 
-              onChange={(e) => handleNestedChange("correspondenceAddress", "city", e.target.value)}
-              options={(LOCATION_DATA[contact.correspondenceAddress?.state]?.districts[contact.correspondenceAddress?.district] || []).map(c => ({ value: c, label: c }))}
-            />
+           <InputField
+  label="City/Town"
+  id="city"
+  value={contact.correspondenceAddress?.city || ""}
+  onChange={(e) =>
+    handleNestedChange(
+      "correspondenceAddress",
+      "city",
+      e.target.value
+    )
+  }
+  placeholder="Enter City/Town"
+  disabled={contact.isSameAddress || isSubmitted}
+/>
             <InputField disabled={contact.isSameAddress} label="PIN Code" value={contact.correspondenceAddress?.pinCode || ""} onChange={(e) => handleNestedChange("correspondenceAddress", "pinCode", e.target.value)} />
           </div>
         </div>
 
-        <div className="md:col-span-2 pt-4">
-          <InputField label="Distance from Campus (KM)" id="distanceToCampus" type="number" value={contact.distanceToCampus || ""} onChange={handleChange} />
-        </div>
+   <div className="md:col-span-2 border-t border-slate-100 pt-4">
+  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <InputField
+      label="Distance from Campus (KM)"
+      id="distanceToCampus"
+      type="number"
+      value={contact.distanceToCampus || ""}
+      onChange={handleChange}
+    />
+  </div>
+</div>
       </FormSection>
     </FormWrapper>
   );

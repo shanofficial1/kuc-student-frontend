@@ -1,11 +1,13 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useStore } from '../../store';
-import FormWrapper, { FormSection, InputField } from '../../components/FormWrapper';
+import FormWrapper, { FormSection, InputField ,SelectField} from '../../components/FormWrapper';
 import { getChangedFields, SECTION_API_KEYS } from '../../lib/utils';
 import { Users, Coins, UserPlus, Trash2, ChevronDown } from 'lucide-react';
 import useHashFocus from '../../hooks/useHashFocus';
 import { useNavigate } from "react-router-dom";
 export default function FamilyForm() {
+
+  const {deleteProfileRecord} =useStore();
   useHashFocus();
   const isSubmitted = useStore((s) => s.isSubmitted);
   const family = useStore((state) => state.family);
@@ -15,7 +17,41 @@ export default function FamilyForm() {
   const phoneRef = useRef(null);
   const navigate = useNavigate();
 
+const {qualifications}=useStore();
 
+const handleDeleteSibling = async (index) => {
+
+  const sibling = family.siblings[index];
+
+  if (!sibling) return;
+
+  // Not saved in DB yet
+  if (!sibling._id) {
+    updateSection("family", {
+      siblings: family.siblings.filter((_, i) => i !== index),
+    });
+    return;
+  }
+
+  const result = await deleteProfileRecord(
+    "siblings",
+    sibling._id
+  );
+
+  console.log("RESULT:", result);
+
+  if (result.success) {
+
+    updateSection("family", {
+      siblings: family.siblings.filter((_, i) => i !== index),
+    });
+
+  } else {
+
+    alert(result.message);
+
+  }
+};
 
 const saveAndRefresh =
   useStore((s) => s.saveAndRefresh);
@@ -163,13 +199,20 @@ const handleSave = async () => {
           disabled={isSubmitted} 
         />
         {/* REVERTED: Qualification back to InputField */}
-        <InputField 
-          label="Qualification" 
-          value={family?.father?.qualification || ''} 
-          onChange={(e) => handleNestedChange('father', 'qualification', e.target.value)} 
-          disabled={isSubmitted} 
-          placeholder="e.g. MBA, PhD"
-        />
+        <SelectField
+  label="Qualification"
+  id="qualification"
+  value={family?.father?.qualification || ""}
+  onChange={(e) =>
+    handleNestedChange(
+      "father",
+      "qualification",
+      e.target.value
+    )
+  }
+  options={qualifications}
+  disabled={isSubmitted}
+/>
         <InputField 
           label="Occupation" 
           value={family?.father?.occupation || ''} 
@@ -189,13 +232,20 @@ const handleSave = async () => {
           disabled={isSubmitted} 
         />
         {/* REVERTED: Qualification back to InputField */}
-        <InputField 
-          label="Qualification" 
-          value={family?.mother?.qualification || ''} 
-          onChange={(e) => handleNestedChange('mother', 'qualification', e.target.value)} 
-          disabled={isSubmitted} 
-          placeholder="e.g. BSc, Teacher Training"
-        />
+      <SelectField
+  label="Qualification"
+  id="qualification"
+  value={family?.mother?.qualification || ""}
+  onChange={(e) =>
+    handleNestedChange(
+      "mother",
+      "qualification",
+      e.target.value
+    )
+  }
+  options={qualifications}
+  disabled={isSubmitted}
+/>
         <InputField 
           label="Occupation" 
           value={family?.mother?.occupation || ''} 
@@ -205,110 +255,129 @@ const handleSave = async () => {
       </FormSection>
 
       {/* Financial & Contact */}
-      <FormSection title="Financial & Contact" icon={Coins}>
-        <div className="md:col-span-2">
-          <InputField 
-            label="Annual Family Income (INR)" 
-            id="annualFamilyIncome" 
-            type="number" 
-            value={family?.annualFamilyIncome || ''} 
-            onChange={handleChange} 
-            disabled={isSubmitted} 
-          />
-        </div>
+  <FormSection title="Financial & Contact" icon={Coins}>
+  <InputField
+    label="Annual Family Income (INR)"
+    id="annualFamilyIncome"
+    type="number"
+    value={family?.annualFamilyIncome || ""}
+    onChange={handleChange}
+    disabled={isSubmitted}
+  />
 
-        <div className="space-y-2">
-          <label className="block text-sm font-medium text-slate-600 text-left">Parent Phone</label>
-          <div className={`flex items-stretch bg-slate-50 border border-slate-200 rounded-lg relative focus-within:ring-2 focus-within:ring-primary ${isSubmitted ? 'opacity-70' : ''}`}>
-            <div className="relative border-r border-slate-200 bg-slate-100 rounded-l-lg" ref={phoneRef}>
-              <button
-                type="button"
-                disabled={isSubmitted}
-                onClick={() => setOpenParentPhoneCode(!openParentPhoneCode)}
-                className="flex items-center justify-between w-20 h-full px-3 text-slate-700 font-medium text-sm"
-              >
-                <span>{family?.parentContact?.countryCode || "+91"}</span>
-                <ChevronDown size={14} className={`text-slate-400 transition-transform ${openParentPhoneCode ? 'rotate-180' : ''}`} />
-              </button>
-              {openParentPhoneCode && (
-                <div className="absolute top-[calc(100%+8px)] left-0 z-50 w-48 bg-white border border-slate-100 rounded-xl shadow-xl py-2">
-                  {COUNTRY_CODES.map((code) => (
-                    <button
-                      key={code.value}
-                      type="button"
-                      className={`w-full text-left px-4 py-2.5 text-sm hover:bg-slate-50 ${family?.parentContact?.countryCode === `+${code.value}` ? 'text-blue-600 font-bold' : ''}`}
-                      onClick={() => handleSelectCode(code.value)}
-                    >
-                      +{code.value} ({code.label})
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-            <input
-              type="tel"
-              value={family?.parentContact?.number || ''}
-              onChange={handlePhoneChange}
-              placeholder="00000 00000"
-              disabled={isSubmitted}
-              className="flex-1 px-4 py-3 bg-transparent outline-none text-slate-700 placeholder:text-slate-400"
-            />
-          </div>
-        </div>
+  <div className="space-y-2">
+    <label className="block text-sm font-medium text-slate-600">
+      Parent Phone
+    </label>
 
-        <InputField label="Parent Email" id="parentEmail" type="email" value={family?.parentEmail || ''} onChange={handleChange} disabled={isSubmitted} />
-      </FormSection>
+    <div
+      className={`flex items-stretch bg-slate-50 border border-slate-200 rounded-lg focus-within:ring-2 focus-within:ring-primary ${
+        isSubmitted ? "bg-gray-100 opacity-70" : ""
+      }`}
+    >
+      <div className="relative border-r border-slate-200 bg-slate-100 rounded-l-lg">
+        <input
+          type="text"
+          value={family?.parentContact?.countryCode || "+91"}
+          onChange={(e) =>
+            handleNestedChange("parentContact", "countryCode", e.target.value)
+          }
+          disabled={isSubmitted}
+          className="w-16 h-full px-2 text-center text-slate-700 font-medium text-sm bg-transparent outline-none border-none"
+        />
+      </div>
 
+      <input
+        type="tel"
+        value={family?.parentContact?.number || ""}
+        onChange={(e) =>
+          handleNestedChange("parentContact", "number", e.target.value)
+        }
+        placeholder="00000 00000"
+        disabled={isSubmitted}
+        className="flex-1 px-4 py-3 bg-transparent outline-none text-slate-700 placeholder:text-slate-400"
+      />
+    </div>
+  </div>
+
+  <InputField
+    label="Parent Email"
+    id="parentEmail"
+    type="email"
+    value={family?.parentEmail || ""}
+    onChange={handleChange}
+    disabled={isSubmitted}
+  />
+</FormSection>
       {/* Sibling Details */}
-      <FormSection title="Sibling Details" icon={UserPlus}>
-        <div className="md:col-span-2 space-y-4">
-          {(family?.siblings || []).map((sibling, index) => (
-            <div key={index} className="relative p-4 bg-slate-50 border border-slate-200 rounded-xl flex flex-col md:flex-row gap-4">
-              <input
-                className="w-full px-4 py-2 bg-white border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-primary"
-                placeholder="Sibling Name"
-                disabled={isSubmitted}
-                value={sibling.name || ''}
-                onChange={(e) => {
-                  const newSiblings = [...family.siblings];
-                  newSiblings[index].name = e.target.value;
-                  updateSection('family', { siblings: newSiblings });
-                }}
-              />
-              <input
-                className="w-full px-4 py-2 bg-white border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-primary"
-                placeholder="Education Status"
-                value={sibling.educationStatus || ''}
-                disabled={isSubmitted}
-                onChange={(e) => {
-                  const newSiblings = [...family.siblings];
-                  newSiblings[index].educationStatus = e.target.value;
-                  updateSection('family', { siblings: newSiblings });
-                }}
-              />
-              <button
-                onClick={() => {
-                  const newSiblings = family.siblings.filter((_, i) => i !== index);
-                  updateSection('family', { siblings: newSiblings });
-                }}
-                className="p-2 text-red-500 hover:bg-red-50 rounded-full transition-colors"
-                disabled={isSubmitted}
-              >
-                <Trash2 size={18} />
-              </button>
-            </div>
-          ))}
-          <button
-            type="button"
+    <FormSection title="Sibling Details" icon={UserPlus}>
+  <div className="md:col-span-2 space-y-4">
+    {(family?.siblings || []).map((sibling, index) => (
+      <div
+        key={index}
+        className="relative p-4  border border-slate-200 rounded-xl"
+      >
+        <div className="grid grid-cols-1 md:grid-cols-[1fr_1fr_auto] gap-4 items-end">
+
+          <InputField
+            label="Sibling Name"
+            id={`siblingName-${index}`}
+            value={sibling.name || ""}
             disabled={isSubmitted}
-            onClick={() => updateSection('family', { siblings: [...(family?.siblings || []), { name: '', educationStatus: '' }] })}
-            className="w-full py-4 border-2 border-dashed border-slate-200 rounded-xl text-primary font-semibold hover:bg-blue-50 transition-all flex items-center justify-center gap-2"
-          >
-            <UserPlus size={20} />
-            Add Sibling
-          </button>
+            onChange={(e) => {
+              const newSiblings = [...family.siblings];
+              newSiblings[index].name = e.target.value;
+              updateSection("family", { siblings: newSiblings });
+            }}
+          />
+
+          <SelectField
+            label="Education Status"
+            id={`siblingEducationStatus-${index}`}
+            value={sibling.educationStatus || ""}
+            disabled={isSubmitted}
+            options={qualifications}
+            onChange={(e) => {
+              const newSiblings = [...family.siblings];
+              newSiblings[index].educationStatus = e.target.value;
+              updateSection("family", { siblings: newSiblings });
+            }}
+          />
+
+        <button
+  type="button"
+  disabled={isSubmitted}
+  onClick={() => handleDeleteSibling(index)}
+  className="h-12 w-12 flex items-center justify-center text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+>
+  <Trash2 size={18} />
+</button>
+
         </div>
-      </FormSection>
+      </div>
+    ))}
+
+    <button
+      type="button"
+      disabled={isSubmitted}
+      onClick={() =>
+        updateSection("family", {
+          siblings: [
+            ...(family?.siblings || []),
+            {
+              name: "",
+              educationStatus: "",
+            },
+          ],
+        })
+      }
+      className="w-full py-4 border-2 border-dashed border-slate-200 rounded-xl text-primary font-semibold hover:bg-blue-50 transition-all flex items-center justify-center gap-2"
+    >
+      <UserPlus size={20} />
+      Add Sibling
+    </button>
+  </div>
+</FormSection>
 
       {/* Guardian Address Details */}
       <FormSection title="Guardian Address Details" icon={Users}>

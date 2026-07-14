@@ -15,7 +15,7 @@ export default function FinancialForm() {
   const financial = useStore((state) => state.financial);
   const updateSection = useStore((state) => state.updateSection);
   const navigate = useNavigate();
-
+const {bankNames,grantCategories,scholarshipCategories} =useStore();
 
   const saveAndRefresh =
   useStore((s) => s.saveAndRefresh);
@@ -194,14 +194,7 @@ return (
             }
           }}
           disabled={isSubmitted}
-          options={[
-            { value: "none", label: "None" },
-            { value: "Government", label: "Government" },
-            { value: "Institutional", label: "Institutional" },
-            { value: "JRF", label: "JRF" },
-            { value: "e-Grant", label: "e-Grant" },
-            { value: "others", label: "Others" },
-          ]}
+          options={scholarshipCategories}
         />
 
         {financial.schType === "others" && (
@@ -280,14 +273,7 @@ return (
             }
           }}
           disabled={isSubmitted}
-          options={[
-            { value: "none", label: "None" },
-            { value: "Government", label: "Government" },
-            { value: "Institutional", label: "Institutional" },
-            { value: "JRF", label: "JRF" },
-            { value: "e-Grant", label: "e-Grant" },
-            { value: "others", label: "Others" },
-          ]}
+          options={grantCategories}
         />
 
         {financial.grantType === "others" && (
@@ -344,12 +330,7 @@ return (
           value={financial.educationLoan?.bankName || ""}
           onChange={(e) => handleNestedChange("educationLoan", "bankName", e.target.value)}
           disabled={isSubmitted}
-          options={[
-            { value: "", label: "Select Bank..." },
-            { value: "SBI", label: "State Bank of India" },
-            { value: "HDFC", label: "HDFC Bank" },
-            { value: "ICICI", label: "ICICI Bank" },
-          ]}
+          options={bankNames}
         />
 
       
