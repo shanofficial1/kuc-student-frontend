@@ -555,6 +555,7 @@ export default function RequestHistory() {
   const getMyProfileRequests = useStore((s) => s.getMyProfileRequests);
   const getMyUnlockRequests = useStore((s) => s.getMyUnlockRequests);
 
+
   const fetchRequests = useCallback(async () => {
     try {
       setLoading(true);
@@ -567,6 +568,9 @@ export default function RequestHistory() {
       const profileRequests = normalizeList(profileResponse);
       const unlockRequests = normalizeList(unlockResponse);
 
+
+      console.log(profileRequests,unlockRequests);
+      
       const merged = [
         ...profileRequests.map((item) => ({
           ...item,

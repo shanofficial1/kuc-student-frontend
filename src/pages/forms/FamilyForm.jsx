@@ -17,7 +17,7 @@ export default function FamilyForm() {
   const phoneRef = useRef(null);
   const navigate = useNavigate();
 
-const {qualifications}=useStore();
+const {qualificationLevels}=useStore();
 
 const handleDeleteSibling = async (index) => {
 
@@ -210,7 +210,7 @@ const handleSave = async () => {
       e.target.value
     )
   }
-  options={qualifications}
+  options={qualificationLevels}
   disabled={isSubmitted}
 />
         <InputField 
@@ -243,7 +243,7 @@ const handleSave = async () => {
       e.target.value
     )
   }
-  options={qualifications}
+  options={qualificationLevels}
   disabled={isSubmitted}
 />
         <InputField 
@@ -336,7 +336,7 @@ const handleSave = async () => {
             id={`siblingEducationStatus-${index}`}
             value={sibling.educationStatus || ""}
             disabled={isSubmitted}
-            options={qualifications}
+            options={qualificationLevels}
             onChange={(e) => {
               const newSiblings = [...family.siblings];
               newSiblings[index].educationStatus = e.target.value;

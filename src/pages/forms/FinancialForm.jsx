@@ -6,7 +6,7 @@ import FormWrapper, {
   FileInput,
   SelectField,
 } from "../../components/FormWrapper";
-import { Wallet, Landmark, ShieldCheck } from "lucide-react";
+import { Wallet, Landmark, ShieldCheck,Plus ,Trash2  } from "lucide-react";
 import useHashFocus from '../../hooks/useHashFocus';
 import { useNavigate } from "react-router-dom";
 export default function FinancialForm() {
@@ -16,7 +16,9 @@ export default function FinancialForm() {
   const updateSection = useStore((state) => state.updateSection);
   const navigate = useNavigate();
 const {bankNames,grantCategories,scholarshipCategories} =useStore();
-
+const {
+  deleteProfileRecord,
+} = useStore();
   const saveAndRefresh =
   useStore((s) => s.saveAndRefresh);
   const fetchCanEdit = useStore((s) => s.fetchCanEdit);
@@ -158,171 +160,477 @@ const {bankNames,grantCategories,scholarshipCategories} =useStore();
 const handleSave = async () => {
   navigate("/forms/professional");
 };  
+
+const addScholarship = () => {
+
+  updateSection("financial", {
+
+    scholarships: [
+
+      ...(financial.scholarships || []),
+
+      {
+        schType: "none",
+        schOther: "",
+        schId: "",
+        feeWaiveUrl: {
+          document: "",
+        },
+        fileError: "",
+      },
+
+    ],
+
+  });
+
+};
+
+
+const addGrant = () => {
+
+  updateSection("financial", {
+
+    grants: [
+
+      ...(financial.grants || []),
+
+      {
+        grantType: "none",
+        grantOther: "",
+        grantId: "",
+        grantWaiveUrl: {
+          document: "",
+        },
+        fileError: "",
+      },
+
+    ],
+
+  });
+
+};
+
+const handleDeleteGrant = async (index) => {
+
+  const grant = financial.grants[index];
+
+  if (!grant) return;
+
+  // Not saved yet
+  if (!grant._id) {
+
+    updateSection("financial", {
+      grants: financial.grants.filter((_, i) => i !== index),
+    });
+
+    return;
+
+  }
+
+  const result = await deleteProfileRecord(
+    "grants",
+    grant._id
+  );
+
+  if (result.success) {
+
+    updateSection("financial", {
+      grants: financial.grants.filter((_, i) => i !== index),
+    });
+
+  } else {
+
+    alert(result.message);
+
+  }
+
+};
+const handleGrantFile = (
+  index,
+  e
+) => {
+
+  const arr = [...(financial.grants || [])];
+
+  arr[index] = {
+
+    ...arr[index],
+
+    grantWaiveUrl: {
+      document: e.target.file,
+    },
+
+    fileError: e.target.error,
+
+  };
+
+  updateSection("financial", {
+
+    grants: arr,
+
+  });
+
+};
+
+const handleGrantChange = (
+  index,
+  field,
+  value
+) => {
+
+  const arr = [...(financial.grants || [])];
+
+  arr[index] = {
+
+    ...arr[index],
+
+    [field]: value,
+
+  };
+
+  updateSection("financial", {
+
+    grants: arr,
+
+  });
+
+};
+
+
+
+
+const handleScholarshipFile = (
+  index,
+  e
+) => {
+
+  const arr = [
+    ...(financial.scholarships || [])
+  ];
+
+  arr[index] = {
+
+    ...arr[index],
+
+    feeWaiveUrl: {
+      document: e.target.file,
+    },
+
+    fileError: e.target.error,
+
+  };
+
+  updateSection("financial", {
+
+    scholarships: arr,
+
+  });
+
+};
+
+
+const handleScholarshipChange = (
+  index,
+  field,
+  value
+) => {
+
+  const arr = [
+    ...(financial.scholarships || [])
+  ];
+
+  arr[index] = {
+
+    ...arr[index],
+
+    [field]: value,
+
+  };
+
+  updateSection("financial", {
+
+    scholarships: arr,
+
+  });
+
+};
+
+
+
+
+const handleDeleteScholarship = async (index) => {
+
+  const scholarship =
+    financial.scholarships[index];
+
+  if (!scholarship) return;
+
+  // Not saved in DB yet
+  if (!scholarship._id) {
+
+    updateSection("financial", {
+      scholarships:
+        financial.scholarships.filter(
+          (_, i) => i !== index
+        ),
+    });
+
+    return;
+
+  }
+
+  const result =
+    await deleteProfileRecord(
+      "scholarships",
+      scholarship._id
+    );
+
+  if (result.success) {
+
+    updateSection("financial", {
+      scholarships:
+        financial.scholarships.filter(
+          (_, i) => i !== index
+        ),
+    });
+
+  } else {
+
+    alert(result.message);
+
+  }
+
+};
+
+
 return (
     <FormWrapper
       title="Financial Details"
       description="Provide your scholarship, loan, and bank details for processing."
       onSave={handleSave}
     >
-      {/* ===================== 1. SCHOLARSHIP ===================== */}
-      <FormSection title="Scholarship & Support" icon={Wallet}>
+    <FormSection title="Scholarships & Support" icon={Wallet}>
+
+  <div className="md:col-span-2 space-y-6">
+
+    {(financial.scholarships || []).map((sch, index) => (
+
+      <div
+        key={index}
+        className="relative grid gap-4 rounded-xl border border-slate-200 bg-slate-50 p-4 md:grid-cols-2"
+      >
+
+        {/* Delete Button */}
+
+        <button
+  type="button"
+  onClick={() =>
+    handleDeleteScholarship(index)
+  }
+  className="absolute right-4 top-4 text-red-500"
+>
+  <Trash2 size={18} />
+</button>
+
+        {/* Scholarship Category */}
+
         <SelectField
           label="Scholarship Category"
-          id="schType" // Matches backend "schType"
-          required
-          value={financial.schType || "none"}
-          onChange={(e) => {
-            const val = e.target.value;
-            if (val === "none") {
-              updateSection("financial", {
-                schType: val,
-                schOther: "",
-                schId: "",
-                feeWaiveUrl: { document: "" },
-                feeDocError: "",
-              });
-            } else if (val === "others") {
-              updateSection("financial", {
-                schType: val,
-                schOther: "",
-                schId: "",
-                feeWaiveUrl: { document: "" },
-                feeDocError: "",
-              });
-            } else {
-              handleChange(e);
-            }
-          }}
-          disabled={isSubmitted}
+          value={sch.schType || "none"}
           options={scholarshipCategories}
+          disabled={isSubmitted}
+          onChange={(e) =>
+            handleScholarshipChange(
+              index,
+              "schType",
+              e.target.value
+            )
+          }
         />
 
-        {financial.schType === "others" && (
+        {/* Other */}
+
+        {sch.schType === "others" && (
+
           <InputField
-            label="Specify Scholarship Category"
-            id="schOther"
-            placeholder="Enter scholarship type"
-            required
-            value={financial.schOther || ""}
-            onChange={handleChange}
+            label="Specify Scholarship"
+            value={sch.schOther || ""}
             disabled={isSubmitted}
+            onChange={(e) =>
+              handleScholarshipChange(
+                index,
+                "schOther",
+                e.target.value
+              )
+            }
           />
+
         )}
 
-        {financial.schType && financial.schType !== "none" && (
+        {/* Scholarship ID */}
+
+        {sch.schType !== "none" && (
+
           <>
+
             <InputField
-              label={`${financial.schType === "others" ? "Scholarship" : financial.schType.toUpperCase()} Unique ID`}
-              id="schId" // Matches backend "schId"
-              placeholder="Enter your registration ID"
-              required
-              value={financial.schId || ""}
-              onChange={handleChange}
+              label="Scholarship ID"
+              value={sch.schId || ""}
               disabled={isSubmitted}
+              onChange={(e) =>
+                handleScholarshipChange(
+                  index,
+                  "schId",
+                  e.target.value
+                )
+              }
             />
+
             <FileInput
               label="Fee Waiver Document"
               file={
-                financial.feeWaiveUrl?.document?.name ||
-                financial.feeWaiveUrl?.document
+                sch.feeWaiveUrl?.document?.name ||
+                sch.feeWaiveUrl?.document
               }
               fileUrl={
-                financial.feeWaiveUrl?.document?.url
+                sch.feeWaiveUrl?.document?.url
               }
-              error={financial.feeDocError}
+              error={sch.fileError}
               disabled={isSubmitted}
-              onChange={(e) => {
-                updateSection("financial", {
-                  feeWaiveUrl: {
-                    document: e.target.file,
-                  },
-                  feeDocError: e.target.error,
-                });
-              }}
+              onChange={(e) =>
+                handleScholarshipFile(
+                  index,
+                  e
+                )
+              }
             />
-          </>
-        )}
-      </FormSection>
 
+          </>
+
+        )}
+
+      </div>
+
+    ))}
+
+    <button
+      type="button"
+      disabled={isSubmitted}
+      onClick={addScholarship}
+      className="flex items-center gap-2 font-medium text-primary"
+    >
+      <Plus size={16} />
+      Add Scholarship
+    </button>
+
+  </div>
+
+</FormSection>
       <FormSection title="Grants" icon={ShieldCheck}>
+
+  <div className="md:col-span-2 space-y-6">
+
+    {(financial.grants || []).map((grant, index) => (
+
+      <div
+        key={index}
+        className="relative grid gap-4 rounded-xl border border-slate-200 bg-slate-50 p-4 md:grid-cols-2"
+      >
+
+        <button
+  type="button"
+  onClick={() => handleDeleteGrant(index)}
+  className="absolute right-4 top-4 text-red-500"
+>
+  <Trash2 size={18} />
+</button>
         <SelectField
           label="Grant Category"
-          id="grantType"
-          required
-          value={financial.grantType || "none"}
-          onChange={(e) => {
-            const val = e.target.value;
-            if (val === "none") {
-              updateSection("financial", {
-                grantType: val,
-                grantOther: "",
-                grantId: "",
-                grantWaiveUrl: { document: "" },
-                grantDocError: "",
-              });
-            } else if (val === "others") {
-              updateSection("financial", {
-                grantType: val,
-                grantOther: "",
-                grantId: "",
-                grantWaiveUrl: { document: "" },
-                grantDocError: "",
-              });
-            } else {
-              handleChange(e);
-            }
-          }}
-          disabled={isSubmitted}
+          value={grant.grantType || "none"}
           options={grantCategories}
+          disabled={isSubmitted}
+          onChange={(e) =>
+            handleGrantChange(
+              index,
+              "grantType",
+              e.target.value
+            )
+          }
         />
 
-        {financial.grantType === "others" && (
+        {grant.grantType === "others" && (
+
           <InputField
             label="Specify Grant Category"
-            id="grantOther"
+            value={grant.grantOther || ""}
             placeholder="Enter grant type"
-            required
-            value={financial.grantOther || ""}
-            onChange={handleChange}
             disabled={isSubmitted}
+            onChange={(e) =>
+              handleGrantChange(
+                index,
+                "grantOther",
+                e.target.value
+              )
+            }
           />
+
         )}
 
-        {financial.grantType && financial.grantType !== "none" && (
+        {grant.grantType !== "none" && (
+
           <>
+
             <InputField
-              label={`${financial.grantType === "others" ? "Grant" : financial.grantType.toUpperCase()} Unique ID`}
-              id="grantId"
-              placeholder="Enter your numeric ID"
-              required
-              value={financial.grantId || ""}
-              onChange={handleChange}
+              label="Grant Unique ID"
+              value={grant.grantId || ""}
+              placeholder="Enter your grant ID"
               disabled={isSubmitted}
+              onChange={(e) =>
+                handleGrantChange(
+                  index,
+                  "grantId",
+                  e.target.value
+                )
+              }
             />
+
             <FileInput
-              label="Grant Waiver Document"
+              label="Grant Document"
               file={
-                financial.grantWaiveUrl?.document?.name ||
-                financial.grantWaiveUrl?.document
+                grant.grantWaiveUrl?.document?.name ||
+                grant.grantWaiveUrl?.document
               }
               fileUrl={
-                financial.grantWaiveUrl?.document?.url
+                grant.grantWaiveUrl?.document?.url
               }
-              error={financial.grantDocError}
+              error={grant.fileError}
               disabled={isSubmitted}
-              onChange={(e) => {
-                updateSection("financial", {
-                  grantWaiveUrl: {
-                    document: e.target.file,
-                  },
-                  grantDocError: e.target.error,
-                });
-              }}
+              onChange={(e) =>
+                handleGrantFile(index, e)
+              }
             />
-          </>
-        )}
-      </FormSection>
 
+          </>
+
+        )}
+
+      </div>
+
+    ))}
+
+    <button
+      type="button"
+      disabled={isSubmitted}
+      onClick={addGrant}
+      className="flex items-center gap-2 font-medium text-primary"
+    >
+      <Plus size={16} />
+      Add Grant
+    </button>
+
+  </div>
+
+</FormSection>
       {/* ===================== 2. EDUCATION LOAN ===================== */}
       <FormSection title="Education Loan Details" icon={Wallet}>
         <SelectField

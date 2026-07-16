@@ -175,14 +175,58 @@ const handleDeleteCompetitiveExam = async (index) => {
   };
 
   // --- Filtering & Validation Options ---
-  const getQualificationOptions = (currentQualType) => {
-    const exclusiveTypes = ['10th', 'Plus Two'];
-    const usedTypes = records
-      .map((rec) => rec.qualType)
-      .filter((type) => type && exclusiveTypes.includes(type) && type !== currentQualType);
+  // Generates qualification options based on the *latest* records state.
+  // Ensures the dropdown for the current record always includes its current qualType.
+  const getAvailableQualificationOptions = (currentQualType) => {
+    const qualificationOrder = [
+      'SSLC',
+      'Plus Two',
+      'Diploma',
+      'UG Degree',
+      'PG Degree',
+      'M.Phil',
+      'PhD',
+      'Other',
+    ];
 
-    return QUALIFICATION_OPTIONS.filter((opt) => opt.value === '' || !usedTypes.includes(opt.value));
+    // Count occurrences of backend qualification values in the latest academicRecords state
+    const qualificationCount = {};
+    records.forEach((record) => {
+      const key = record?.qualType;
+      if (!key) return;
+      qualificationCount[key] = (qualificationCount[key] || 0) + 1;
+    });
+
+    // Backend values must be used exactly as they are.
+    const optionByValue = {
+      SSLC: { value: 'SSLC', label: 'SSLC' },
+      'Plus Two': { value: 'Plus Two', label: 'Plus Two / 12th' },
+      Diploma: { value: 'Diploma', label: 'Diploma' },
+      'UG Degree': { value: 'UG Degree', label: 'Undergraduate (UG)' },
+      'PG Degree': { value: 'PG Degree', label: 'Postgraduate (PG)' },
+      'M.Phil': { value: 'M.Phil', label: 'M.Phil' },
+      PhD: { value: 'PhD', label: 'PhD' },
+      Other: { value: 'Other', label: 'Other' },
+    };
+
+    return qualificationOrder
+      .filter((value) => {
+        // Always keep the current record's selected value visible.
+        if (value === currentQualType) return true;
+
+        // Restrict only the other records' selection.
+        if (value === 'SSLC') return (qualificationCount.SSLC || 0) < 1;
+        if (value === 'Plus Two') return (qualificationCount['Plus Two'] || 0) < 1;
+
+        // Unlimited qualifications must never disappear
+        return true;
+      })
+      .map((value) => optionByValue[value])
+      .filter(Boolean);
   };
+
+
+
 
   // --- Isolated Sub-Fields Layout Modifiers ---
   // const renderBaseFields = (record, index) => (
@@ -356,123 +400,10 @@ const handleDeleteCompetitiveExam = async (index) => {
   </>
 );
 
-const renderSecondaryFields=(record,index)=>(
-<>
-{renderCommonFields(record,index)}
-</>
-);
-const renderHigherSecondaryFields=(record,index)=>(
-<>
-{renderCommonFields(record,index)}
-</>
-);
-const renderDiplomaFields=(record,index)=>(
-<>
-{renderCommonFields(record,index)}
-
-<InputField
-label="Diploma Name"
-value={record.degreeName||""}
-onChange={(e)=>updateAcademicField(index,"degreeName",e.target.value)}
-disabled={isSubmitted}
-/>
-
-</>
-);
-
-const renderUGFields=(record,index)=>(
-<>
-{renderCommonFields(record,index)}
-
-<InputField
-label="Degree Name"
-value={record.degreeName||""}
-onChange={(e)=>updateAcademicField(index,"degreeName",e.target.value)}
-disabled={isSubmitted}
-/>
-
-<InputField
-label="Specialization"
-value={record.specialization||""}
-onChange={(e)=>updateAcademicField(index,"specialization",e.target.value)}
-disabled={isSubmitted}
-/>
-
-</>
-);
-
-const renderMPhilFields=(record,index)=>(
-<>
-{renderUGFields(record,index)}
-
-<InputField
-label="Dissertation Title"
-value={record.dissertationTitle||""}
-onChange={(e)=>updateAcademicField(index,"dissertationTitle",e.target.value)}
-disabled={isSubmitted}
-/>
-
-</>
-);
-
-const renderPhDFields = (record, index) => (
+const renderBaseLocationFields = (record, index) => (
   <>
-    <InputField
-      label="Institution / University Name"
-      value={record.institution || ""}
-      onChange={(e) =>
-        updateAcademicField(index, "institution", e.target.value)
-      }
-      disabled={isSubmitted}
-    />
-
-    <InputField
-      label="Degree Name"
-      value={record.degreeName || ""}
-      onChange={(e) =>
-        updateAcademicField(index, "degreeName", e.target.value)
-      }
-      disabled={isSubmitted}
-    />
-
-    <InputField
-      label="Research Subject / Area"
-      value={record.subject || ""}
-      onChange={(e) =>
-        updateAcademicField(index, "subject", e.target.value)
-      }
-      disabled={isSubmitted}
-    />
-
-    <InputField
-      label="Research Supervisor"
-      value={record.researchSupervisor || ""}
-      onChange={(e) =>
-        updateAcademicField(index, "researchSupervisor", e.target.value)
-      }
-      disabled={isSubmitted}
-    />
-
-    <InputField
-      label="Thesis / Dissertation Title"
-      value={record.thesisTitle || ""}
-      onChange={(e) =>
-        updateAcademicField(index, "thesisTitle", e.target.value)
-      }
-      disabled={isSubmitted}
-    />
-
-    <InputField
-      label="Year of Completion"
-      value={record.passYear || ""}
-      onChange={(e) =>
-        updateAcademicField(index, "passYear", e.target.value)
-      }
-      disabled={isSubmitted}
-    />
-
     <SelectField
-      label="Mode of Study"
+      label="Mode"
       value={record.mode || ""}
       options={qualificationModes}
       onChange={(e) =>
@@ -500,24 +431,160 @@ const renderPhDFields = (record, index) => (
       }
       disabled={isSubmitted}
     />
-
-    
   </>
 );
 
-const renderPGFields = (record, index) => (
-  <>
-    {renderCommonFields(record, index)}
 
+const renderSchoolCommonFields = (record, index) => (
+  <>
+    <InputField
+      label="Institution / School"
+      value={record.institution || ""}
+      onChange={(e) =>
+        updateAcademicField(index, "institution", e.target.value)
+      }
+      disabled={isSubmitted}
+    />
+
+    <InputField
+      label="Board"
+      value={record.board || ""}
+      onChange={(e) =>
+        updateAcademicField(index, "board", e.target.value)
+      }
+      disabled={isSubmitted}
+    />
+
+    <InputField
+      label="Year of Passing"
+      value={record.passYear || ""}
+      onChange={(e) =>
+        updateAcademicField(index, "passYear", e.target.value)
+      }
+      disabled={isSubmitted}
+    />
+
+    <SelectField
+      label="Grade Type"
+      value={record.gradeType || ""}
+      options={record.gradeTypeOptions || [
+        { value: "CGPA", label: "CGPA" },
+        { value: "Percentage", label: "Percentage" },
+      ]}
+      onChange={(e) =>
+        updateAcademicField(index, "gradeType", e.target.value)
+      }
+      disabled={isSubmitted}
+    />
+
+    <InputField
+      label="Percentage / CGPA"
+      value={record.percentage || ""}
+      onChange={(e) =>
+        updateAcademicField(index, "percentage", e.target.value)
+      }
+      disabled={isSubmitted}
+    />
+
+    <InputField
+      label="Division"
+      value={record.division || ""}
+      onChange={(e) =>
+        updateAcademicField(index, "division", e.target.value)
+      }
+      disabled={isSubmitted}
+    />
+
+    {renderBaseLocationFields(record, index)}
+  </>
+);
+
+const renderSchoolFields = (record, index) => (
+  <>
+    {renderSchoolCommonFields(record, index)}
+  </>
+);
+
+const renderDiplomaFields = (record, index) => (
+  <>
+    <InputField
+      label="Diploma Name"
+      value={record.degreeName || ""}
+      onChange={(e) =>
+        updateAcademicField(index, "degreeName", e.target.value)
+      }
+      disabled={isSubmitted}
+    />
+
+    <InputField
+      label="Institution"
+      value={record.institution || ""}
+      onChange={(e) =>
+        updateAcademicField(index, "institution", e.target.value)
+      }
+      disabled={isSubmitted}
+    />
+
+    <InputField
+      label="Board / University"
+      value={record.board || ""}
+      onChange={(e) =>
+        updateAcademicField(index, "board", e.target.value)
+      }
+      disabled={isSubmitted}
+    />
+
+    <InputField
+      label="Year of Passing"
+      value={record.passYear || ""}
+      onChange={(e) =>
+        updateAcademicField(index, "passYear", e.target.value)
+      }
+      disabled={isSubmitted}
+    />
+
+    <SelectField
+      label="Grade Type"
+      value={record.gradeType || ""}
+      options={record.gradeTypeOptions || [
+        { value: "CGPA", label: "CGPA" },
+        { value: "Percentage", label: "Percentage" },
+      ]}
+      onChange={(e) =>
+        updateAcademicField(index, "gradeType", e.target.value)
+      }
+      disabled={isSubmitted}
+    />
+
+    <InputField
+      label="Percentage / CGPA"
+      value={record.percentage || ""}
+      onChange={(e) =>
+        updateAcademicField(index, "percentage", e.target.value)
+      }
+      disabled={isSubmitted}
+    />
+
+    <InputField
+      label="Division"
+      value={record.division || ""}
+      onChange={(e) =>
+        updateAcademicField(index, "division", e.target.value)
+      }
+      disabled={isSubmitted}
+    />
+
+    {renderBaseLocationFields(record, index)}
+  </>
+);
+
+const renderDegreeFields = (record, index) => (
+  <>
     <InputField
       label="Degree Name"
       value={record.degreeName || ""}
       onChange={(e) =>
-        updateAcademicField(
-          index,
-          "degreeName",
-          e.target.value
-        )
+        updateAcademicField(index, "degreeName", e.target.value)
       }
       disabled={isSubmitted}
     />
@@ -526,52 +593,263 @@ const renderPGFields = (record, index) => (
       label="Specialization"
       value={record.specialization || ""}
       onChange={(e) =>
-        updateAcademicField(
-          index,
-          "specialization",
-          e.target.value
-        )
+        updateAcademicField(index, "specialization", e.target.value)
+      }
+      disabled={isSubmitted}
+    />
+
+    <InputField
+      label="Institution"
+      value={record.institution || ""}
+      onChange={(e) =>
+        updateAcademicField(index, "institution", e.target.value)
+      }
+      disabled={isSubmitted}
+    />
+
+    <InputField
+      label="Board / University"
+      value={record.board || ""}
+      onChange={(e) =>
+        updateAcademicField(index, "board", e.target.value)
+      }
+      disabled={isSubmitted}
+    />
+
+    <InputField
+      label="Year of Passing"
+      value={record.passYear || ""}
+      onChange={(e) =>
+        updateAcademicField(index, "passYear", e.target.value)
+      }
+      disabled={isSubmitted}
+    />
+
+    <SelectField
+      label="Grade Type"
+      value={record.gradeType || ""}
+      options={record.gradeTypeOptions || [
+        { value: "CGPA", label: "CGPA" },
+        { value: "Percentage", label: "Percentage" },
+      ]}
+      onChange={(e) =>
+        updateAcademicField(index, "gradeType", e.target.value)
+      }
+      disabled={isSubmitted}
+    />
+
+    <InputField
+      label="Percentage / CGPA"
+      value={record.percentage || ""}
+      onChange={(e) =>
+        updateAcademicField(index, "percentage", e.target.value)
+      }
+      disabled={isSubmitted}
+    />
+
+    <InputField
+      label="Division"
+      value={record.division || ""}
+      onChange={(e) =>
+        updateAcademicField(index, "division", e.target.value)
+      }
+      disabled={isSubmitted}
+    />
+
+    {renderBaseLocationFields(record, index)}
+  </>
+);
+
+const renderResearchFields = (record, index) => (
+  <>
+    <InputField
+      label="Degree Name"
+      value={record.degreeName || ""}
+      onChange={(e) =>
+        updateAcademicField(index, "degreeName", e.target.value)
+      }
+      disabled={isSubmitted}
+    />
+
+    <InputField
+      label="Research Area / Subject"
+      value={record.specialization || record.subject || ""}
+      onChange={(e) =>
+        updateAcademicField(index, "specialization", e.target.value)
+      }
+      disabled={isSubmitted}
+    />
+
+    <InputField
+      label="Research Supervisor"
+      value={record.researchSupervisor || ""}
+      onChange={(e) =>
+        updateAcademicField(index, "researchSupervisor", e.target.value)
+      }
+      disabled={isSubmitted}
+    />
+
+    <InputField
+      label="Dissertation / Thesis Title"
+      value={record.thesisTitle || record.dissertationTitle || ""}
+      onChange={(e) =>
+        updateAcademicField(index, "thesisTitle", e.target.value)
+      }
+      disabled={isSubmitted}
+    />
+
+    <InputField
+      label="Institution"
+      value={record.institution || ""}
+      onChange={(e) =>
+        updateAcademicField(index, "institution", e.target.value)
+      }
+      disabled={isSubmitted}
+    />
+
+    <InputField
+      label="Year of Completion"
+      value={record.passYear || ""}
+      onChange={(e) =>
+        updateAcademicField(index, "passYear", e.target.value)
+      }
+      disabled={isSubmitted}
+    />
+
+    <SelectField
+      label="Mode"
+      value={record.mode || ""}
+      options={qualificationModes}
+      onChange={(e) =>
+        updateAcademicField(index, "mode", e.target.value)
+      }
+      disabled={isSubmitted}
+    />
+
+    <SelectField
+      label="Country"
+      value={record.country || ""}
+      options={countries}
+      onChange={(e) =>
+        updateAcademicField(index, "country", e.target.value)
+      }
+      disabled={isSubmitted}
+    />
+
+    <SelectField
+      label="State"
+      value={record.state || ""}
+      options={Object.keys(states)}
+      onChange={(e) =>
+        updateAcademicField(index, "state", e.target.value)
       }
       disabled={isSubmitted}
     />
   </>
 );
 
+const renderOtherFields = (record, index) => (
+  <>
+    <InputField
+      label="Qualification Name"
+      value={record.otherQualification || ""}
+      onChange={(e) =>
+        updateAcademicField(index, "otherQualification", e.target.value)
+      }
+      disabled={isSubmitted}
+    />
+
+    <InputField
+      label="Institution"
+      value={record.institution || ""}
+      onChange={(e) =>
+        updateAcademicField(index, "institution", e.target.value)
+      }
+      disabled={isSubmitted}
+    />
+
+    <InputField
+      label="Board"
+      value={record.board || ""}
+      onChange={(e) =>
+        updateAcademicField(index, "board", e.target.value)
+      }
+      disabled={isSubmitted}
+    />
+
+    <InputField
+      label="Year"
+      value={record.passYear || ""}
+      onChange={(e) =>
+        updateAcademicField(index, "passYear", e.target.value)
+      }
+      disabled={isSubmitted}
+    />
+
+    <SelectField
+      label="Grade Type"
+      value={record.gradeType || ""}
+      options={record.gradeTypeOptions || [
+        { value: "CGPA", label: "CGPA" },
+        { value: "Percentage", label: "Percentage" },
+      ]}
+      onChange={(e) =>
+        updateAcademicField(index, "gradeType", e.target.value)
+      }
+      disabled={isSubmitted}
+    />
+
+    <InputField
+      label="Percentage"
+      value={record.percentage || ""}
+      onChange={(e) =>
+        updateAcademicField(index, "percentage", e.target.value)
+      }
+      disabled={isSubmitted}
+    />
+
+    <InputField
+      label="Division"
+      value={record.division || ""}
+      onChange={(e) =>
+        updateAcademicField(index, "division", e.target.value)
+      }
+      disabled={isSubmitted}
+    />
+
+    {renderBaseLocationFields(record, index)}
+  </>
+);
 
 const renderQualificationFields = (record, index) => {
   switch (record.qualType) {
-
-    case "":
-    case undefined:
-    case null:
-      return renderCommonFields(record, index);
-
-    case "Secondary (10th)":
-      return renderSecondaryFields(record, index);
-
-    case "Higher Secondary (Plus Two)":
-      return renderHigherSecondaryFields(record, index);
+    case "SSLC":
+    case "Plus Two":
+      return renderSchoolFields(record, index);
 
     case "Diploma":
       return renderDiplomaFields(record, index);
 
-    case "Undergraduate":
-      return renderUGFields(record, index);
+    case "UG Degree":
+    case "PG Degree":
+      return renderDegreeFields(record, index);
 
-    case "Postgraduate":
-      return renderPGFields(record, index);
+    case "M.Phil":
+    case "PhD":
+      return renderResearchFields(record, index);
 
-    case "Master of Philosophy (M.Phil)":
-      return renderMPhilFields(record, index);
+    case "Other":
+      return renderOtherFields(record, index);
 
-    case "Doctorate":
-    return renderPhDFields(record, index);
     default:
-      return renderCommonFields(record, index);
+      return (
+        <>
+          {renderCommonFields(record, index)}
+        </>
+      );
   }
 };
 
-const isDoctorate = education.qualType === "Doctorate";
 
   return (
     <FormWrapper
@@ -610,10 +888,13 @@ const isStaticType = [
                   <SelectField
                     label="Qualification Level"
                     value={record.qualType || ''}
-                    options={qualificationLevels}
+                    options={getAvailableQualificationOptions(record?.qualType)}
                     onChange={(e) => updateAcademicField(index, 'qualType', e.target.value)}
                     disabled={isSubmitted}
+                    sort={false}
+                    
                   />
+
 
                  {renderQualificationFields(record, index)}
 
@@ -638,15 +919,17 @@ const isStaticType = [
           {!isSubmitted && (
             <button
               type="button"
-onClick={() =>
-  updateSection("education", {
-    education: [...records, { qualType: "" }]
-  })
-}              className="w-full py-4 border-2 border-dashed border-slate-200 rounded-xl text-primary font-semibold hover:bg-blue-50 transition-all flex items-center justify-center gap-2"
+                  onClick={() =>
+                updateSection("education", {
+                  education: [...records, { qualType: "" }],
+                })
+              }
+              className="w-full py-4 border-2 border-dashed border-slate-200 rounded-xl text-primary font-semibold hover:bg-blue-50 transition-all flex items-center justify-center gap-2"
             >
               <Plus size={20} /> Add Qualification
             </button>
           )}
+
         </div>
       </FormSection>
 

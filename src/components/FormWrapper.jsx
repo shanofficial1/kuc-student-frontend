@@ -5,6 +5,7 @@ import { useStore } from "../store";
 import { compressImage } from "../lib/fileCompression";
 import { compressPdfApi } from "../api/file.api";
 import { useState } from "react";
+
 /* ================= MAIN WRAPPER ================= */
 
 export default function FormWrapper({
@@ -117,6 +118,8 @@ export function SelectField({
   value,
   onChange,
   multiple = false, 
+    sort = true,
+  others = false,
 }) {
   const isSubmitted = useStore((s) => s.isSubmitted);
   const isDisabled = disabled ;
@@ -131,18 +134,30 @@ export function SelectField({
     ? [value]
     : [];
 
-const normalizedOptions = (options || [])
-  .map((opt) =>
-    typeof opt === "string"
-      ? { value: opt, label: opt }
-      : opt
-  )
-  .sort((a, b) =>
+let normalizedOptions = (options || []).map((opt) =>
+  typeof opt === "string"
+    ? { value: opt, label: opt }
+    : opt
+);
+
+if (sort) {
+  normalizedOptions.sort((a, b) =>
     a.label.localeCompare(b.label, undefined, {
       numeric: true,
       sensitivity: "base",
     })
   );
+}
+
+if (
+  others &&
+  !normalizedOptions.some((o) => o.value === "Other")
+) {
+  normalizedOptions.push({
+    value: "Other",
+    label: "Other",
+  });
+}
 
 const filteredOptions = normalizedOptions.filter((opt) =>
   opt.label.toLowerCase().includes(search.toLowerCase())

@@ -245,21 +245,28 @@ membershipTypes: [],
 
   /* FINANCIAL */
   financial: {
-    scholarshipCategory: "",
 
-    feeWaiverDocUrl: "",
+  scholarships: [],
 
-    loanBankName: "",
-    loanBranch: "",
-    loanAmount: "",
+  grants: [],
 
-    bankAccountHolder: "",
+  educationLoan: {
+    bankName: "",
+    branchName: "",
+    amount: "",
+  },
 
-    panNumber: "",
-
+  bankAccount: {
+    accountHolderName: "",
     accountNumber: "",
+    bankName: "",
+    branchName: "",
     ifscCode: "",
   },
+
+  pan: "",
+
+},
 
   /* PROFESSIONAL */
   professional: {
@@ -769,7 +776,7 @@ submitProfileUpdateRequest: async (payload) => {
     const token = get().token;
 
     const res = await fetch(
-      `${import.meta.env.VITE_SERVER}/api/`,
+      `${import.meta.env.VITE_SERVER}/api/profile-update-request`,
       {
         method: "POST",
         headers: {
