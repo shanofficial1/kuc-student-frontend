@@ -5,6 +5,7 @@ import { useStore } from "../store";
 import { compressImage } from "../lib/fileCompression";
 import { compressPdfApi } from "../api/file.api";
 import { useState } from "react";
+import AppAlertDialog  from "../components/ui/AlertDialog"
 
 /* ================= MAIN WRAPPER ================= */
 
@@ -20,7 +21,7 @@ export default function FormWrapper({
   return (
     <div className="max-w-[1024px] mx-auto px-6 py-12">
       <header className="mb-10">
-        <h1 className="text-3xl font-bold text-primary mb-2 tracking-tight">
+        <h1 className="text-3xl font-bold text-primary mb-2 tracking-tight mt-4">
           {title}
         </h1>
         <p className="text-slate-500 max-w-2xl">{description}</p>
@@ -78,35 +79,72 @@ export function FormSection({ title, icon: Icon, children, className }) {
 
 /* ================= INPUT FIELD ================= */
 
-export function InputField({ label, id, required, disabled,  alwaysEnabled = false, ...props }) {
+export function InputField({
+  label,
+  id,
+  required,
+  disabled,
+  alwaysEnabled = false,
+  error,
+  dateYearRule = "all",
+  ...props
+}) {
   const isSubmitted = useStore((s) => s.isSubmitted);
+
+  const isDisabled = alwaysEnabled
+    ? false
+    : (disabled || isSubmitted);
 
   return (
     <div className="space-y-2">
-      <label htmlFor={id} className="block text-sm font-medium text-slate-600">
-        {label} {required && <span className="text-status-error ml-0.5">*</span>}
+      <label
+        htmlFor={id}
+        className="block text-sm font-medium text-slate-600"
+      >
+        {label}{" "}
+        {required && (
+          <span className="text-status-error ml-0.5">*</span>
+        )}
       </label>
 
       <input
         id={id}
-disabled={alwaysEnabled ? false : (disabled || isSubmitted)}
+        disabled={isDisabled}
+        data-date-year-rule={dateYearRule}
+        aria-invalid={!!error}
+        aria-describedby={error ? `${id}-error` : undefined}
         className={cn(
-          "w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-lg outline-none transition-all placeholder:text-slate-400",
+          "w-full px-4 py-3 bg-slate-50 border rounded-lg outline-none transition-all placeholder:text-slate-400",
 
-         !(isSubmitted && !alwaysEnabled) &&
-  "focus:ring-2 focus:ring-primary focus:border-primary",
+          !error && "border-slate-200",
 
-(isSubmitted && !alwaysEnabled) &&
-  "bg-gray-100 cursor-not-allowed opacity-70",
+          error &&
+            "border-status-error focus:ring-2 focus:ring-status-error focus:border-status-error",
+
+          !error &&
+            !(isSubmitted && !alwaysEnabled) &&
+            "focus:ring-2 focus:ring-primary focus:border-primary",
+
+          isDisabled &&
+            "bg-gray-100 cursor-not-allowed opacity-70",
 
           props.className
         )}
         {...props}
       />
+
+      {error && (
+        <p
+          id={`${id}-error`}
+          className="text-sm text-status-error flex items-center gap-1"
+        >
+          <span>⚠</span>
+          {error}
+        </p>
+      )}
     </div>
   );
 }
-
 /* ================= SELECT FIELD ================= */
 
 export function SelectField({
@@ -309,7 +347,13 @@ const [compressing,setCompressing] =useState(false);
 
 const [compressionData,setCompressionData] = useState(null);
 
+const [alertOpen, setAlertOpen] = useState(false);
 
+const [alertData, setAlertData] = useState({
+  title: "",
+  message: "",
+  type: "info",
+});
 
 
 const [showCompressionModal,
@@ -321,15 +365,19 @@ const handlePreview = (e) => {
   e.preventDefault();
 
   console.log("FILE URL =", fileUrl);
+// No file
+if (!fileUrl) {
 
-  // No file
-  if (!fileUrl) {
+  setAlertData({
+    type: "warning",
+    title: "Preview Unavailable",
+    message: "No document is available for preview.",
+  });
 
-    alert("Preview unavailable");
+  setAlertOpen(true);
 
-    return;
-
-  }
+  return;
+}
 
   let url = "";
 
@@ -368,14 +416,18 @@ const handlePreview = (e) => {
     return;
 
   }
+else {
 
-  else {
+  setAlertData({
+    title: "Preview Unavailable",
+    message: "No document is available for preview.",
+  });
 
-    alert("Preview unavailable");
+  setAlertOpen(true);
 
-    return;
+  return;
 
-  }
+}
 
   // Convert Windows path
   const cleanUrl =
@@ -709,6 +761,14 @@ Cancel
 
 )
 }
+
+<AppAlertDialog
+  open={alertOpen}
+  setOpen={setAlertOpen}
+  type={alertData.type}
+  title={alertData.title}
+  message={alertData.message}
+/>
     </>
   );
 }

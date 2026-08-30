@@ -47,8 +47,17 @@ export default function LoginPage() {
       const data = await res.json();
 
       if (data.success) {
-        login(data.user, data.token);
-        navigate('/');
+      login(data.user, data.token);
+
+if (data.user.mustChangePassword) {
+  navigate("/change-password", {
+    replace: true,
+  });
+} else {
+  navigate("/", {
+    replace: true,
+  });
+}
       } else {
         setError(data.message || 'Login failed');
       }
@@ -87,6 +96,7 @@ export default function LoginPage() {
                   <input
                     id="email"
                     type="email"
+                    autoComplete="email"
                     required
                     value={email}
                     onChange={(e) => setemail(e.target.value)}

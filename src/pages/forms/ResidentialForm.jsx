@@ -110,52 +110,99 @@ const handleSave = async () => {
       onSave={handleSave}
     >
       {/* ================= RESIDENTIAL ================= */}
-      <FormSection title="Residential Information" icon={Home}>
-        <SelectField
-          disabled={isSubmitted}
-          label="Residential Type"
-          id="resType"
-          value={residential.resType || ""}
-          onChange={(e) => handleTopLevelChange("resType", e.target.value)}
-          options={[
-            { value: "Day Scholar", label: "Day Scholar" },
-            { value: "Hosteller", label: "Hosteller" },
-          ]}
-        />
+     <FormSection title="Residential Information" icon={Home}>
+  <SelectField
+    disabled={isSubmitted}
+    label="Residential Type"
+    id="resType"
+    value={residential.resType || ""}
+    onChange={(e) =>
+      handleTopLevelChange("resType", e.target.value)
+    }
+    options={[
+      { value: "Day Scholar", label: "Day Scholar" },
+      { value: "Hosteller", label: "Hosteller" },
+      { value: "Stay Outside", label: "Stay Outside" },
+    ]}
+  />
 
-        {/* HOSTELLER FIELDS */}
-        {isHosteller && (
-          <>
-            <InputField
-              label="Room Number"
-              id="roomNo"
-              value={residential.hostel?.roomNo || ""}
-              onChange={(e) => handleNestedChange("hostel", "roomNo", e.target.value)}
-              disabled={isSubmitted}
-            />
-            <InputField
-              label="Hostel Block"
-              id="block"
-              value={residential.hostel?.block || ""}
-              onChange={(e) => handleNestedChange("hostel", "block", e.target.value)}
-              disabled={isSubmitted}
-            />
-            <SelectField
-              disabled={isSubmitted}
-              label="Bed Type"
-              id="bedType"
-              value={residential.hostel?.bedType || ""}
-              onChange={(e) => handleNestedChange("hostel", "bedType", e.target.value)}
-              options={[
-                { value: "", label: "Select Bed Type" },
-                { value: "Single", label: "Single" },
-                { value: "Double Sharing", label: "Double Sharing" },
-                { value: "Triple Sharing", label: "Triple Sharing" },
-              ]}
-            />
-          </>
-        )}
-      </FormSection>
+  {/* HOSTELLER FIELDS */}
+  {isHosteller && (
+    <>
+      <InputField
+        label="Room Number"
+        id="roomNo"
+        value={residential.hostel?.roomNo || ""}
+        onChange={(e) =>
+          handleNestedChange(
+            "hostel",
+            "roomNo",
+            e.target.value
+          )
+        }
+        disabled={isSubmitted}
+      />
+
+      <InputField
+        label="Hostel Block"
+        id="block"
+        value={residential.hostel?.block || ""}
+        onChange={(e) =>
+          handleNestedChange(
+            "hostel",
+            "block",
+            e.target.value
+          )
+        }
+        disabled={isSubmitted}
+      />
+
+      <SelectField
+        disabled={isSubmitted}
+        label="Bed Type"
+        id="bedType"
+        value={residential.hostel?.bedType || ""}
+        onChange={(e) =>
+          handleNestedChange(
+            "hostel",
+            "bedType",
+            e.target.value
+          )
+        }
+        options={[
+          { value: "", label: "Select Bed Type" },
+          { value: "Single", label: "Single" },
+          { value: "Double Sharing", label: "Double Sharing" },
+          { value: "Triple Sharing", label: "Triple Sharing" },
+        ]}
+      />
+    </>
+  )}
+
+  {/* STAY OUTSIDE - HOME ADDRESS */}
+  {residential.resType === "Stay Outside" && (
+    <div className="md:col-span-2 space-y-2">
+      <label className="block text-sm font-medium text-slate-600">
+        Home Address
+      </label>
+
+      <textarea
+        id="homeAddress"
+        placeholder="House Name/No., Street, Locality, City, District, State, Pincode"
+        rows={3}
+        value={residential.homeAddress || ""}
+        onChange={(e) =>
+          handleTopLevelChange(
+            "homeAddress",
+            e.target.value
+          )
+        }
+        disabled={isSubmitted}
+        className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-primary transition-all resize-none"
+      />
+    </div>
+  )}
+</FormSection>
 
       {/* ================= DINING ================= */}
       <FormSection title="Dining Services" icon={Utensils}>
@@ -176,7 +223,7 @@ const handleSave = async () => {
       <FormSection title="Transport Details" icon={Bus}>
         <SelectField
           disabled={isSubmitted}
-          label="Opt for University Bus"
+          label="Opt for Institution Bus"
           id="opted"
           value={residential.transport?.opted ? "Yes" : "No"}
           onChange={(e) => handleNestedChange("transport", "opted", e.target.value === "Yes")}

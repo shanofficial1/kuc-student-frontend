@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { InputField, SelectField } from "../components/FormWrapper";
+import Toast from "../components/ui/Toast";
 
 const StatusCard = ({ title, value, icon: Icon, className = "" }) => (
   <div className={`rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200/80 ${className}`}>
@@ -29,6 +30,16 @@ const StatusCard = ({ title, value, icon: Icon, className = "" }) => (
 );
 
 export default function RequestUnlockPage() {
+
+
+  const [toastOpen, setToastOpen] = useState(false);
+
+const [toastData, setToastData] = useState({
+  type: "info",
+  title: "",
+  message: "",
+});
+
 
   const store = useStore();
   const navigate = useNavigate();
@@ -218,7 +229,17 @@ const handleSubmit = async () => {
       remarks
     );
 
-    alert("Field correction request submitted.");
+setToastData({
+  type: "success",
+  title: "Success",
+  message: "Field correction request submitted.",
+});
+
+setToastOpen(true);
+
+setTimeout(() => {
+  setToastOpen(false);
+}, 2000);
 
   } catch (err) {
     alert(err.message);
@@ -424,7 +445,7 @@ const showPendingFullUnlock =
     fullUnlockActive;
 
   return (
-
+<>
 
     <div className="max-w-[900px] mx-auto px-4 md:px-6 py-10">
       <Link
@@ -797,6 +818,14 @@ disabled={isAddFieldDisabled}
         )}
       </div>
     </div>
+<Toast
+  open={toastOpen}
+  setOpen={setToastOpen}
+  type={toastData.type}
+  title={toastData.title}
+  message={toastData.message}
+/>
+    </>
   );
 }
 

@@ -2,7 +2,7 @@ import React from 'react';
 import { useStore } from '../../store';
 import FormWrapper, { FormSection, InputField, SelectField, FileInput } from '../../components/FormWrapper';
 import { getChangedFields, SECTION_API_KEYS } from '../../lib/utils';
-import { HeartPulse, Accessibility, ShieldCheck, Syringe } from 'lucide-react';
+import { HeartPulse, Accessibility, ShieldCheck, Syringe , Plus, Trash2} from 'lucide-react';
 import useHashFocus from '../../hooks/useHashFocus';
 import { useNavigate } from "react-router-dom";
 export default function HealthForm() {
@@ -11,7 +11,7 @@ export default function HealthForm() {
   const health = useStore((state) => state.health);
   const updateSection = useStore((state) => state.updateSection);
 
-
+const vaccinations = health.vaccinations || [];
   const navigate = useNavigate();
 const {vaccinationStatuses,bloodGroups} = useStore();
 const saveAndRefresh = useStore((s) => s.saveAndRefresh);
@@ -301,47 +301,123 @@ onChange={(e) =>
           onChange={(e) => handleNestedChange('insurance', 'policyNumber', e.target.value)} 
           disabled={isSubmitted} 
         />
-        <SelectField
-          disabled={isSubmitted}
-          label="Vaccination Status"
-          id="vaccinationStatus"
-          value={health.vaccinationStatus || ""}
-          onChange={handleChange}
-          options={vaccinationStatuses}
-        />
-
-        {(health.vaccinationStatus === 'Completed' || health.vaccinationStatus === 'Partially') && (
-      <FileInput
-  label="Vaccination Certificate"
-  file={
-  health.vaccinationDoc?.name || ""
-}
-  fileUrl={
-    health.vaccinationDoc?.url
-  }
-  error={health.vaccinationUploadError}
-  disabled={isSubmitted}
- onChange={(e) => {
-
-  const { file, error } = e.target;
-
-  updateSection("health", {
-
-    vaccinationFile: file,
-
-    vaccinationDoc: {
-      name: file?.name,
-      url: ""
-    },
-
-    vaccinationUploadError: error,
-
-  });
-
-}}
-/>
-        )}
+    
       </FormSection>
+      
+  <FormSection title="Vaccination Details" icon={Syringe}>
+  <div className="space-y-4">
+
+    {vaccinations.map((vaccination, index) => (
+      <div
+        key={index}
+        className="p-4 border border-slate-200 rounded-xl bg-slate-50 space-y-4 relative"
+      >
+
+        {/* Remove */}
+        {!isSubmitted && vaccinations.length > 1 && (
+          <button
+            type="button"
+            onClick={() => {
+              const updated = vaccinations.filter(
+                (_, i) => i !== index
+              );
+
+              updateSection("health", {
+                vaccinations: updated,
+              });
+            }}
+            className="absolute top-3 right-3 text-red-500 hover:text-red-600"
+          >
+            <Trash2 size={18} />
+          </button>
+        )}
+
+     <SelectField
+  disabled={isSubmitted}
+  label={`Vaccination ${index + 1} Status`}
+  id={`vaccinationStatus-${index}`}
+  value={vaccination.status || ""}
+  onChange={(e) => {
+    const updated = [...vaccinations];
+
+    updated[index] = {
+      ...updated[index],
+      status: e.target.value,
+    };
+
+    updateSection("health", {
+      vaccinations: updated,
+    });
+  }}
+  options={vaccinationStatuses}
+/>
+
+<FileInput
+  label="Vaccination Certificate"
+  file={vaccination.vaccinationDoc?.name || ""}
+  fileUrl={vaccination.vaccinationDoc?.url || ""}
+  error={vaccination.uploadError || ""}
+  disabled={isSubmitted}
+  onChange={(e) => {
+    const { file, error } = e.target;
+
+    const updated = [...vaccinations];
+
+    updated[index] = {
+      ...updated[index],
+
+      vaccinationFile: file || null,
+
+      vaccinationDoc: file
+        ? {
+            name: file.name,
+            url: "",
+          }
+        : {
+            name: "",
+            url: "",
+          },
+
+      uploadError: error || "",
+    };
+
+    updateSection("health", {
+      vaccinations: updated,
+    });
+  }}
+/>
+      </div>
+    ))}
+
+    {/* Add Vaccination */}
+    {!isSubmitted && (
+      <button
+        type="button"
+        onClick={() => {
+          updateSection("health", {
+            vaccinations: [
+              ...vaccinations,
+              {
+                status: "",
+                vaccinationDoc: {
+                  name: "",
+                  url: "",
+                },
+                vaccinationFile: null,
+                uploadError: "",
+              },
+            ],
+          });
+        }}
+        className="w-full flex items-center justify-center gap-2 py-3 border-2 border-dashed border-slate-300 rounded-xl text-primary font-semibold hover:bg-blue-50 transition-all"
+      >
+        <Plus size={18} />
+        Add Vaccination
+      </button>
+    )}
+
+  </div>
+</FormSection>
     </FormWrapper>
   );
 }

@@ -35,7 +35,7 @@ import ChangePassword from "./pages/ChangePassword";
 import RequestUnlockPage from "./pages/RequestUnlockPage";
 import MarkRequestPage from "./pages/MarkRequestPage";
 import RequestHistory from "./pages/RequestHistory";
-
+import ProtectedRoute from "./components/ProtectedRoute";
 function Layout() {
   const isSubmitted = useStore((s) => s.isSubmitted);
   const isLoggedIn = useStore((state) => state.isLoggedIn);
@@ -118,8 +118,16 @@ useEffect(() => {
                 element={!isLoggedIn ? <ForgotPasswordPage /> : <Navigate to="/" />}
               />
 
+<Route
+  path="/change-password"
+  element={
+    isLoggedIn
+      ? <ChangePassword />
+      : <Navigate to="/login" replace />
+  }
+/>
               {/* MAIN */}
-              <Route
+              {/* <Route
                 path="/"
                 element={isLoggedIn ? <DashboardPage /> : <Navigate to="/login" />}
               />
@@ -129,7 +137,6 @@ useEffect(() => {
                 element={isLoggedIn ? <GradeCardPage /> : <Navigate to="/login" />}
               />
 
-              {/* FORMS */}
               <Route path="/forms/personal" element={isLoggedIn ? <PersonalForm /> : <Navigate to="/login" />} />
               <Route path="/forms/education" element={isLoggedIn ? <EducationForm /> : <Navigate to="/login" />} />
               <Route path="/forms/academic" element={isLoggedIn ? <AcademicForm /> : <Navigate to="/login" />} />
@@ -146,7 +153,33 @@ useEffect(() => {
               <Route path="/change-password" element={isLoggedIn ? <ChangePassword /> : <Navigate to="/login" />} />
               <Route path="/request" element={isLoggedIn ? <RequestUnlockPage /> : <Navigate to="/login" />} />
               <Route path="/mark-request" element={isLoggedIn ? <MarkRequestPage/> : <Navigate to="/login"/>} />
-              <Route path="/request-history" element={isLoggedIn ? <RequestHistory /> : <Navigate to="/login" />} />
+              <Route path="/request-history" element={isLoggedIn ? <RequestHistory /> : <Navigate to="/login" />} /> */}
+
+              <Route element={<ProtectedRoute />}>
+
+  <Route path="/" element={<DashboardPage />} />
+
+  <Route path="/grade-card" element={<GradeCardPage />} />
+
+  <Route path="/forms/personal" element={<PersonalForm />} />
+  <Route path="/forms/education" element={<EducationForm />} />
+  <Route path="/forms/academic" element={<AcademicForm />} />
+  <Route path="/forms/contact" element={<ContactForm />} />
+  <Route path="/forms/health" element={<HealthForm />} />
+  <Route path="/forms/family" element={<FamilyForm />} />
+  <Route path="/forms/financial" element={<FinancialForm />} />
+  <Route path="/forms/professional" element={<ProfessionalForm />} />
+  <Route path="/forms/residential" element={<ResidentialForm />} />
+  <Route path="/forms/documents" element={<DocumentsForm />} />
+  <Route path="/forms/mentor" element={<MentorDetailsForm />} />
+  <Route path="/forms/review" element={<FinalReviewForm />} />
+
+  <Route path="/request" element={<RequestUnlockPage />} />
+  <Route path="/mark-request" element={<MarkRequestPage />} />
+  <Route path="/request-history" element={<RequestHistory />} />
+
+</Route>
+
               {/* FALLBACK */}
               <Route path="*" element={<Navigate to="/" />} />
 

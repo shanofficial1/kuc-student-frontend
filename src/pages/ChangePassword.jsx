@@ -100,12 +100,21 @@
 
 
 
-
+import { useNavigate } from "react-router-dom";
 import React, { useState } from "react";
 import { useStore } from "../store";
 import { Lock, ShieldCheck, AlertCircle, Save } from "lucide-react";
-
+import Toast from "../components/ui/Toast";
 export default function ChangePassword() {
+  const navigate = useNavigate();
+const user = useStore((s) => s.user);
+
+const submitForgotPasswordRequest =
+  useStore((s) => s.submitForgotPasswordRequest);
+  const [forgotLoading, setForgotLoading] =
+  useState(false);
+const updateUser = useStore((s) => s.updateUser);
+
   const token = useStore((s) => s.token);
   const [passwords, setPasswords] = useState({
     current: "",
@@ -116,6 +125,60 @@ export default function ChangePassword() {
   const [success, setSuccess] = useState(false);
   const [payload, setPayload] = useState(null);
   const [loading, setLoading] = useState(false);
+const [toastOpen, setToastOpen] = useState(false);
+
+const [toastData, setToastData] = useState({
+  type: "info",
+  title: "",
+  message: "",
+});
+
+const handleForgotPassword = async () => {
+
+  try {
+
+    setForgotLoading(true);
+
+    await submitForgotPasswordRequest(
+      user.email
+    );
+
+    setToastData({
+      type: "success",
+      title: "Request Submitted",
+      message:
+        "Your password reset request has been sent to the administrator.",
+    });
+
+    setToastOpen(true);
+
+    setTimeout(() => {
+      setToastOpen(false);
+    }, 2000);
+
+  } catch (err) {
+
+    setToastData({
+      type: "error",
+      title: "Request Failed",
+      message:
+        err.message ||
+        "Unable to submit password reset request.",
+    });
+
+    setToastOpen(true);
+
+    setTimeout(() => {
+      setToastOpen(false);
+    }, 2000);
+
+  } finally {
+
+    setForgotLoading(false);
+
+  }
+
+};
 
   const handleChange = (e) => {
     const { id, value } = e.target;
@@ -171,11 +234,25 @@ export default function ChangePassword() {
 
       const data = await res.json();
 
-      if (data.success) {
-        setSuccess(true);
-      } else {
-        setError(data.message || "Failed to update password.");
-      }
+   if (data.success) {
+
+  updateUser({
+    mustChangePassword: false,
+  });
+
+  setSuccess(true);
+
+  setTimeout(() => {
+    navigate("/", {
+      replace: true,
+    });
+  }, 1000);
+
+} else {
+
+  setError(data.message || "Failed to update password.");
+
+}
     } catch (err) {
       console.error(err);
       setError("Server error. Please try again.");
@@ -185,6 +262,7 @@ export default function ChangePassword() {
   };
 
   return (
+    <>
     <div className="max-w-2xl mx-auto p-6">
       <div className="bg-white rounded-2xl shadow-sm border border-slate-200">
         <div className="p-6 border-b border-slate-100 flex items-center gap-3">
@@ -210,7 +288,20 @@ export default function ChangePassword() {
               className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-primary transition-all"
             />
           </div>
+<div className="flex justify-end mt-2">
 
+  <button
+    type="button"
+    onClick={handleForgotPassword}
+    disabled={forgotLoading}
+    className="text-sm font-semibold text-primary hover:underline disabled:opacity-50"
+  >
+    {forgotLoading
+      ? "Submitting..."
+      : "Forgot Current Password?"}
+  </button>
+
+</div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-2">
               <label className="text-sm font-medium text-slate-600">New Password</label>
@@ -273,5 +364,13 @@ export default function ChangePassword() {
         </form>
       </div>
     </div>
+    <Toast
+  open={toastOpen}
+  setOpen={setToastOpen}
+  type={toastData.type}
+  title={toastData.title}
+  message={toastData.message}
+/>
+    </>
   );
 }

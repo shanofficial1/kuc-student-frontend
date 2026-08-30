@@ -32,7 +32,7 @@ motherTongues: [],
 languages: [],
 relations: [],
 bloodGroups: [],
-vaccinationStatuses: [],
+vaccinations: [],
 qualifications: [],
 qualificationLevels: [],
 qualificationModes: [],
@@ -165,18 +165,10 @@ membershipTypes: [],
     policyNumber: "",
   },
 
-  vaccinationStatus: "",
 
-  vaccinationDoc: {
-    name: "",
-    url: "",
-  },
+disabilityFile: null,
 
-  disabilityFile: null,
-  vaccinationFile: null,
-
-  uploadError: "",
-  vaccinationUploadError: "",
+uploadError: "",
 },
 
   /* FAMILY */
@@ -368,6 +360,185 @@ const clean = (obj) =>
     Object.entries(obj || {}).map(([k, v]) => [k, v ?? ""])
   );
 
+
+/* ================= LOCAL DRAFT STORAGE ================= */
+
+/*
+  Unsubmitted form data is stored locally per user.
+
+  Example:
+  student-form-draft:<user-id-or-email>
+
+  Only form sections are stored. Authentication, dropdowns,
+  notifications, loading flags, etc. are NOT stored in the draft.
+*/
+
+const LOCAL_DRAFT_PREFIX = "student-form-draft:";
+
+const DRAFT_SECTIONS = [
+  "academic",
+  "personal",
+  "contact",
+  "health",
+  "family",
+  "education",
+  "financial",
+  "professional",
+  "residential",
+  "mentor",
+  "documents",
+];
+
+const getDraftUserKey = (user) => {
+  if (!user) return null;
+
+  // Prefer a stable database/user id when available.
+  const id =
+    user._id ||
+    user.id ||
+    user.userId ||
+    user.studentId ||
+    user.email;
+
+  if (!id) return null;
+
+  return `${LOCAL_DRAFT_PREFIX}${String(id).trim().toLowerCase()}`;
+};
+
+const removeFilesForStorage = (value) => {
+  if (typeof File !== "undefined" && value instanceof File) {
+    return undefined;
+  }
+
+  if (typeof Blob !== "undefined" && value instanceof Blob) {
+    return undefined;
+  }
+
+  if (Array.isArray(value)) {
+    return value
+      .map(removeFilesForStorage)
+      .filter((item) => item !== undefined);
+  }
+
+  if (value && typeof value === "object") {
+    return Object.fromEntries(
+      Object.entries(value)
+        .map(([key, item]) => [key, removeFilesForStorage(item)])
+        .filter(([, item]) => item !== undefined)
+    );
+  }
+
+  return value;
+};
+
+const getDraftSections = (state) => {
+  const draft = {};
+
+  DRAFT_SECTIONS.forEach((section) => {
+    if (state[section] !== undefined) {
+      draft[section] = removeFilesForStorage(state[section]);
+    }
+  });
+
+  return draft;
+};
+
+const getLocalDraft = (user) => {
+  if (typeof window === "undefined") return null;
+
+  const key = getDraftUserKey(user);
+  if (!key) return null;
+
+  try {
+    const raw = window.localStorage.getItem(key);
+    if (!raw) return null;
+
+    const parsed = JSON.parse(raw);
+    return parsed?.draft || null;
+  } catch (error) {
+    console.error("Failed to read local student draft:", error);
+    return null;
+  }
+};
+
+const saveLocalDraft = (user, state) => {
+  if (typeof window === "undefined") return;
+
+  const key = getDraftUserKey(user);
+  if (!key) return;
+
+  try {
+    const draft = getDraftSections(state);
+
+    window.localStorage.setItem(
+      key,
+      JSON.stringify({
+        version: 1,
+        updatedAt: new Date().toISOString(),
+        draft,
+      })
+    );
+  } catch (error) {
+    console.error("Failed to save local student draft:", error);
+  }
+};
+
+const clearLocalDraftForUser = (user) => {
+  if (typeof window === "undefined") return;
+
+  const key = getDraftUserKey(user);
+  if (!key) return;
+
+  try {
+    window.localStorage.removeItem(key);
+  } catch (error) {
+    console.error("Failed to clear local student draft:", error);
+  }
+};
+
+/*
+  Deep merge is required because several form sections contain
+  nested objects such as health.physicalDimensions, family.guardian,
+  financial.bankAccount, etc.
+*/
+const mergeLocalDraft = (base, draft) => {
+  if (!draft || typeof draft !== "object") {
+    return base;
+  }
+
+  const merge = (target, source) => {
+    if (!source || typeof source !== "object") {
+      return target;
+    }
+
+    if (Array.isArray(source)) {
+      return source;
+    }
+
+    const result = {
+      ...(target && typeof target === "object" && !Array.isArray(target)
+        ? target
+        : {}),
+    };
+
+    Object.entries(source).forEach(([key, value]) => {
+      if (
+        value &&
+        typeof value === "object" &&
+        !Array.isArray(value)
+      ) {
+        result[key] = merge(result[key], value);
+      } else {
+        result[key] = value;
+      }
+    });
+
+    return result;
+  };
+
+  return merge(base, draft);
+};
+
 /* ================= STORE ================= */
 
 
@@ -469,14 +640,10 @@ isInternational:
       policyNumber: "",
     },
 
-  vaccinationStatus:
-    data.health_details?.vaccinationStatus || "",
-
-  vaccinationDoc:
-    data.health_details?.vaccinationDoc || {
-      name: "",
-      url: "",
-    },
+ vaccinations:
+  Array.isArray(data.health_details?.vaccinations)
+    ? data.health_details.vaccinations
+    : [],
 
   disabilityFile: null,
   vaccinationFile: null,
@@ -586,12 +753,20 @@ export const useStore = create(
       ...initialState,
 
       /* LOGIN */
-      login: (user, token) =>
-        set({
+      login: (user, token) => {
+        const localDraft = getLocalDraft(user);
+
+        set((state) => ({
           isLoggedIn: true,
           user,
           token,
-        }),
+
+          // Restore the unfinished local draft immediately.
+          ...(localDraft
+            ? mergeLocalDraft(state, localDraft)
+            : {}),
+        }));
+      },
 
       /* LOGOUT */
   logout: () => {
@@ -712,6 +887,10 @@ if (res.status === 401) {
 
     }
 
+
+    // A successful profile save is a committed server-side save.
+    // Remove the unfinished local draft only after the API succeeds.
+    clearLocalDraftForUser(get().user);
 
     console.log(
       "FETCHED LATEST PROFILE FROM DB"
@@ -1079,16 +1258,45 @@ publicationStatuses: data.publicationStatuses || []
         }),
 
       /* UPDATE SECTION */
-      updateSection: (section, data) =>
-        set((state) => ({
-          [section]: {
-            ...state[section],
-            ...data,
-          },
-        })),
+      updateSection: (section, data) => {
+        set((state) => {
+          const nextState = {
+            ...state,
+            [section]: {
+              ...state[section],
+              ...data,
+            },
+          };
+
+          // Save automatically whenever the user changes a form section.
+          // The draft is keyed to the logged-in user.
+          saveLocalDraft(state.user, nextState);
+
+          return {
+            [section]: nextState[section],
+          };
+        });
+      },
+
+      /* LOCAL DRAFT */
+      saveLocalDraft: () => {
+        saveLocalDraft(get().user, get());
+      },
+
+      clearLocalDraft: () => {
+        clearLocalDraftForUser(get().user);
+      },
 
          setProfileData: (data) => {
-    set(createProfileState(data));
+    const serverProfile = createProfileState(data);
+    const localDraft = getLocalDraft(get().user);
+
+    set(
+      localDraft
+        ? mergeLocalDraft(serverProfile, localDraft)
+        : serverProfile
+    );
+
     set({ isSubmitted: !get().user?.canEdit });
   },
 
@@ -1152,7 +1360,13 @@ fetchCanEdit: async () => {
             ),
           },
         })),
-        
+        updateUser: (data) =>
+  set((state) => ({
+    user: {
+      ...state.user,
+      ...data,
+    },
+  })),
 
       /* FETCH STUDENT */
 fetchStudent: async () => {
@@ -1202,10 +1416,21 @@ console.log(result);
       data.professional_details?.conferences
     );
 
-    set(createProfileState(data));
+    const serverProfile = createProfileState(data);
+    const localDraft = getLocalDraft(get().user);
+
+    // Database remains the base profile.
+    // Any unfinished local edits are applied on top.
+    set(
+      localDraft
+        ? mergeLocalDraft(serverProfile, localDraft)
+        : serverProfile
+    );
 
     console.log(
-      "FETCHED LATEST PROFILE FROM DB"
+      localDraft
+        ? "FETCHED PROFILE + RESTORED LOCAL DRAFT"
+        : "FETCHED LATEST PROFILE FROM DB"
     );
 
   } catch (err) {
@@ -1226,7 +1451,47 @@ console.log(result);
     console.error(error);
   }
 },
+submitForgotPasswordRequest: async (email) => {
+  try {
 
+    const res = await fetch(
+      `${import.meta.env.VITE_SERVER}/api/forgot-password-request`,
+      {
+        method: "POST",
+
+        headers: {
+          "Content-Type": "application/json",
+        },
+
+        body: JSON.stringify({
+          email,
+        }),
+      }
+    );
+
+    const result = await res.json();
+
+    console.log("FORGOT PASSWORD RESPONSE", result);
+
+    if (!result.success) {
+      throw new Error(
+        result.message || "Request failed."
+      );
+    }
+
+    return result;
+
+  } catch (err) {
+
+    console.error(
+      "Forgot Password Error:",
+      err
+    );
+
+    throw err;
+
+  }
+},
 getRequestEligibility:
 async () => {
 
@@ -1258,10 +1523,13 @@ async () => {
 
 },
       /* RESET */
-      resetStore: () =>
+      resetStore: () => {
+        clearLocalDraftForUser(get().user);
+
         set({
           ...initialState,
-        }),
+        });
+      },
     }),
     {
   name: "student-app-storage",

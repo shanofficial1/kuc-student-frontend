@@ -20,7 +20,7 @@ import { useNavigate } from "react-router-dom";
 export default function ProfessionalForm() {
   const {deleteProfileRecord}=useStore();
     const navigate = useNavigate();
-  const {membershipTypes,patentStatuses,conferenceTypes,presentationTypes,indexingServices,publicationStatuses,publicationIndexedIn,publicationTypes} =useStore();
+  const {membershipTypes,patentStatuses,conferenceTypes,presentationTypes,indexingServices,publicationStatuses,publicationIndexedIn,publicationTypes,countries} =useStore();
   useHashFocus();
   const isSubmitted = useStore((s) => s.isSubmitted);
   const professional = useStore((s) => s.professional) || {};
@@ -32,12 +32,120 @@ export default function ProfessionalForm() {
     ? professional.skills.split(",").filter(s => s.trim() !== "") 
     : [];
 
-  const handleArrayUpdate = (key, index, field, value) => {
-    const arr = [...(professional[key] || [])];
-    arr[index] = { ...arr[index], [field]: value };
-    updateSection("professional", { [key]: arr });
-  };
+const handleArrayUpdate = (key, index, field, value) => {
+  const arr = [...(professional[key] || [])];
 
+  let val = value;
+
+  // ==========================================
+  // CONFERENCE DATE
+  // ==========================================
+  if (key === "conferences" && field === "date") {
+    // Numbers only, maximum 8 digits
+    const digits = value
+      .replace(/\D/g, "")
+      .slice(0, 8);
+
+    const dd = digits.slice(0, 2);
+    const mm = digits.slice(2, 4);
+    const yyyy = digits.slice(4, 8);
+
+    // ------------------------------------------
+    // DD-MM-YYYY FORMAT
+    // ------------------------------------------
+    if (digits.length <= 2) {
+      val = dd;
+    } else if (digits.length <= 4) {
+      val = `${dd}-${mm}`;
+    } else {
+      val = `${dd}-${mm}-${yyyy}`;
+    }
+
+    let dateError = "";
+
+    // ------------------------------------------
+    // CHECK DAY WHILE TYPING
+    // ------------------------------------------
+    if (dd.length === 2) {
+      const day = Number(dd);
+
+      if (day < 1 || day > 31) {
+        dateError = "Invalid day";
+      }
+    }
+
+    // ------------------------------------------
+    // CHECK MONTH WHILE TYPING
+    // ------------------------------------------
+    if (!dateError && mm.length === 2) {
+      const month = Number(mm);
+
+      if (month < 1 || month > 12) {
+        dateError = "Invalid month";
+      }
+    }
+
+    // ------------------------------------------
+    // CHECK COMPLETE DATE
+    // ------------------------------------------
+    if (!dateError && digits.length === 8) {
+      const day = Number(dd);
+      const month = Number(mm);
+      const year = Number(yyyy);
+
+      const enteredDate = new Date(
+        year,
+        month - 1,
+        day
+      );
+
+      enteredDate.setHours(0, 0, 0, 0);
+
+      // Check actual calendar date
+      const isValidCalendarDate =
+        enteredDate.getFullYear() === year &&
+        enteredDate.getMonth() === month - 1 &&
+        enteredDate.getDate() === day;
+
+      if (!isValidCalendarDate) {
+        dateError = "Invalid date";
+      } else {
+        // --------------------------------------
+        // CONFERENCE DATE = PAST ONLY
+        // --------------------------------------
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        if (enteredDate > today) {
+          dateError = "Future date not allowed";
+        }
+      }
+    }
+
+    // ------------------------------------------
+    // SAVE DATE + ERROR
+    // ------------------------------------------
+    arr[index] = {
+      ...arr[index],
+      date: val,
+      dateError,
+    };
+  }
+
+  // ==========================================
+  // ALL OTHER ARRAY FIELDS
+  // ==========================================
+  else {
+    arr[index] = {
+      ...arr[index],
+      [field]: value,
+    };
+  }
+
+  updateSection("professional", {
+    [key]: arr,
+  });
+};
   const handleSkillKeyDown = (e) => {
     if (e.key === "Enter" && skillInput.trim()) {
       e.preventDefault();
@@ -61,6 +169,40 @@ export default function ProfessionalForm() {
   useStore(
     (s) => s.saveAndRefresh
   );
+
+  const validateYear = (value, rule = "all") => {
+  // Empty
+  if (!value) {
+    return "";
+  }
+
+  const yearString = String(value);
+
+  // Must be exactly 4 digits
+  if (!/^\d{4}$/.test(yearString)) {
+    return "Enter a valid 4-digit year";
+  }
+
+  const year = Number(yearString);
+  const currentYear = new Date().getFullYear();
+
+  // Basic valid year
+  if (year < 1) {
+    return "Enter a valid year";
+  }
+
+  // Past = current year or earlier
+  if (rule === "past" && year > currentYear) {
+    return `Year cannot be after ${currentYear}`;
+  }
+
+  // Future = current year or later
+  if (rule === "future" && year < currentYear) {
+    return `Year cannot be before ${currentYear}`;
+  }
+
+  return "";
+};
 
 // const handleSave = async () => {
 
@@ -573,8 +715,28 @@ onClick={() => handleDeletePublication(index)}
 
               <InputField label="ISSN Number" value={pub.issn || ""} onChange={(e) => handleArrayUpdate("publications", index, "issn", e.target.value)} />
 
-              <InputField label="Year of Publication" value={pub.date ? pub.date.split("-")[0] : ""} onChange={(e) => handleArrayUpdate("publications", index, "date", e.target.value)} />
+<InputField
+  label="Year of Publication"
+  value={pub.date ? pub.date.split("-")[0] : ""}
+  placeholder="YYYY"
+  maxLength={4}
+  error={validateYear(
+    pub.date ? pub.date.split("-")[0] : "",
+    "past"
+  )}
+  onChange={(e) => {
+    const value = e.target.value
+      .replace(/\D/g, "")
+      .slice(0, 4);
 
+    handleArrayUpdate(
+      "publications",
+      index,
+      "date",
+      value
+    );
+  }}
+/>
               <SelectField
                 label="Indexed In"
                 value={pub.indexedIn || ""}
@@ -595,8 +757,20 @@ onClick={() => handleDeletePublication(index)}
 
               <InputField label="DOI / Link" value={pub.doi || ""} onChange={(e) => handleArrayUpdate("publications", index, "doi", e.target.value)} />
 
-              <InputField label="Country" value={pub.country || ""} onChange={(e) => handleArrayUpdate("publications", index, "country", e.target.value)} />
-            <FileInput
+<SelectField
+  label="Country"
+  id={`publicationCountry-${index}`}
+  value={pub.country || ""}
+  onChange={(e) =>
+    handleArrayUpdate(
+      "publications",
+      index,
+      "country",
+      e.target.value
+    )
+  }
+  options={countries}
+/>            <FileInput
               label="Upload Publication"
               file={pub.url?.name || pub.url}
               fileUrl={pub.url?.url}
@@ -660,8 +834,41 @@ onClick={() => handleDeletePublication(index)}
 
               <InputField label="Venue" value={conf.venue || ""} onChange={(e) => handleArrayUpdate("conferences", index, "venue", e.target.value)} />
 
-              <InputField label="Date" type="date" value={conf.date || ""} onChange={(e) => handleArrayUpdate("conferences", index, "date", e.target.value)} />
+<InputField
+  label="Date"
+  type="text"
+  placeholder="DD-MM-YYYY"
+  value={conf.date || ""}
+  error={conf.dateError || ""}
+  onChange={(e) =>
+    handleArrayUpdate(
+      "conferences",
+      index,
+      "date",
+      e.target.value
+    )
+  }
+  onBlur={() => {
+    const value = conf.date || "";
 
+    if (!value) {
+      return;
+    }
+
+    if (!/^\d{2}-\d{2}-\d{4}$/.test(value)) {
+      const arr = [...(professional.conferences || [])];
+
+      arr[index] = {
+        ...arr[index],
+        dateError: "Enter a complete date (DD-MM-YYYY)",
+      };
+
+      updateSection("professional", {
+        conferences: arr,
+      });
+    }
+  }}
+/>
               <InputField label="ISBN / ISSN" value={conf.isbnIssn || ""} onChange={(e) => handleArrayUpdate("conferences", index, "isbnIssn", e.target.value)} />
 
               <InputField label="DOI / Link" value={conf.doiLink || ""} onChange={(e) => handleArrayUpdate("conferences", index, "doiLink", e.target.value)} />
@@ -709,8 +916,23 @@ onClick={() => handleDeletePublication(index)}
               </button>
               <InputField label="Company" value={exp.company || ""} onChange={(e) => handleArrayUpdate("experience", index, "company", e.target.value)} />
               <InputField label="Designation" value={exp.designation || ""} onChange={(e) => handleArrayUpdate("experience", index, "designation", e.target.value)} />
-              <InputField label="Year of Experience" value={exp.years || ""} onChange={(e) => handleArrayUpdate("experience", index, "years", e.target.value)} />
-              <FileInput
+<InputField
+  label="Year of Experience"
+  value={exp.years || ""}
+  maxLength={2}
+  onChange={(e) => {
+    const value = e.target.value
+      .replace(/\D/g, "")
+      .slice(0, 2);
+
+    handleArrayUpdate(
+      "experience",
+      index,
+      "years",
+      value
+    );
+  }}
+/>              <FileInput
                 label="Experience Certificate"
                 file={exp.url?.name || exp.url}
                 fileUrl={exp.url?.url}
@@ -788,8 +1010,20 @@ onClick={() => handleDeletePublication(index)}
 
               <InputField label="DOI / Link" value={pat.doi || ""} onChange={(e) => handleArrayUpdate("patents", index, "doi", e.target.value)} />
 
-              <InputField label="Country" value={pat.country || ""} onChange={(e) => handleArrayUpdate("patents", index, "country", e.target.value)} />
-              <FileInput
+<SelectField
+  label="Country"
+  id={`patentCountry-${index}`}
+  value={pat.country || ""}
+  onChange={(e) =>
+    handleArrayUpdate(
+      "patents",
+      index,
+      "country",
+      e.target.value
+    )
+  }
+  options={countries}
+/>              <FileInput
                 label="Upload Patent Document"
                 className="md:col-span-2"
                 file={pat.document?.name || pat.document}
@@ -854,17 +1088,33 @@ onClick={() => handleDeletePublication(index)}
                   className="lg:col-span-2"
                 />
 
-                <InputField
-                  label="Year of Joining"
-                  value={mem.joiningYear || ""}
-                  onChange={(e) => {
-                    const arr = [...(professional.membershipUrl || [])];
-                    arr[index] = { ...arr[index], joiningYear: e.target.value };
-                    updateSection("professional", { membershipUrl: arr });
-                  }}
-                  disabled={isSubmitted}
-                />
+               <InputField
+  label="Year of Joining"
+  value={mem.joiningYear || ""}
+  placeholder="YYYY"
+  maxLength={4}
+  error={validateYear(
+    mem.joiningYear,
+    "past"
+  )}
+  onChange={(e) => {
+    const value = e.target.value
+      .replace(/\D/g, "")
+      .slice(0, 4);
 
+    const arr = [...(professional.membershipUrl || [])];
+
+    arr[index] = {
+      ...arr[index],
+      joiningYear: value,
+    };
+
+    updateSection("professional", {
+      membershipUrl: arr,
+    });
+  }}
+  disabled={isSubmitted}
+/>
                 <SelectField
                   label="Membership Type"
                   value={mem.membershipType || ""}

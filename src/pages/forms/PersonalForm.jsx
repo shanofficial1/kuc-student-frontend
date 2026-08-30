@@ -205,12 +205,29 @@ const {castes,socialCategories,states,countries,nationalities,genders,religions,
     const [errors, setErrors] = useState({});
     const [showKeyboard, setShowKeyboard] = useState(false);
 
-    const DATE_FIELDS = [
-      "dob",
-      "passportExpiry",
-      "visaIssueDate",
-      "visaExpiryDate",
-    ];
+  const DATE_FIELDS = [
+  "dob",
+  "passportIssueDate",
+  "passportExpiry",
+  "visaIssueDate",
+  "visaExpiryDate",
+  "issueDate",
+  "expiryDate",
+];
+
+const DATE_RULES = {
+  // Must be today or earlier
+  dob: "past",
+  passportIssueDate: "past",
+  visaIssueDate: "past",
+  issueDate: "past",
+
+  // Must be today or later
+  passportExpiry: "future",
+  visaExpiryDate: "future",
+  expiryDate: "future",
+};
+    
 
     const store = useStore();
 
@@ -401,49 +418,155 @@ const {castes,socialCategories,states,countries,nationalities,genders,religions,
       return "";
     };
 
-    const handleBlur = (e) => {
-      const { id, value } = e.target;
-      if (DATE_FIELDS.includes(id)) {
-        const error = validateDOB(value);
-        setErrors((prev) => ({ ...prev, [id]: error }));
-      }
-    };
+const handleBlur = (e) => {
+  const { id, value } = e.target;
 
-    const handleChange = (e) => {
-      const { id, value } = e.target;
+  if (!DATE_FIELDS.includes(id)) {
+    return;
+  }
 
-      let val = value;
+  const rule = DATE_RULES[id] || "all";
 
-      // PHONE FORMAT
-      if (id === "mobile" || id === "whatsapp") {
-        let digits = val.replace(/\D/g, "").slice(0, 10);
+  const error = validateDateValue(
+    value,
+    rule
+  );
 
-        val = digits.replace(/(\d{5})(?=\d)/g, "$1 ");
-      }
+  setErrors((prev) => ({
+    ...prev,
+    [id]: error,
+  }));
+};
 
-      // DATE FORMAT
-      else if (DATE_FIELDS.includes(id)) {
-        let digits = val.replace(/\D/g, "").slice(0, 8);
+const validateDateValue = (value, rule = "all") => {
+  // Empty
+  if (!value) {
+    return "";
+  }
 
-        let dd = digits.slice(0, 2);
+  // Must be exactly DD-MM-YYYY
+  if (!/^\d{2}-\d{2}-\d{4}$/.test(value)) {
+    return "Invalid date";
+  }
 
-        let mm = digits.slice(2, 4);
+  const [day, month, year] = value
+    .split("-")
+    .map(Number);
 
-        let yyyy = digits.slice(4, 8);
+  // Basic range check
+  if (
+    day < 1 ||
+    day > 31 ||
+    month < 1 ||
+    month > 12 ||
+    year < 1
+  ) {
+    return "Invalid date";
+  }
 
-        if (digits.length <= 2) {
-          val = dd;
-        } else if (digits.length <= 4) {
-          val = `${dd}-${mm}`;
-        } else {
-          val = `${dd}-${mm}-${yyyy}`;
-        }
-      }
+  // Real calendar date
+  const enteredDate = new Date(
+    year,
+    month - 1,
+    day
+  );
 
-      updateSection("personal", {
-        [id]: val,
-      });
-    };
+  enteredDate.setHours(0, 0, 0, 0);
+
+  const isRealDate =
+    enteredDate.getFullYear() === year &&
+    enteredDate.getMonth() === month - 1 &&
+    enteredDate.getDate() === day;
+
+  if (!isRealDate) {
+    return "Invalid date";
+  }
+
+  // Today's date
+  const today = new Date();
+
+  today.setHours(0, 0, 0, 0);
+
+  // PAST
+  if (rule === "past" && enteredDate > today) {
+    return "Future date not allowed";
+  }
+
+  // FUTURE
+  if (rule === "future" && enteredDate < today) {
+    return "Past date not allowed";
+  }
+
+  return "";
+};
+
+
+const handleChange = (e) => {
+  const { id, value } = e.target;
+
+  let val = value;
+
+  // =========================
+  // PHONE FORMAT
+  // =========================
+  if (id === "mobile" || id === "whatsapp") {
+    const digits = value
+      .replace(/\D/g, "")
+      .slice(0, 10);
+
+    val = digits.replace(
+      /(\d{5})(?=\d)/g,
+      "$1 "
+    );
+  }
+
+  // =========================
+  // DATE FORMAT
+  // =========================
+  else if (DATE_FIELDS.includes(id)) {
+    const digits = value
+      .replace(/\D/g, "")
+      .slice(0, 8);
+
+    const dd = digits.slice(0, 2);
+    const mm = digits.slice(2, 4);
+    const yyyy = digits.slice(4, 8);
+
+    if (digits.length <= 2) {
+      val = dd;
+    } else if (digits.length <= 4) {
+      val = `${dd}-${mm}`;
+    } else {
+      val = `${dd}-${mm}-${yyyy}`;
+    }
+
+    // =========================
+    // VALIDATE COMPLETE DATE
+    // =========================
+    let error = "";
+
+    if (digits.length === 8) {
+      const rule = DATE_RULES[id] || "all";
+
+      error = validateDateValue(
+        val,
+        rule
+      );
+    }
+
+    setErrors((prev) => ({
+      ...prev,
+      [id]: error,
+    }));
+  }
+
+  // =========================
+  // UPDATE STORE
+  // =========================
+  updateSection("personal", {
+    [id]: val,
+  });
+};
     const handleAadhaarChange = (e) => {
       let value = e.target.value.replace(/\D/g, "");
       if (value.length > 12) value = value.slice(0, 12);
@@ -691,16 +814,17 @@ const {castes,socialCategories,states,countries,nationalities,genders,religions,
 
     </div>
   </div>
-            <InputField
-              label="Date of Birth"
-              id="dob"
-              type="text"
-              placeholder="DD-MM-YYYY"
-              value={personal.dob || ""}
-              onChange={handleChange}
-              onBlur={handleBlur}
-              error={errors.dob}
-            />
+<InputField
+  label="Date of Birth"
+  id="dob"
+  type="text"
+  placeholder="DD-MM-YYYY"
+  value={personal.dob || ""}
+  onChange={handleChange}
+  onBlur={handleBlur}
+  error={errors.dob}
+  dateRule="past"
+/>
 
           <FileInput
     label="Date of Birth Proof"
@@ -824,17 +948,17 @@ const {castes,socialCategories,states,countries,nationalities,genders,religions,
               onChange={handleChange}
               options={countries}
             />
-            <InputField
-              label="Passport Expiry Date"
-              id="passportExpiry"
-              type="text"
-              placeholder="DD-MM-YYYY"
-              value={personal.passportExpiry || ""}
-              onChange={handleChange}
-              onBlur={handleBlur}
-              error={errors.passportExpiry}
-            />
-
+ <InputField
+  label="Passport Expiry Date"
+  id="passportExpiry"
+  type="text"
+  placeholder="DD-MM-YYYY"
+  value={personal.passportExpiry || ""}
+  onChange={handleChange}
+  onBlur={handleBlur}
+  error={errors.passportExpiry}
+  dateRule="future"
+/>
           <FileInput
     label="Passport Document"
     required={false}

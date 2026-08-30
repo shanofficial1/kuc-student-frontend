@@ -341,14 +341,33 @@ const handleDeleteCompetitiveExam = async (index) => {
       disabled={isSubmitted}
     />
 
-    <InputField
-      label="Year of Passing"
-      value={record.passYear || ""}
-      onChange={(e)=>
-        updateAcademicField(index,"passYear",e.target.value)
-      }
-      disabled={isSubmitted}
-    />
+  <InputField
+  label="Year of Passing"
+  value={record.passYear || ""}
+  placeholder="YYYY"
+  maxLength={4}
+  error={
+    record.passYear
+      ? !/^\d{4}$/.test(String(record.passYear))
+        ? "Enter a valid 4-digit year"
+        : Number(record.passYear) > new Date().getFullYear()
+          ? `Year cannot be after ${new Date().getFullYear()}`
+          : ""
+      : ""
+  }
+  onChange={(e) => {
+    const value = e.target.value
+      .replace(/\D/g, "")
+      .slice(0, 4);
+
+    updateAcademicField(
+      index,
+      "passYear",
+      value
+    );
+  }}
+  disabled={isSubmitted}
+/>
 
     <InputField
       label="Percentage / CGPA"
@@ -455,14 +474,33 @@ const renderSchoolCommonFields = (record, index) => (
       disabled={isSubmitted}
     />
 
-    <InputField
-      label="Year of Passing"
-      value={record.passYear || ""}
-      onChange={(e) =>
-        updateAcademicField(index, "passYear", e.target.value)
-      }
-      disabled={isSubmitted}
-    />
+  <InputField
+  label="Year of Passing"
+  value={record.passYear || ""}
+  placeholder="YYYY"
+  maxLength={4}
+  error={
+    record.passYear
+      ? !/^\d{4}$/.test(String(record.passYear))
+        ? "Enter a valid 4-digit year"
+        : Number(record.passYear) > new Date().getFullYear()
+          ? `Year cannot be after ${new Date().getFullYear()}`
+          : ""
+      : ""
+  }
+  onChange={(e) => {
+    const value = e.target.value
+      .replace(/\D/g, "")
+      .slice(0, 4);
+
+    updateAcademicField(
+      index,
+      "passYear",
+      value
+    );
+  }}
+  disabled={isSubmitted}
+/>
 
     <SelectField
       label="Grade Type"
@@ -534,14 +572,33 @@ const renderDiplomaFields = (record, index) => (
       disabled={isSubmitted}
     />
 
-    <InputField
-      label="Year of Passing"
-      value={record.passYear || ""}
-      onChange={(e) =>
-        updateAcademicField(index, "passYear", e.target.value)
-      }
-      disabled={isSubmitted}
-    />
+  <InputField
+  label="Year of Passing"
+  value={record.passYear || ""}
+  placeholder="YYYY"
+  maxLength={4}
+  error={
+    record.passYear
+      ? !/^\d{4}$/.test(String(record.passYear))
+        ? "Enter a valid 4-digit year"
+        : Number(record.passYear) > new Date().getFullYear()
+          ? `Year cannot be after ${new Date().getFullYear()}`
+          : ""
+      : ""
+  }
+  onChange={(e) => {
+    const value = e.target.value
+      .replace(/\D/g, "")
+      .slice(0, 4);
+
+    updateAcademicField(
+      index,
+      "passYear",
+      value
+    );
+  }}
+  disabled={isSubmitted}
+/>
 
     <SelectField
       label="Grade Type"
@@ -616,15 +673,33 @@ const renderDegreeFields = (record, index) => (
       disabled={isSubmitted}
     />
 
-    <InputField
-      label="Year of Passing"
-      value={record.passYear || ""}
-      onChange={(e) =>
-        updateAcademicField(index, "passYear", e.target.value)
-      }
-      disabled={isSubmitted}
-    />
+  <InputField
+  label="Year of Passing"
+  value={record.passYear || ""}
+  placeholder="YYYY"
+  maxLength={4}
+  error={
+    record.passYear
+      ? !/^\d{4}$/.test(String(record.passYear))
+        ? "Enter a valid 4-digit year"
+        : Number(record.passYear) > new Date().getFullYear()
+          ? `Year cannot be after ${new Date().getFullYear()}`
+          : ""
+      : ""
+  }
+  onChange={(e) => {
+    const value = e.target.value
+      .replace(/\D/g, "")
+      .slice(0, 4);
 
+    updateAcademicField(
+      index,
+      "passYear",
+      value
+    );
+  }}
+  disabled={isSubmitted}
+/>
     <SelectField
       label="Grade Type"
       value={record.gradeType || ""}
@@ -971,14 +1046,32 @@ const isStaticType = [
                   onChange={(e) => updateExamField(index, 'score', e.target.value)} 
                   disabled={isSubmitted} 
                 />
-                <InputField
+<InputField
   label="Year"
   id={`examYear-${index}`}
   value={exam.year || ""}
-  onChange={(e) =>
-    updateExamField(index, "year", e.target.value)
+  placeholder="YYYY"
+  maxLength={4}
+  error={
+    exam.year
+      ? !/^\d{4}$/.test(String(exam.year))
+        ? "Enter a valid 4-digit year"
+        : Number(exam.year) > new Date().getFullYear()
+          ? `Year cannot be after ${new Date().getFullYear()}`
+          : ""
+      : ""
   }
-  placeholder={String(new Date().getFullYear())-1}
+  onChange={(e) => {
+    const value = e.target.value
+      .replace(/\D/g, "")
+      .slice(0, 4);
+
+    updateExamField(
+      index,
+      "year",
+      value
+    );
+  }}
   disabled={isSubmitted}
 />
                 

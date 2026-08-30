@@ -272,7 +272,7 @@ const {faculty,departments,degreeNames,programLevels,admissionCategories,studyMo
 } = useStore();
 
 
-  const currentYear = new Date().getFullYear()-1;
+  const currentYear = new Date().getFullYear();
 
   const academic = useStore((state) => state.academic);
 
@@ -288,6 +288,49 @@ const {faculty,departments,degreeNames,programLevels,admissionCategories,studyMo
     (state) => state.setLoading
   );
 
+
+  const validateAcademicCycle = (value) => {
+  if (!value) return "";
+
+  // Split multiple academic cycles
+  const cycles = value.split(",");
+
+  const seen = new Set();
+
+  for (let cycle of cycles) {
+    cycle = cycle.trim();
+
+    // Must be YYYY-YYYY
+    if (!/^\d{4}-\d{4}$/.test(cycle)) {
+      return "Use format YYYY-YYYY";
+    }
+
+    const [startYear, endYear] = cycle
+      .split("-")
+      .map(Number);
+
+    // Same year
+    if (startYear === endYear) {
+      return "Start and end year cannot be the same";
+    }
+
+    // End year must be after start year
+    if (endYear < startYear) {
+      return "End year must be after start year";
+    }
+
+    // Prevent duplicate cycles
+    const normalized = `${startYear}-${endYear}`;
+
+    if (seen.has(normalized)) {
+      return "Duplicate academic cycle is not allowed";
+    }
+
+    seen.add(normalized);
+  }
+
+  return "";
+};
 
 const saveAndRefresh = useStore(
   (s) => s.saveAndRefresh
@@ -469,7 +512,7 @@ const specializationOptions = [
   disabled={isSubmitted}
 /><SelectField
   label="Department"
-  id="departments"
+  id="department"
   value={academic.department || ""}
   onChange={handleChange}
   options={departments}
@@ -552,21 +595,77 @@ const specializationOptions = [
           icon={Calendar}
         >
 
-          <InputField
-            label="Admission Batch"
-            id="admissionBatch"
-            value={academic.admissionBatch || ""}
-            onChange={handleChange}
-  placeholder={String(currentYear)}
-          />
+        <InputField
+  label="Admission Batch"
+  id="admissionBatch"
+  value={academic.admissionBatch || ""}
+  placeholder="YYYY"
+  maxLength={4}
+  error={
+    academic.admissionBatch
+      ? !/^\d{4}$/.test(String(academic.admissionBatch))
+        ? "Enter a valid 4-digit year"
+        : Number(academic.admissionBatch) > currentYear
+          ? `Year cannot be after ${currentYear}`
+          : ""
+      : ""
+  }
+  onChange={(e) => {
+    const value = e.target.value
+      .replace(/\D/g, "")
+      .slice(0, 4);
 
-          <InputField
-            label="Academic Cycle"
-            id="academicCycle"
-            value={academic.academicCycle || ""}
-            onChange={handleChange}
-  placeholder={`${currentYear}-${currentYear + 2}`}
-          />
+    handleChange({
+      target: {
+        id: "admissionBatch",
+        value,
+      },
+    });
+  }}
+/>
+
+ <InputField
+  label="Academic Cycle"
+  id="academicCycle"
+  value={academic.academicCycle || ""}
+  placeholder="YYYY-YYYY"
+  error={validateAcademicCycle(academic.academicCycle || "")}
+  onChange={(e) => {
+    let input = e.target.value;
+
+    // Keep only numbers, comma, hyphen and spaces
+    input = input.replace(/[^\d,\-\s]/g, "");
+
+    // Split multiple cycles
+    const cycles = input.split(",");
+
+    const formattedCycles = cycles.map((cycle) => {
+      // Keep numbers only for each cycle
+      const digits = cycle
+        .replace(/\D/g, "")
+        .slice(0, 8);
+
+      if (digits.length <= 4) {
+        return digits;
+      }
+
+      // Automatically insert -
+      return `${digits.slice(0, 4)}-${digits.slice(4)}`;
+    });
+
+    // Rebuild comma-separated value
+    const value = formattedCycles
+      .join(", ")
+      .slice(0, 40);
+
+    handleChange({
+      target: {
+        id: "academicCycle",
+        value,
+      },
+    });
+  }}
+/>
 
           <SelectField
             disabled={isSubmitted}

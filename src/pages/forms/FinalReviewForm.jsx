@@ -8,6 +8,7 @@ import {
 } from "lucide-react";
 import { useStore } from "../../store";
 import { getChangedFields } from "../../lib/utils";
+import Toast from "../../components/ui/Toast";
 
 const SERVER = import.meta.env.VITE_SERVER;
 
@@ -269,6 +270,14 @@ const handleView = () => {
 
 
 export default function FinalReviewForm() {
+
+const [toastOpen, setToastOpen] = useState(false);
+
+const [toastData, setToastData] = useState({
+  type: "info",
+  title: "",
+  message: "",
+});
   const store = useStore();
   const isSubmitted = store.isSubmitted;
   const [agreed, setAgreed] = useState(false);
@@ -361,6 +370,42 @@ export default function FinalReviewForm() {
     return Object.keys(diff).length > 0;
   };
 
+const hasData = (value) => {
+  if (value === null || value === undefined) return false;
+
+  // Empty string
+  if (typeof value === "string") {
+    return value.trim() !== "";
+  }
+
+  // Boolean false is still valid data
+  if (typeof value === "boolean") {
+    return true;
+  }
+
+  // Number 0 is still valid data
+  if (typeof value === "number") {
+    return true;
+  }
+
+  // Uploaded File
+  if (typeof File !== "undefined" && value instanceof File) {
+    return true;
+  }
+
+  // Arrays
+  if (Array.isArray(value)) {
+    return value.some((item) => hasData(item));
+  }
+
+  // Objects
+  if (typeof value === "object") {
+    return Object.values(value).some((item) => hasData(item));
+  }
+
+  return true;
+};
+
   const sections = [
     "academic",
     "personal",
@@ -406,8 +451,22 @@ export default function FinalReviewForm() {
     console.log("Changed Sections:", changedSections);
 
     if (!hasChanges) {
-      alert("No changes detected.");
-      return;
+setToastData({
+  type: "info",
+  title: "No Changes",
+  message: "No changes detected.",
+});
+
+setToastOpen(true);
+console.log("Toast should open");
+console.log(toastOpen, toastData);
+
+
+setTimeout(() => {
+  setToastOpen(false);
+}, 2000);
+
+return;      
     }
 
 await store.submitProfileUpdateRequest({
@@ -417,7 +476,13 @@ await store.submitProfileUpdateRequest({
 
     window.location.reload();
 
-    alert("Application submitted for verification");
+setToastData({
+  type: "success",
+  title: "Application Submitted",
+  message: "Application submitted for verification.",
+});
+
+setToastOpen(true);
 
     window.scrollTo({
       top: 0,
@@ -431,171 +496,415 @@ await store.submitProfileUpdateRequest({
       behavior: "smooth",
     });
 
-    alert(`Changes detected in ${Object.keys(changedSections).length} section(s).`);
-  };
+setToastData({
+  type: "info",
+  title: "Changes Detected",
+  message: `Changes detected in ${Object.keys(changedSections).length} section(s).`,
+});
+
+setToastOpen(true);
+
+setTimeout(() => {
+  setToastOpen(false);
+}, 2000);  };
 
 
-  const academicDiff = sectionDiffs.academic || {};
+/* =========================================================
+   ACADEMIC
+========================================================= */
 
-const showAdmission =
-  academicDiff.admissionApplicationNumber ||
-  academicDiff.universityEnrollmentNumber ||
-  academicDiff.rollNumber;
+const academicDiff = sectionDiffs.academic || {};
 
-const showFaculty =
-  academicDiff.facultySchool ||
-  academicDiff.faculty ||
-  academicDiff.department ||
-  academicDiff.programLevel ||
-  academicDiff.degreeName;
+const showAdmission = hasData(
+  academic.admissionApplicationNumber,
+  academic.universityEnrollmentNumber,
+  academic.rollNumber
+);
 
-const showSpecialization =
-  academicDiff.specialization ||
-  academicDiff.specializationResearchArea;
+const showFaculty = hasData(
+  academic.facultySchool,
+  academic.faculty,
+  academic.department,
+  academic.programLevel,
+  academic.degreeName
+);
 
-const showProgress =
-  academicDiff.admissionBatch ||
-  academicDiff.academicCycle ||
-  academicDiff.currentYear ||
-  academicDiff.year ||
-  academicDiff.currentSemester ||
-  academicDiff.semester;
+const showSpecialization = hasData(
+  academic.specialization,
+  academic.specializationResearchArea
+);
 
-const showAdmissionInfo =
-  academicDiff.modeOfStudy ||
-  academicDiff.admissionCategory;
+const showProgress = hasData(
+  academic.admissionBatch,
+  academic.academicCycle,
+  academic.currentYear,
+  academic.year,
+  academic.currentSemester,
+  academic.semester
+);
 
-const showFellowship =
-  academicDiff.fellowshipLetterNumber ||
-  academicDiff.fellowshipLetter;
+const showAdmissionInfo = hasData(
+  academic.modeOfStudy,
+  academic.admissionCategory
+);
 
-
-  
-const hasValue = (...values) =>
-  values.some((v) => {
-    if (v === null || v === undefined) return false;
-
-    if (typeof v === "string")
-      return v.trim() !== "";
-
-    if (Array.isArray(v))
-      return v.length > 0;
-
-    return true;
-  });
+const showFellowship = hasData(
+  academic.fellowshipLetterNumber,
+  academic.fellowshipLetter
+);
 
 
+/* =========================================================
+   PERSONAL
+========================================================= */
 
-  const personalDiff = sectionDiffs.personal || {};
+const personalDiff = sectionDiffs.personal || {};
 
-const showBasic =
-  personalDiff.fullName ||
-  personalDiff.dob ||
-  personalDiff.gender ||
-  personalDiff.nationality;
+const showBasic = hasData(
+  personal.fullName,
+  personal.dob,
+  personal.gender,
+  personal.nationality
+);
 
-const showSocial =
-  personalDiff.domicileState ||
-  personalDiff.religion ||
-  personalDiff.socialCategory ||
-  personalDiff.category ||
-  personalDiff.caste ||
-  personalDiff.motherTongue ||
-  personalDiff.languagesKnown;
+const showSocial = hasData(
+  personal.domicileState,
+  personal.religion,
+  personal.socialCategory,
+  personal.category,
+  personal.caste,
+  personal.motherTongue,
+  personal.languagesKnown
+);
 
-const showIdentity =
-  personalDiff.aadhaarNo ||
-  personalDiff.aadhaarNumber ||
-  personalDiff.passportNumber ||
-  personalDiff.passportNo ||
-  personalDiff.passportCountry ||
-  personalDiff.passportExpiry ||
-  personalDiff.visaType ||
-  personalDiff.visaStatus;
+const showIdentity = hasData(
+  personal.aadhaarNo,
+  personal.aadhaarNumber,
+  personal.passportNumber,
+  personal.passportNo,
+  personal.passportCountry,
+  personal.passportExpiry,
+  personal.visaType,
+  personal.visaStatus
+);
 
-const showDocuments =
-  personalDiff.birthCertificateDoc ||
-  personalDiff.passportDoc ||
-  personalDiff.visaDoc;
-
-
-  
-  const contactDiff = sectionDiffs.contact || {};
-
-const showContactInfo =
-  contactDiff.personalMobile ||
-  contactDiff.mobile ||
-  contactDiff.whatsappNumber ||
-  contactDiff.whatsapp ||
-  contactDiff.personalEmail ||
-  contactDiff.email ||
-  contactDiff.institutionalEmail ||
-  contactDiff.distanceToCampus ||
-  contactDiff.distanceFromCampus ||
-  contactDiff.isSameAddress;
-
-const showPermanentAddress =
-  contactDiff.permanentAddress;
-
-const showCommunicationAddress =
-  contactDiff.correspondenceAddress ||
-  contactDiff.communicationAddress;
-
-const showEmergency =
-  contactDiff.emergencyContact ||
-  contactDiff.emergencyName ||
-  contactDiff.emergencyRelation ||
-  contactDiff.emergencyPhone;
+const showDocuments = hasData(
+  personal.birthCertificateDoc,
+  personal.passportDoc,
+  personal.visaDoc
+);
 
 
+/* =========================================================
+   CONTACT
+========================================================= */
 
-  const familyDiff = sectionDiffs.family || {};
+const contactDiff = sectionDiffs.contact || {};
 
-const showFather =
-  familyDiff.father?.name ||
-  familyDiff.father?.qualification ||
-  familyDiff.father?.occupation ||
-  familyDiff.father?.annualIncome;
+const showContactInfo = hasData(
+  contact.personalMobile,
+  contact.mobile,
+  contact.whatsappNumber,
+  contact.whatsapp,
+  contact.personalEmail,
+  contact.email,
+  contact.institutionalEmail,
+  contact.distanceToCampus,
+  contact.distanceFromCampus,
+  contact.isSameAddress
+);
 
-const showMother =
-  familyDiff.mother?.name ||
-  familyDiff.mother?.qualification ||
-  familyDiff.mother?.occupation ||
-  familyDiff.mother?.annualIncome;
+const showPermanentAddress = hasData(
+  contact.permanentAddress
+);
 
-const showParentInfo =
-  familyDiff.annualFamilyIncome ||
-  familyDiff.parentContact ||
-  familyDiff.parentEmail;
+const showCommunicationAddress = hasData(
+  contact.correspondenceAddress,
+  contact.communicationAddress
+);
 
-const showGuardian =
-  familyDiff.guardian?.name ||
-  familyDiff.guardian?.relation ||
-  familyDiff.guardian?.contact ||
-  familyDiff.guardian?.address ||
-  familyDiff.guardianResidentialAddress ||
-  familyDiff.guardianOfficeAddress;
+const showEmergency = hasData(
+  contact.emergencyContact?.name,
+  contact.emergencyContact?.relation,
+  contact.emergencyContact?.number,
+  contact.emergencyContact?.countryCode,
+  contact.emergencyName,
+  contact.emergencyRelation,
+  contact.emergencyPhone
+);
 
+
+/* =========================================================
+   FAMILY
+========================================================= */
+
+const familyDiff = sectionDiffs.family || {};
+
+/* Father */
+const showFather = hasData(
+  family.father?.name,
+  family.father?.qualification,
+  family.father?.occupation,
+  family.father?.annualIncome,
+  family.father?.contact,
+  family.father?.email
+);
+
+/* Mother */
+const showMother = hasData(
+  family.mother?.name,
+  family.mother?.qualification,
+  family.mother?.occupation,
+  family.mother?.annualIncome,
+  family.mother?.contact,
+  family.mother?.email
+);
+
+/* Siblings */
+const showSiblings = hasData(
+  family.siblings
+);
+
+/* Parent information */
+const showParentInfo = hasData(
+  family.annualFamilyIncome,
+  family.parentContact,
+  family.parentEmail
+);
+
+/* Guardian */
+const showGuardian = hasData(
+  family.guardian?.name,
+  family.guardian?.relation,
+  family.guardian?.contact,
+  family.guardian?.email,
+  family.guardian?.address,
+  family.guardianResidentialAddress,
+  family.guardianOfficeAddress
+);
+
+
+/* =========================================================
+   EDUCATION
+========================================================= */
 
 const educationDiff = sectionDiffs.education || {};
 
 const showQualifications =
   Array.isArray(educationDiff.educationRecords) &&
-  educationDiff.educationRecords.length > 0;
+  educationDiff.educationRecords.some(hasData);
 
 const showAcademicRecords =
   Array.isArray(educationDiff.academicRecords) &&
-  educationDiff.academicRecords.length > 0;
+  educationDiff.academicRecords.some(hasData);
 
 const showCompetitiveExams =
-  Array.isArray(educationDiff.competitiveExams) &&
-  educationDiff.competitiveExams.length > 0;
+  Array.isArray(education.competitiveExams) &&
+  education.competitiveExams.some(hasData);
 
-const showMigration =
-  educationDiff.migrationUrl ||
-  educationDiff.migrationFile;
+const showMigration = hasData(
+  education.migrationUrl,
+  education.migrationFile
+);
+
+
+/* =========================================================
+   FINANCIAL
+========================================================= */
+
+const showScholarship = hasData(
+  financial.scholarshipCategory,
+  financial.scholarshipUniqueID,
+  financial.schType,
+  financial.schId
+);
+
+const showGrant = hasData(
+  financial.grantCategory,
+  financial.grantUniqueID,
+  financial.grantType,
+  financial.grantId
+);
+
+const showEducationLoan = hasData(
+  financial.educationLoan?.bankName,
+  financial.educationLoan?.branchName,
+  financial.educationLoan?.loanAmount,
+  financial.loanBankName,
+  financial.loanBranch,
+  financial.loanAmount
+);
+
+const showBankAccount = hasData(
+  financial.accountHolderName,
+  financial.bankAccountHolder,
+  financial.accountNumber,
+  financial.ifscCode,
+  financial.panCardNumber,
+  financial.panNumber
+);
+
+const showFinancialDocuments = hasData(
+  financial.scholarshipDocument,
+  financial.scholarshipFile,
+  financial.grantDocument,
+  financial.grantFile,
+  financial.feeWaiveUrl,
+  financial.grantWaiveUrl
+);
+
+
+/* =========================================================
+   HEALTH
+========================================================= */
+
+const showBasicHealth = hasData(
+  health.bloodGroup,
+  health.physicalDimensions?.height,
+  health.physicalDimensions?.weight,
+  health.vaccinationStatus
+);
+
+const showDisability = hasData(
+  health.disabilityStatus,
+  health.disabilityDetails?.disabilityType,
+  health.disabilityDetails?.percentage
+);
+
+const showInsurance = hasData(
+  health.insurance?.provider,
+  health.insurance?.policyNumber
+);
+
+const showMedical = hasData(
+  health.chronicConditions,
+  health.regularMedications
+);
+
+const showHealthDocuments = hasData(
+  health.disabilityCertificate,
+  health.vaccinationDoc,
+  health.medicalCertificate,
+  health.insuranceDocument
+);
+
+
+/* =========================================================
+   RESIDENTIAL
+========================================================= */
+
+const showResidentialInfo = hasData(
+  residential.resType,
+  residential.type,
+  residential.homeAddress,
+  residential.hostel?.block,
+  residential.hostel?.roomNo,
+  residential.hostel?.bedType,
+  residential.hostelBlock,
+  residential.roomNo,
+  residential.bedType,
+  residential.mess,
+  residential.messPreference,
+  residential.hostelDeclarationForm
+);
+
+const showTransport = hasData(
+  residential.transport?.opted,
+  residential.transport?.routeNumber,
+  residential.transport?.boardingPoint,
+  residential.transport?.passNumber,
+  residential.transportOpted,
+  residential.busRouteId,
+  residential.pickupPoint
+);
+
+const showVehicle = hasData(
+  residential.vehicleReg
+);
+
+
+/* =========================================================
+   DOCUMENTS
+========================================================= */
+
+const showPersonalDocuments = hasData(
+  documents.profilePhoto,
+  documents.profilePhotoFile,
+  documents.signature,
+  documents.signatureFile,
+  documents.identityProof,
+  documents.identityProofFile
+);
+
+const showCommunityDocuments = hasData(
+  documents.legalCertificates?.casteCertificate,
+  documents.legalCertificates?.incomeCertificate,
+  documents.legalCertificates?.nativityCertificate,
+  documents.legalCertificates?.nonCreamyLayerCertificate,
+  documents.casteCertificateFile,
+  documents.incomeCertificateFile,
+  documents.nativityCertificateFile,
+  documents.nonCreamyLayerCertificateFile
+);
+
+const showOtherDocuments = hasData(
+  documents.migrationCertificate,
+  documents.transferCertificate,
+  documents.characterCertificate,
+  documents.medicalCertificate
+);
+
+
+/* =========================================================
+   PROFESSIONAL
+========================================================= */
+
+const showTechnicalSkills = hasData(
+  professional.technicalSkills,
+  professional.skills
+);
+
+const showExperience =
+  Array.isArray(professional.experience) &&
+  professional.experience.some(hasData);
+
+const showPublications =
+  Array.isArray(professional.publications) &&
+  professional.publications.some(hasData);
+
+const showConferences =
+  Array.isArray(professional.conferences) &&
+  professional.conferences.some(hasData);
+
+const showPatents =
+  Array.isArray(professional.patents) &&
+  professional.patents.some(hasData);
+
+const showMemberships =
+  Array.isArray(professional.membershipUrl) &&
+  professional.membershipUrl.some(hasData);
+
+
+/* =========================================================
+   MENTOR
+========================================================= */
+
+const showTutor = hasData(
+  mentor.tutorName,
+  mentor.tutorEmail,
+  mentor.tutorPhone,
+  mentor.tutorDepartment
+);
+
+const showHOD = hasData(
+  mentor.hodName,
+  mentor.hodEmail,
+  mentor.hodPhone,
+  mentor.hodDepartment
+);
 
   return (
+    <>
     <div className="mx-auto w-full max-w-6xl space-y-5 px-1 py-2 pb-28 sm:px-3 md:py-6">
       <header className="rounded-lg bg-white p-5 shadow-sm ring-1 ring-slate-200 sm:p-6">
         <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
@@ -1179,10 +1488,17 @@ const showMigration =
             value={family.father?.occupation}
           />
 
-          <ReviewInput
-            label="Annual Income"
-            value={family.father?.annualIncome}
-          />
+  <ReviewInput
+        label="Father Phone Number"
+        value={joinPhone(family.father?.contact)}
+      />
+
+      <ReviewInput
+        label="Father Email"
+        value={family.father?.email}
+      />
+      
+       
 
         </div>
 
@@ -1214,10 +1530,15 @@ const showMigration =
             value={family.mother?.occupation}
           />
 
-          <ReviewInput
-            label="Annual Income"
-            value={family.mother?.annualIncome}
-          />
+         <ReviewInput
+        label="Mother Phone Number"
+        value={joinPhone(family.mother?.contact)}
+      />
+
+      <ReviewInput
+        label="Mother Email"
+        value={family.mother?.email}
+      />
 
         </div>
 
@@ -1273,6 +1594,10 @@ const showMigration =
             label="Relationship"
             value={family.guardian?.relation}
           />
+   <ReviewInput
+        label="Guardian Email"
+        value={family.guardian?.email}
+      />
 
           <ReviewInput
             label="Guardian Contact Number"
@@ -1420,10 +1745,17 @@ const showMigration =
 
   {/* Scholarship Details */}
 
-  <h3 className="text-lg font-semibold text-slate-800">
-    Scholarship Details
-  </h3>
+{showScholarship && (
+  <>
+    <h3 className="text-lg font-semibold text-slate-800">
+      Scholarship Details
+    </h3>
 
+    {/* existing Scholarship grid */}
+
+    <SectionDivider />
+  </>
+)}
   <div className="grid gap-6 md:grid-cols-2">
 
     <ReviewInput
@@ -1443,7 +1775,8 @@ const showMigration =
 
 
   {/* Grant Details */}
-
+{showGrant && (
+  <>
   <h3 className="text-lg font-semibold text-slate-800">
     Grant Details
   </h3>
@@ -1464,10 +1797,12 @@ const showMigration =
 
   <SectionDivider />
 
-
+  </>
+)}
 
   {/* Education Loan */}
-
+{showEducationLoan && (
+  <>
   <h3 className="text-lg font-semibold text-slate-800">
     Education Loan
   </h3>
@@ -1502,10 +1837,12 @@ const showMigration =
 
   <SectionDivider />
 
-
+  </>
+)}
 
   {/* Bank Account */}
-
+{showBankAccount && (
+  <>
   <h3 className="text-lg font-semibold text-slate-800">
     Bank Account Details
   </h3>
@@ -1541,10 +1878,14 @@ const showMigration =
   </div>
 
   <SectionDivider />
-
+  </>
+)}
 
 
   {/* Uploaded Documents */}
+
+{showFinancialDocuments && (
+  <>
 
   <h3 className="text-lg font-semibold text-slate-800">
     Supporting Documents
@@ -1579,7 +1920,8 @@ const showMigration =
     />
 
   </div>
-
+  </>
+)}
 </ReviewSection>
       )}
 
@@ -1591,7 +1933,8 @@ const showMigration =
 >
 
   {/* Basic Health Information */}
-
+{showBasicHealth && (
+  <>
   <h3 className="text-lg font-semibold text-slate-800">
     Basic Health Information
   </h3>
@@ -1622,10 +1965,12 @@ const showMigration =
 
   <SectionDivider />
 
-
+  </>
+)}
 
   {/* Disability Details */}
-
+{showDisability && (
+  <>
   <h3 className="text-lg font-semibold text-slate-800">
     Disability Details
   </h3>
@@ -1651,10 +1996,12 @@ const showMigration =
 
   <SectionDivider />
 
-
+  </>
+)}
 
   {/* Insurance Details */}
-
+{showInsurance && (
+  <>
   <h3 className="text-lg font-semibold text-slate-800">
     Health Insurance
   </h3>
@@ -1675,10 +2022,12 @@ const showMigration =
 
   <SectionDivider />
 
-
+  </>
+)}
 
   {/* Medical Information */}
-
+{showMedical && (
+  <>
   <h3 className="text-lg font-semibold text-slate-800">
     Medical Information
   </h3>
@@ -1701,10 +2050,12 @@ const showMigration =
 
   <SectionDivider />
 
-
+  </>
+)}
 
   {/* Documents */}
-
+{showHealthDocuments && (
+  <>
   <h3 className="text-lg font-semibold text-slate-800">
     Supporting Documents
   </h3>
@@ -1732,7 +2083,8 @@ const showMigration =
     />
 
   </div>
-
+  </>
+)}
 </ReviewSection>
       )}
 
@@ -1744,7 +2096,8 @@ const showMigration =
 >
 
   {/* Residential Information */}
-
+{showResidentialInfo && (
+  <>
   <h3 className="text-lg font-semibold text-slate-800">
     Residential Information
   </h3>
@@ -1792,10 +2145,12 @@ const showMigration =
 
   <SectionDivider />
 
-
+  </>
+)}
 
   {/* Transport Details */}
-
+{showTransport && (
+  <>
   <h3 className="text-lg font-semibold text-slate-800">
     Transport Details
   </h3>
@@ -1825,14 +2180,15 @@ const showMigration =
         residential.pickupPoint
       }
     />
-
+{showVehicle && (
     <ReviewInput
       label="Vehicle Registration Number"
       value={residential.vehicleReg}
     />
-
+)}
   </div>
-
+  </>
+)}
 </ReviewSection>
       )}
 
@@ -1844,7 +2200,8 @@ const showMigration =
 >
 
   {/* Personal Documents */}
-
+{showPersonalDocuments && (
+  <>
   <h3 className="text-lg font-semibold text-slate-800">
     Personal Documents
   </h3>
@@ -1869,11 +2226,13 @@ const showMigration =
   </div>
 
   <SectionDivider />
-
+  </>
+)}
 
 
   {/* Community & Income */}
-
+{showCommunityDocuments && (
+  <>
   <h3 className="text-lg font-semibold text-slate-800">
     Community & Income Certificates
   </h3>
@@ -1917,9 +2276,11 @@ const showMigration =
   <SectionDivider />
 
 
-
+  </>
+)}
   {/* Other Documents */}
-
+{showOtherDocuments && (
+  <>
   <h3 className="text-lg font-semibold text-slate-800">
     Other Documents
   </h3>
@@ -1947,7 +2308,8 @@ const showMigration =
     />
 
   </div>
-
+  </>
+)}
 </ReviewSection>
       )}
 
@@ -1959,7 +2321,8 @@ const showMigration =
 >
 
   {/* Technical Skills */}
-
+{showTechnicalSkills && (
+  <>
   <h3 className="text-lg font-semibold text-slate-800">
     Technical Skills
   </h3>
@@ -1975,11 +2338,13 @@ const showMigration =
   </div>
 
   <SectionDivider />
-
+  </>
+)}
 
 
   {/* Work Experience */}
-
+{showExperience && (
+  <>
   <h3 className="text-lg font-semibold text-slate-800">
     Work Experience
   </h3>
@@ -2030,11 +2395,13 @@ const showMigration =
   ))}
 
   <SectionDivider />
-
+  </>
+)}
 
 
   {/* Publications */}
-
+{showPublications && (
+  <>
   <h3 className="text-lg font-semibold text-slate-800">
     Publications
   </h3>
@@ -2084,11 +2451,12 @@ const showMigration =
   ))}
 
   <SectionDivider />
-
+  </>
+)}
 
 
   {/* Conferences */}
-
+{showConferences && (<>
   <h3 className="text-lg font-semibold text-slate-800">
     Conferences
   </h3>
@@ -2139,10 +2507,10 @@ const showMigration =
 
   <SectionDivider />
 
-
+</>)}
 
   {/* Patents */}
-
+{showPatents && ( <>
   <h3 className="text-lg font-semibold text-slate-800">
     Patents
   </h3>
@@ -2187,11 +2555,11 @@ const showMigration =
   ))}
 
   <SectionDivider />
-
+</>)}
 
 
   {/* Membership */}
-
+{showMemberships && (<>
   <h3 className="text-lg font-semibold text-slate-800">
     Professional Membership
   </h3>
@@ -2234,7 +2602,7 @@ const showMigration =
     </div>
 
   ))}
-
+</>)}
 </ReviewSection>
       )}
 
@@ -2246,7 +2614,7 @@ const showMigration =
 >
 
   {/* Tutor Details */}
-
+{showTutor && ( <>
   <h3 className="text-lg font-semibold text-slate-800">
     Tutor Details
   </h3>
@@ -2277,10 +2645,10 @@ const showMigration =
 
   <SectionDivider />
 
-
+</>)}
 
   {/* Head of Department */}
-
+{showHOD && (<>
   <h3 className="text-lg font-semibold text-slate-800">
     Head of Department
   </h3>
@@ -2308,7 +2676,7 @@ const showMigration =
     />
 
   </div>
-
+</>)}
 </ReviewSection>
       )}
 
@@ -2373,5 +2741,13 @@ const showMigration =
 
 </ReviewSection>
     </div>
+<Toast
+  open={toastOpen}
+  setOpen={setToastOpen}
+  type={toastData.type}
+  title={toastData.title}
+  message={toastData.message}
+/>
+    </>
   );
 }
